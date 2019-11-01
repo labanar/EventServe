@@ -13,4 +13,9 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\EventServe.EventStore\EventServe.EventStore.csproj" />
+    <ProjectReference Include="..\..\..\src\EventServe\EventServe.csproj" />
+  </ItemGroup>
+
 </Project>
