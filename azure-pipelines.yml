@@ -6,6 +6,11 @@
 trigger:
 - master
 
+resources:
+  containers:
+    - container: eventstore
+      image: eventstore/eventstore:latest
+
 pool:
   vmImage: 'windows-latest'
 
