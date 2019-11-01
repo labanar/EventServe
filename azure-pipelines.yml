@@ -17,8 +17,9 @@ resources:
 
 services:
   eventstore: eventstore
-
-pool: 'Default'
+  
+pool:
+    vmImage: 'ubuntu-latest'
 
 variables:
   solution: '**/*.sln'
