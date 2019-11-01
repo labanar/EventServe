@@ -11,8 +11,7 @@ resources:
     - container: eventstore
       image: eventstore/eventstore:latest
 
-pool:
-  vmImage: 'default'
+pool: 'Default'
 
 variables:
   solution: '**/*.sln'
