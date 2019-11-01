@@ -12,7 +12,7 @@ resources:
       image: eventstore/eventstore:latest
 
 pool:
-  vmImage: 'windows-latest'
+  vmImage: 'default'
 
 variables:
   solution: '**/*.sln'
