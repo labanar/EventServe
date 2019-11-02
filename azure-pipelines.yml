@@ -64,4 +64,3 @@ steps:
     packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
     nuGetFeedType: 'internal'
     publishVstsFeed: 'c86709e4-239b-4eaf-a5f5-a1673cae1aae'
-    versioningScheme: 'off'
