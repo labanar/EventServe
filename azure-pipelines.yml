@@ -42,25 +42,25 @@ steps:
     command: 'test'
     projects: '**/tests/Integration/**/*.csproj'
 
-- task: DotNetCoreCLI@2
-  displayName: 'Publish EventServe artifact'
-  inputs:
-    command: 'publish'
-    publishWebProjects: false
-    projects: '**/src/**/EventServe.csproj'
-    arguments: '--output "$(Build.ArtifactStagingDirectory)\EventServe"'
-    zipAfterPublish: false
-    modifyOutputPath: false
+# - task: DotNetCoreCLI@2
+#   displayName: 'Publish EventServe artifact'
+#   inputs:
+#     command: 'publish'
+#     publishWebProjects: false
+#     projects: '**/src/**/EventServe.csproj'
+#     arguments: '--output "$(Build.ArtifactStagingDirectory)\EventServe"'
+#     zipAfterPublish: false
+#     modifyOutputPath: false
 
-- task: DotNetCoreCLI@2
-  displayName: 'Publish EventServe.EventStore artifact'
-  inputs:
-    command: 'publish'
-    publishWebProjects: false
-    projects: '**/src/**/EventServe.EventStore.csproj'
-    arguments: '--output "$(Build.ArtifactStagingDirectory)\EventServe.EventStore"'
-    zipAfterPublish: false
-    modifyOutputPath: false
+# - task: DotNetCoreCLI@2
+#   displayName: 'Publish EventServe.EventStore artifact'
+#   inputs:
+#     command: 'publish'
+#     publishWebProjects: false
+#     projects: '**/src/**/EventServe.EventStore.csproj'
+#     arguments: '--output "$(Build.ArtifactStagingDirectory)\EventServe.EventStore"'
+#     zipAfterPublish: false
+#     modifyOutputPath: false
 
 - task: DotNetCoreCLI@2
   displayName: 'NuGet Pack'
@@ -68,7 +68,7 @@ steps:
     command: 'pack'
     packagesToPack: '**/src/**/*.csproj'
     versioningScheme: 'off'
-    arguments: '--output "$(Build.ArtifactStagingDirectory)\NuGetPackages"'
+    arguments: '--output "$(Build.ArtifactStagingDirectory)\NuGetPackages" --PackageVersion="1.0.0.$(Build.BuildId)"'
 
 - task: PublishBuildArtifacts@1
   displayName: 'Publish Build Artifacts'
