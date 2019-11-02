@@ -2,7 +2,6 @@
 # Build and test ASP.NET Core projects targeting the full .NET Framework.
 # Add steps that publish symbols, save build artifacts, and more:
 # https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
-name: $(majorMinorVersion).$(semanticVersion) # $(rev:r)
 
 trigger:
 - master
@@ -56,7 +55,7 @@ steps:
   inputs:
     command: 'pack'
     packagesToPack: '**/src/**/*.csproj'
-    versioningScheme: 'byBuildNumber'
+    versioningScheme: 'off'
 
 - task: DotNetCoreCLI@2
   displayName: 'Nuget Push'
@@ -65,3 +64,4 @@ steps:
     packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
     nuGetFeedType: 'internal'
     publishVstsFeed: 'c86709e4-239b-4eaf-a5f5-a1673cae1aae'
+    versioningScheme: 'off'
