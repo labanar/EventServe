@@ -22,7 +22,7 @@ namespace EventServe.EventStore.IntegrationTests
         }
 
         [Fact]
-        public async Task Write_and_read_events_from_stream()
+        public async Task write_events_to_stream()
         {
             var connectionProvider = new EventStoreConnectionProvider(Options.Create(_fixture.EventStoreConnectionOptions));
 
@@ -49,8 +49,6 @@ namespace EventServe.EventStore.IntegrationTests
             readEvents.Count.Should().Be(3);
         }
 
-
-
         [Fact]
         public async Task write_events_to_stream_when_expected_version_matches()
         {
@@ -67,17 +65,17 @@ namespace EventServe.EventStore.IntegrationTests
             var writeEvents = new List<Event>
                 {
                     new DummyCreatedEvent(aggregateId, "The name", "https://url.example.com"),
-                    //new DummyNameChangedEvent(aggregateId, "The new name"),
-                    //new DummyUrlChangedEvent(aggregateId, "https://newurl.example.com")
+                    new DummyNameChangedEvent(aggregateId, "The new name"),
+                    new DummyUrlChangedEvent(aggregateId, "https://newurl.example.com")
                 };
 
             var sut = new EventStoreStreamWriter(connectionProvider, _serializer);
             await sut.AppendEventsToStream(stream.Id, writeEvents);
 
             var changeEvent = new DummyUrlChangedEvent(aggregateId, "https://newnewurl.example.com");
-            await sut.AppendEventsToStream(stream.Id, new List<Event> { changeEvent }, 0);
-
+            await sut.AppendEventsToStream(stream.Id, new List<Event> { changeEvent }, 2);
         }
+
 
         [Fact]
         public async Task throw_on_write_when_expected_version_does_not_match()
