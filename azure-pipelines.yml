@@ -43,14 +43,6 @@ steps:
     projects: '**/tests/Integration/**/*.csproj'
 
 - task: DotNetCoreCLI@2
-  displayName: 'Publish'
-  inputs:
-    command: 'publish'
-    publishWebProjects: false
-    projects: '**/src/**/*.csproj'
-    zipAfterPublish: false
-
-- task: DotNetCoreCLI@2
   displayName: 'Publish EventServe artifact'
   inputs:
     command: 'publish'
