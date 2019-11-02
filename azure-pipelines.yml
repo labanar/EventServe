@@ -6,8 +6,19 @@
 trigger:
 - master
 
-pool:
-  vmImage: 'windows-latest'
+resources:
+  containers:
+    - container: eventstore
+      image: eventstore/eventstore:latest
+      options: --name eventstore-node -it
+      ports:
+      - 2113:2113
+      - 1113:1113
+
+services:
+  eventstore: eventstore
+  
+pool: default
 
 variables:
   solution: '**/*.sln'
