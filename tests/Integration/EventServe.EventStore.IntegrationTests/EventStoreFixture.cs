@@ -2,6 +2,7 @@
 using Docker.DotNet.Models;
 using EventStore.ClientAPI;
 using EventStore.ClientAPI.SystemData;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -13,52 +14,54 @@ namespace EventServe.EventStore.IntegrationTests
 {
     public class EmbeddedEventStoreFixture : IAsyncLifetime
     {
-        private int _suffix;
-        private int _prefix;
+        const string EventStoreImage = "eventstore/eventstore";
+
+        private readonly string _containerName;
+        private readonly DockerClient _dockerClient;
+
         private bool _connected;
+        private IEventStoreConnection _conn;
+        public EventStoreConnectionOptions EventStoreConnectionOptions { get; private set; }
 
         public EmbeddedEventStoreFixture()
         {
-            EventStoreContainer = "es" + Guid.NewGuid().ToString("N");
-        }
+            var random = new Random();
+            EventStoreConnectionOptions = new EventStoreConnectionOptions
+            {
+                Host = "localhost",
+                Port = random.Next(1114, 2111),
+                Username = "admin",
+                Password = "changeit"
+            };
 
-        private string EventStoreContainer { get; set; }
+            _containerName = "es" + Guid.NewGuid().ToString("N");
 
-        //public StreamName NextStreamName()
-        //{
-        //    return new StreamName($"stream-{Interlocked.Increment(ref _suffix)}");
-        //}
-
-        //public string NextStreamNamePrefix()
-        //{
-        //    return $"scenario-{Interlocked.Increment(ref _prefix):D}-";
-        //}
-
-        public IEventStoreConnection Connection { get; private set; }
-
-        const string EventStoreImage = "eventstore/eventstore";
-
-        public async Task InitializeAsync()
-        {
             var address = Environment.OSVersion.Platform == PlatformID.Unix
                 ? new Uri("unix:///var/run/docker.sock")
                 : new Uri("npipe://./pipe/docker_engine");
             var config = new DockerClientConfiguration(address);
-            this.Client = config.CreateClient();
-            var images = await this.Client.Images.ListImagesAsync(new ImagesListParameters { MatchName = EventStoreImage });
+            _dockerClient = config.CreateClient();
+        }
+
+
+
+        public async Task InitializeAsync()
+        {
+            
+            var images = await _dockerClient.Images.ListImagesAsync(new ImagesListParameters { MatchName = EventStoreImage });
             if (images.Count == 0)
             {
                 // No image found. Pulling latest ..
                 Console.WriteLine("[docker] no image found - pulling latest");
-                await this.Client.Images.CreateImageAsync(new ImagesCreateParameters { FromImage = EventStoreImage, Tag = "latest" }, null, IgnoreProgress.Forever);
+                await _dockerClient.Images.CreateImageAsync(new ImagesCreateParameters { FromImage = EventStoreImage, Tag = "latest" }, null, IgnoreProgress.Forever);
             }
-            Console.WriteLine("[docker] creating container " + EventStoreContainer);
+            Console.WriteLine("[docker] creating container " + _containerName);
             //Create container ...
-            await this.Client.Containers.CreateContainerAsync(
+            await _dockerClient.Containers.CreateContainerAsync(
                 new CreateContainerParameters
                 {
                     Image = EventStoreImage,
-                    Name = EventStoreContainer,
+                    Name = _containerName,
                     Tty = true,
                     HostConfig = new HostConfig
                     {
@@ -78,7 +81,7 @@ namespace EventServe.EventStore.IntegrationTests
                                 new List<PortBinding> {
                                     new PortBinding
                                     {
-                                        HostPort = "1113"
+                                        HostPort = EventStoreConnectionOptions.Port.ToString()
                                     }
                                 }
                             }
@@ -86,26 +89,24 @@ namespace EventServe.EventStore.IntegrationTests
                     }
                 });
             // Starting the container ...
-            Console.WriteLine("[docker] starting container " + EventStoreContainer);
-            await this.Client.Containers.StartContainerAsync(EventStoreContainer, new ContainerStartParameters { });
-            var endpoint = new Uri("tcp://127.0.0.1:1113");
+            Console.WriteLine("[docker] starting container " + _containerName);
+            await _dockerClient.Containers.StartContainerAsync(_containerName, new ContainerStartParameters { });
+            var endpoint = new Uri($"tcp://127.0.0.1:{EventStoreConnectionOptions.Port}");
             var settings = ConnectionSettings
                 .Create()
                 .KeepReconnecting()
                 .KeepRetrying()
                 .SetDefaultUserCredentials(new UserCredentials("admin", "changeit"));
             var connectionName = $"M={Environment.MachineName},P={Process.GetCurrentProcess().Id},T={DateTimeOffset.UtcNow.Ticks}";
-            this.Connection = EventStoreConnection.Create(settings, endpoint, connectionName);
+            _conn = EventStoreConnection.Create(settings, endpoint, connectionName);
 
-            this.Connection.Connected += Connection_Connected;
+            _conn.Connected += Connection_Connected;
 
             Console.WriteLine("[docker] connecting to eventstore");
-            await this.Connection.ConnectAsync();
-
+            await _conn.ConnectAsync();
 
             while (!_connected)
                 await Task.Delay(250);
-
 
         }
 
@@ -116,18 +117,17 @@ namespace EventServe.EventStore.IntegrationTests
 
         public async Task DisposeAsync()
         {
-            if (this.Client != null)
+            if (_dockerClient != null)
             {
-                this.Connection?.Dispose();
-                Console.WriteLine("[docker] stopping container " + EventStoreContainer);
-                await this.Client.Containers.StopContainerAsync(EventStoreContainer, new ContainerStopParameters { });
-                Console.WriteLine("[docker] removing container " + EventStoreContainer);
-                await this.Client.Containers.RemoveContainerAsync(EventStoreContainer, new ContainerRemoveParameters { Force = true });
-                this.Client.Dispose();
+                _conn?.Dispose();
+                Console.WriteLine("[docker] stopping container " + _containerName);
+                await _dockerClient.Containers.StopContainerAsync(_containerName, new ContainerStopParameters { });
+                Console.WriteLine("[docker] removing container " + _containerName);
+                await _dockerClient.Containers.RemoveContainerAsync(_containerName, new ContainerRemoveParameters { Force = true });
+                _dockerClient.Dispose();
             }
         }
 
-        private DockerClient Client { get; set; }
 
         private class IgnoreProgress : IProgress<JSONMessage>
         {
