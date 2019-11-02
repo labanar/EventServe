@@ -41,3 +41,18 @@ steps:
   inputs:
     command: 'test'
     projects: '**/tests/Integration/**/*.csproj'
+
+
+- task: DotNetCoreCLI@2
+  displayName: 'Publish'
+  inputs:
+    command: 'publish'
+    publishWebProjects: false
+    projects: '**/src/**/*.csproj'
+
+- task: DotNetCoreCLI@2
+  displayName: 'NuGet Pack'
+  inputs:
+    command: 'pack'
+    packagesToPack: '**/src/**/*.csproj'
+    versioningScheme: 'off'
