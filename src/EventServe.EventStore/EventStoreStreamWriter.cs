@@ -15,12 +15,10 @@ namespace EventServe.EventStore
 
         public EventStoreStreamWriter(
             IEventStoreConnectionProvider connectionProvider,
-            IEventSerializer eventSerializer,
-            ILogger<EventStoreStreamWriter> logger)
+            IEventSerializer eventSerializer)
         {
             _connectionProvider = connectionProvider;
             _eventSerializer = eventSerializer;
-            _logger = logger;
         }
 
         public Task AppendEventToStream(string stream, Event @event)

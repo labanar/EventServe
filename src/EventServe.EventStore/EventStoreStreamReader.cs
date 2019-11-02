@@ -1,7 +1,6 @@
 ﻿using EventServe.EventStore.Interfaces;
 using EventServe.Services;
 using EventStore.ClientAPI;
-using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -11,16 +10,13 @@ namespace EventServe.EventStore
     {
         private readonly IEventStoreConnectionProvider _connectionProvider;
         private readonly IEventSerializer _eventSerializer;
-        private readonly ILogger<EventStoreStreamReader> _logger;
 
         public EventStoreStreamReader(
             IEventStoreConnectionProvider connectionProvider,
-            IEventSerializer eventSerializer,
-            ILogger<EventStoreStreamReader> logger)
+            IEventSerializer eventSerializer)
         {
             _connectionProvider = connectionProvider;
             _eventSerializer = eventSerializer;
-            _logger = logger;
         }
 
         public async Task<List<Event>> ReadAllEventsFromStream(string stream)
