@@ -56,3 +56,11 @@ steps:
     command: 'pack'
     packagesToPack: '**/src/**/*.csproj'
     versioningScheme: 'off'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Nuget Push'
+  inputs:
+    command: 'push'
+    packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
+    nuGetFeedType: 'internal'
+    publishVstsFeed: 'c86709e4-239b-4eaf-a5f5-a1673cae1aae'
