@@ -5,18 +5,6 @@
 
 trigger:
 - master
-
-resources:
-  containers:
-    - container: eventstore
-      image: eventstore/eventstore:latest
-      options: --name eventstore-node -it
-      ports:
-      - 2113:2113
-      - 1113:1113
-
-services:
-  eventstore: eventstore
   
 pool: default
 
@@ -27,19 +15,44 @@ variables:
 
 steps:
 - task: NuGetToolInstaller@1
+  displayName: 'Get NuGet Installer'
 
 - task: NuGetCommand@2
+  displayName: 'NuGet Restore'
   inputs:
     restoreSolution: '$(solution)'
 
 - task: VSBuild@1
+  displayName: 'Build'
   inputs:
     solution: '$(solution)'
     msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:DesktopBuildPackageLocation="$(build.artifactStagingDirectory)\WebApp.zip" /p:DeployIisAppPath="Default Web Site"'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
 
-- task: VSTest@2
+- task: DotNetCoreCLI@2
+  displayName: 'Unit Tests'
   inputs:
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
+    command: 'test'
+    projects: '**/tests/Unit/**/*.csproj'
+
+- task: DotNetCoreCLI@2
+  displayName: 'EventStore Integration Tests'
+  inputs:
+    command: 'test'
+    projects: '**/tests/Integration/**/*.csproj'
+
+
+- task: DotNetCoreCLI@2
+  displayName: 'Publish'
+  inputs:
+    command: 'publish'
+    publishWebProjects: false
+    projects: '**/src/**/*.csproj'
+
+- task: DotNetCoreCLI@2
+  displayName: 'NuGet Pack'
+  inputs:
+    command: 'pack'
+    packagesToPack: '**/src/**/*.csproj'
+    versioningScheme: 'off'
