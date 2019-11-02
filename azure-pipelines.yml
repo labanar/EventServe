@@ -48,7 +48,7 @@ steps:
     command: 'publish'
     publishWebProjects: false
     projects: '**/src/**/EventServe.csproj'
-    arguments: '--output $(Build.ArtifactStagingDirectory)/EventServe'
+    arguments: '--output "$(Build.ArtifactStagingDirectory)\EventServe"'
     zipAfterPublish: false
     modifyOutputPath: false
 
@@ -58,7 +58,7 @@ steps:
     command: 'publish'
     publishWebProjects: false
     projects: '**/src/**/EventServe.EventStore.csproj'
-    arguments: '--output $(Build.ArtifactStagingDirectory)/EventServe.EventStore'
+    arguments: '--output "$(Build.ArtifactStagingDirectory)\EventServe.EventStore"'
     zipAfterPublish: false
     modifyOutputPath: false
 
