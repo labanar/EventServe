@@ -51,13 +51,24 @@ steps:
     zipAfterPublish: false
 
 - task: DotNetCoreCLI@2
+  displayName: 'Publish EventServe artifact'
   inputs:
     command: 'publish'
     publishWebProjects: false
-    projects: '**/src/**/*.csproj'
-    arguments: '--output $(Build.ArtifactStagingDirectory)'
+    projects: '**/src/**/EventServe.csproj'
+    arguments: '--output $(Build.ArtifactStagingDirectory)/EventServe'
     zipAfterPublish: false
-    modifyOutputPath: true
+    modifyOutputPath: false
+
+- task: DotNetCoreCLI@2
+  displayName: 'Publish EventServe.EventStore artifact'
+  inputs:
+    command: 'publish'
+    publishWebProjects: false
+    projects: '**/src/**/EventServe.EventStore.csproj'
+    arguments: '--output $(Build.ArtifactStagingDirectory)/EventServe.EventStore'
+    zipAfterPublish: false
+    modifyOutputPath: false
 
 - task: PublishBuildArtifacts@1
   displayName: 'Publish Build Artifacts'
@@ -65,6 +76,8 @@ steps:
     PathtoPublish: '$(Build.ArtifactStagingDirectory)'
     ArtifactName: 'drop'
     publishLocation: 'Container'
+
+
 
 
 
