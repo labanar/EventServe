@@ -67,7 +67,7 @@ steps:
   inputs:
     command: 'pack'
     packagesToPack: '**/src/**/*.csproj'
-    versioningScheme: 'off'
+    versioningScheme: byEnvVar
     arguments: '--output "$(Build.ArtifactStagingDirectory)\NuGetPackages" --PackageVersion="1.0.0.$(Build.BuildId)"'
 
 - task: PublishBuildArtifacts@1
