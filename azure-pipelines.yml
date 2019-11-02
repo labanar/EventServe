@@ -57,7 +57,7 @@ steps:
     projects: '**/src/**/*.csproj'
     arguments: '--output $(Build.ArtifactStagingDirectory)'
     zipAfterPublish: false
-    modifyOutputPath: false
+    modifyOutputPath: true
 
 - task: PublishBuildArtifacts@1
   displayName: 'Publish Build Artifacts'
