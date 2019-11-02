@@ -49,7 +49,7 @@ steps:
     publishWebProjects: false
     arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
     projects: '**/src/**/*.csproj'
-    zipAfterPublish: false
+    zipAfterPublish: true
 
 
 
