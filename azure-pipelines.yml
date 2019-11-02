@@ -4,6 +4,7 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
 
 name: '$(BuildDefinitionName)_$(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)'
+
 trigger:
 - master
   
@@ -68,8 +69,8 @@ steps:
   inputs:
     command: 'pack'
     packagesToPack: '**/src/**/*.csproj'
-    versioningScheme: byEnvVar
-    arguments: '--output "$(Build.ArtifactStagingDirectory)\NuGetPackages" --PackageVersion="1.0.0.$(Build.BuildId)"'
+    versioningScheme: byBuildNumber
+    buildProperties: 'VersionSuffix=-$(Build.BuildId)'
 
 - task: PublishBuildArtifacts@1
   displayName: 'Publish Build Artifacts'
