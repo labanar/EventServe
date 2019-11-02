@@ -55,6 +55,7 @@ steps:
     command: 'publish'
     publishWebProjects: false
     projects: '**/src/**/*.csproj'
+    arguments: '--output $(Build.ArtifactStagingDirectory)'
     zipAfterPublish: false
     modifyOutputPath: true
 
@@ -64,6 +65,8 @@ steps:
     PathtoPublish: '$(Build.ArtifactStagingDirectory)'
     ArtifactName: 'drop'
     publishLocation: 'Container'
+
+
 
 
 # - task: DotNetCoreCLI@2
