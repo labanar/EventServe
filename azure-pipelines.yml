@@ -44,23 +44,30 @@ steps:
 
 
 - task: DotNetCoreCLI@2
-  displayName: 'Publish'
   inputs:
-    command: 'publish'
+    command: publish
     publishWebProjects: false
-    projects: '**/src/**/*.csproj'
+    arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+    zipAfterPublish: True
 
-- task: DotNetCoreCLI@2
-  displayName: 'NuGet Pack'
+- task: PublishBuildArtifacts@1
   inputs:
-    command: 'pack'
-    packagesToPack: '**/src/**/*.csproj'
-    versioningScheme: 'off'
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
 
-- task: DotNetCoreCLI@2
-  displayName: 'Nuget Push'
-  inputs:
-    command: 'push'
-    packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
-    nuGetFeedType: 'internal'
-    publishVstsFeed: 'c86709e4-239b-4eaf-a5f5-a1673cae1aae'
+
+# - task: DotNetCoreCLI@2
+#   displayName: 'NuGet Pack'
+#   inputs:
+#     command: 'pack'
+#     packagesToPack: '**/src/**/*.csproj'
+#     versioningScheme: 'off'
+
+# - task: DotNetCoreCLI@2
+#   displayName: 'Nuget Push'
+#   inputs:
+#     command: 'push'
+#     packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
+#     nuGetFeedType: 'internal'
+#     publishVstsFeed: 'c86709e4-239b-4eaf-a5f5-a1673cae1aae'
