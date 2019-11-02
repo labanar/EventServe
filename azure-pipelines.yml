@@ -42,15 +42,19 @@ steps:
     command: 'test'
     projects: '**/tests/Integration/**/*.csproj'
 
-
 - task: DotNetCoreCLI@2
+  displayName: 'Publish'
   inputs:
-    command: publish
+    command: 'publish'
     publishWebProjects: false
     arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
-    zipAfterPublish: True
+    projects: '**/src/**/*.csproj'
+    zipAfterPublish: false
+
+
 
 - task: PublishBuildArtifacts@1
+  displayName: 'Publish Build Artifacts'
   inputs:
     PathtoPublish: '$(Build.ArtifactStagingDirectory)'
     ArtifactName: 'drop'
