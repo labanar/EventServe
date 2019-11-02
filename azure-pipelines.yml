@@ -55,7 +55,7 @@ steps:
   inputs:
     command: 'pack'
     packagesToPack: '**/src/**/*.csproj'
-    versioningScheme: 'off'
+    versioningScheme: 'byBuildNumber'
 
 - task: DotNetCoreCLI@2
   displayName: 'Nuget Push'
