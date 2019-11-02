@@ -11,7 +11,6 @@ namespace EventServe.EventStore
     {
         private readonly IEventStoreConnectionProvider _connectionProvider;
         private readonly IEventSerializer _eventSerializer;
-        private readonly ILogger<EventStoreStreamWriter> _logger;
 
         public EventStoreStreamWriter(
             IEventStoreConnectionProvider connectionProvider,
