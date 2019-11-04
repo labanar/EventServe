@@ -3,6 +3,8 @@
 # Add steps that publish symbols, save build artifacts, and more:
 # https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
 
+name: '$(BuildDefinitionName)_$(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)'
+
 trigger:
 - master
   
@@ -42,22 +44,33 @@ steps:
     command: 'test'
     projects: '**/tests/Integration/**/*.csproj'
 
-- task: DotNetCoreCLI@2
-  displayName: 'Publish'
-  inputs:
-    command: 'publish'
-    publishWebProjects: false
-    projects: '**/src/**/*.csproj'
-    zipAfterPublish: false
+# - task: DotNetCoreCLI@2
+#   displayName: 'Publish EventServe artifact'
+#   inputs:
+#     command: 'publish'
+#     publishWebProjects: false
+#     projects: '**/src/**/EventServe.csproj'
+#     arguments: '--output "$(Build.ArtifactStagingDirectory)\EventServe"'
+#     zipAfterPublish: false
+#     modifyOutputPath: false
+
+# - task: DotNetCoreCLI@2
+#   displayName: 'Publish EventServe.EventStore artifact'
+#   inputs:
+#     command: 'publish'
+#     publishWebProjects: false
+#     projects: '**/src/**/EventServe.EventStore.csproj'
+#     arguments: '--output "$(Build.ArtifactStagingDirectory)\EventServe.EventStore"'
+#     zipAfterPublish: false
+#     modifyOutputPath: false
 
 - task: DotNetCoreCLI@2
+  displayName: 'NuGet Pack'
   inputs:
-    command: 'publish'
-    publishWebProjects: false
-    projects: '**/src/**/*.csproj'
-    arguments: '--output $(Build.ArtifactStagingDirectory)'
-    zipAfterPublish: false
-    modifyOutputPath: true
+    command: 'pack'
+    packagesToPack: '**/src/**/*.csproj'
+    versioningScheme: byBuildNumber
+    buildProperties: 'VersionSuffix=-$(Build.BuildId)'
 
 - task: PublishBuildArtifacts@1
   displayName: 'Publish Build Artifacts'
@@ -69,12 +82,9 @@ steps:
 
 
 
-# - task: DotNetCoreCLI@2
-#   displayName: 'NuGet Pack'
-#   inputs:
-#     command: 'pack'
-#     packagesToPack: '**/src/**/*.csproj'
-#     versioningScheme: 'off'
+
+
+
 
 # - task: DotNetCoreCLI@2
 #   displayName: 'Nuget Push'
