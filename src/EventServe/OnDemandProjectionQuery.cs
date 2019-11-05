@@ -19,6 +19,7 @@ namespace EventServe {
                 foreach (var @event in events) {
                     projection = await _handler.HandleEvent(projection, @event);
                     projection.IncrementVersion();
+                    var x = "CI TEST";
                 }
 
                 return projection;
