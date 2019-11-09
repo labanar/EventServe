@@ -28,7 +28,7 @@ namespace EventServe {
                 return aggregate;
             }
 
-            public async Task<long> SaveAsync(AggregateRoot aggregate, long version = 0) {
+            public async Task<long> SaveAsync(AggregateRoot aggregate, long version = -1) {
                 if (aggregate == null)
                     return 0;
 
@@ -44,7 +44,7 @@ namespace EventServe {
 
                 var eventCount = events.Count();
 
-                if (version != 0)
+                if (version > -1)
                     await _streamWriter.AppendEventsToStream(stream.Id, events, version);
                 else
                     await _streamWriter.AppendEventsToStream(stream.Id, events);

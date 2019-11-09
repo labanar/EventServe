@@ -1,28 +1,81 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using EventServe.Services;
 using FluentAssertions;
 using Microsoft.Extensions.Options;
 using Xunit;
 
-namespace EventServe.EventStore.IntegrationTests {
+namespace EventServe.EventStore.IntegrationTests
+{
 
     [Collection("EventStore Collection")]
-    public class EventStoreRepositoryShould {
+    public class EventStoreRepositoryShould
+    {
         private readonly EventSerializer _serializer;
         private readonly EmbeddedEventStoreFixture _fixture;
 
-        public EventStoreRepositoryShould(EmbeddedEventStoreFixture fixture) {
+        public EventStoreRepositoryShould(EmbeddedEventStoreFixture fixture)
+        {
             _serializer = new EventSerializer();
             _fixture = fixture;
         }
 
         [Fact]
-        public async Task Writes_aggregate_to_stream() {
+        public async Task Writes_aggregate_to_stream()
+        {
 
-            var resetCommand = new ResetDummyAggregateCommand() {
+            var fakeAggregate = await CreateDummyAggregate();
+
+            var reader = CreateStreamReader();
+            var stream = StreamBuilder.Create()
+                .WithAggregateType<DummyAggregate>()
+                .WithAggregateId(fakeAggregate.Id)
+                .Build();
+
+            fakeAggregate.Version.Should().Be(0);
+
+            var events = await reader.ReadAllEventsFromStream(stream.Id);
+            events.Count.Should().Be(1);
+        }
+
+        [Fact]
+        public async Task Write_fails_when_aggregate_has_been_modified_by_another_actor()
+        {
+            //Create a fake aggregate
+            var fakeAggregate = await CreateDummyAggregate();
+
+            var sut = CreateRepository<DummyAggregate>();
+
+            //Query the fake aggregate two different times, emulating two actors
+            var aggregate1 = await sut.GetById(fakeAggregate.Id);
+            var aggregate2 = await sut.GetById(fakeAggregate.Id);
+
+            //Modify each aggregate
+            aggregate1.ResetDummy(new ResetDummyAggregateCommand
+            {
+                Id = fakeAggregate.Id,
+                Name = "A new name",
+                Url = "https://url.example.com"
+            });
+            aggregate2.ResetDummy(new ResetDummyAggregateCommand
+            {
+                Id = fakeAggregate.Id,
+                Name = "The name",
+                Url = "https://newurl.example.com"
+            });
+
+            //Save the first aggregate
+            await sut.SaveAsync(aggregate1, aggregate1.Version);
+
+            //Saving the second aggregate should fail, as it has been modified since we queried
+            await Assert.ThrowsAsync<WrongExpectedVersionException>(async () => await sut.SaveAsync(aggregate2, aggregate2.Version));
+        }
+
+
+        private async Task<DummyAggregate> CreateDummyAggregate()
+        {
+            var resetCommand = new ResetDummyAggregateCommand()
+            {
                 Id = Guid.NewGuid(),
                 Name = "The name",
                 Url = "https://url.example.com"
@@ -31,22 +84,14 @@ namespace EventServe.EventStore.IntegrationTests {
             var aggregate = new DummyAggregate(resetCommand);
 
             var sut = CreateRepository<DummyAggregate>();
-            var numberOfChanges = await sut.SaveAsync(aggregate);
+            await sut.SaveAsync(aggregate);
 
-            var reader = CreateStreamReader();
-            var stream = StreamBuilder.Create()
-                .WithAggregateType<DummyAggregate>()
-                .WithAggregateId(resetCommand.Id)
-                .Build();
-
-            aggregate.Version.Should().Be(0);
-
-            var events = await reader.ReadAllEventsFromStream(stream.Id);
-            events.Count.Should().Be(1);
+            return aggregate;
         }
 
         private EventRepository<T> CreateRepository<T>()
-        where T : AggregateRoot {
+        where T : AggregateRoot
+        {
             var connectionProvider = new EventStoreConnectionProvider(Options.Create(_fixture.EventStoreConnectionOptions));
 
             var reader = new EventStoreStreamReader(connectionProvider, _serializer);
@@ -57,7 +102,8 @@ namespace EventServe.EventStore.IntegrationTests {
             return sut;
         }
 
-        private IEventStreamReader CreateStreamReader() {
+        private IEventStreamReader CreateStreamReader()
+        {
             var connectionProvider = new EventStoreConnectionProvider(Options.Create(_fixture.EventStoreConnectionOptions));
             return new EventStoreStreamReader(connectionProvider, _serializer);
         }

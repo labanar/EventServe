@@ -1,25 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using EventStore.ClientAPI.Exceptions;
 using FluentAssertions;
 using Microsoft.Extensions.Options;
 using Xunit;
 
-namespace EventServe.EventStore.IntegrationTests {
+namespace EventServe.EventStore.IntegrationTests
+{
     [Collection("EventStore Collection")]
-    public class StreamWriterShould {
+    public class StreamWriterShould
+    {
         private readonly EventSerializer _serializer;
         private readonly EmbeddedEventStoreFixture _fixture;
 
-        public StreamWriterShould(EmbeddedEventStoreFixture fixture) {
+        public StreamWriterShould(EmbeddedEventStoreFixture fixture)
+        {
             _serializer = new EventSerializer();
             _fixture = fixture;
         }
 
         [Fact]
-        public async Task write_events_to_stream() {
+        public async Task write_events_to_stream()
+        {
             var connectionProvider = new EventStoreConnectionProvider(Options.Create(_fixture.EventStoreConnectionOptions));
 
             var aggregateId = Guid.NewGuid();
@@ -44,7 +46,8 @@ namespace EventServe.EventStore.IntegrationTests {
         }
 
         [Fact]
-        public async Task write_events_to_stream_when_expected_version_matches() {
+        public async Task write_events_to_stream_when_expected_version_matches()
+        {
 
             var connectionProvider = new EventStoreConnectionProvider(Options.Create(_fixture.EventStoreConnectionOptions));
 
@@ -69,7 +72,8 @@ namespace EventServe.EventStore.IntegrationTests {
         }
 
         [Fact]
-        public async Task throw_on_write_when_expected_version_does_not_match() {
+        public async Task throw_on_write_when_expected_version_does_not_match()
+        {
 
             var connectionProvider = new EventStoreConnectionProvider(Options.Create(_fixture.EventStoreConnectionOptions));
 
@@ -93,7 +97,7 @@ namespace EventServe.EventStore.IntegrationTests {
             //Write should fail
             var changeEvent = new DummyUrlChangedEvent(aggregateId, "https://newnewurl.example.com");
             await Assert.ThrowsAsync<WrongExpectedVersionException>(
-                async() => await sut.AppendEventsToStream(stream.Id, new List<Event> { changeEvent }, 1));
+                async () => await sut.AppendEventsToStream(stream.Id, new List<Event> { changeEvent }, 1));
 
         }
     }

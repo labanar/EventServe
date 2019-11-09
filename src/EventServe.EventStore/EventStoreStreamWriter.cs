@@ -1,13 +1,13 @@
-﻿using EventServe.EventStore.Interfaces;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
+using EventServe.EventStore.Interfaces;
 using EventServe.Services;
 using EventStore.ClientAPI;
-using Microsoft.Extensions.Logging;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using ES = EventStore.ClientAPI;
 
 namespace EventServe.EventStore
 {
-    public class EventStoreStreamWriter: IEventStreamWriter
+    public class EventStoreStreamWriter : IEventStreamWriter
     {
         private readonly IEventStoreConnectionProvider _connectionProvider;
         private readonly IEventSerializer _eventSerializer;
@@ -46,8 +46,16 @@ namespace EventServe.EventStore
 
             using (var conn = _connectionProvider.GetConnection())
             {
-                await conn.ConnectAsync();                
-                await conn.AppendToStreamAsync(stream, expectedVersion, eventData);
+                await conn.ConnectAsync();
+
+                try
+                {
+                    await conn.AppendToStreamAsync(stream, expectedVersion, eventData);
+                }
+                catch (ES.Exceptions.WrongExpectedVersionException wrongVersionException)
+                {
+                    throw new WrongExpectedVersionException($"Stream version does not match the expected version {expectedVersion}.");
+                }
             }
         }
 
@@ -60,7 +68,15 @@ namespace EventServe.EventStore
             using (var conn = _connectionProvider.GetConnection())
             {
                 await conn.ConnectAsync();
-                await conn.AppendToStreamAsync(stream, expectedVersion, eventDatas);
+
+                try
+                {
+                    await conn.AppendToStreamAsync(stream, expectedVersion, eventDatas);
+                }
+                catch (ES.Exceptions.WrongExpectedVersionException wrongVersionException)
+                {
+                    throw new WrongExpectedVersionException($"Stream version does not match the expected version {expectedVersion}.");
+                }
             }
         }
     }
