@@ -20,7 +20,7 @@ namespace EventServe
             EventDate = DateTime.UtcNow;
         }
 
-        private Event() { }
+        protected Event() { }
     }
 
     public class EventMetaData

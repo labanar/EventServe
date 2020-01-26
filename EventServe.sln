@@ -9,7 +9,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventServe.EventStore", "sr
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventServe.EventStore.IntegrationTests", "tests\Integration\EventServe.EventStore.IntegrationTests\EventServe.EventStore.IntegrationTests.csproj", "{D0167A85-A68D-41EF-96FD-75DA0D9A490C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventServe.EventStore.Extensions.DependencyInjection", "src\EventServe.EventStore.Extensions.DependencyInjection\EventServe.EventStore.Extensions.DependencyInjection.csproj", "{814FC299-910E-4418-B181-98876AF4816D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventServe.EventStore.Extensions.DependencyInjection", "src\EventServe.EventStore.Extensions.DependencyInjection\EventServe.EventStore.Extensions.DependencyInjection.csproj", "{814FC299-910E-4418-B181-98876AF4816D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventServe.SqlStreamStore", "src\EventServe.SqlStreamStore\EventServe.SqlStreamStore.csproj", "{EE46684C-05FD-42E4-8DFA-9ED136A45CA5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventServe.SqlStreamStore.IntegrationTests", "tests\Integration\EventServe.SqlStreamStore.IntegrationTests\EventServe.SqlStreamStore.IntegrationTests.csproj", "{7260ADC2-A47F-47B0-9D6F-F0CC3DE80ADF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventServe.SqlStreamStore.SqlServer", "src\EventServe.SqlStreamStore.SqlServer\EventServe.SqlStreamStore.SqlServer.csproj", "{4612D564-DB85-45DE-9196-CF4F3FC3BCF8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +39,18 @@ Global
 		{814FC299-910E-4418-B181-98876AF4816D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{814FC299-910E-4418-B181-98876AF4816D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{814FC299-910E-4418-B181-98876AF4816D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EE46684C-05FD-42E4-8DFA-9ED136A45CA5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EE46684C-05FD-42E4-8DFA-9ED136A45CA5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EE46684C-05FD-42E4-8DFA-9ED136A45CA5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EE46684C-05FD-42E4-8DFA-9ED136A45CA5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7260ADC2-A47F-47B0-9D6F-F0CC3DE80ADF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7260ADC2-A47F-47B0-9D6F-F0CC3DE80ADF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7260ADC2-A47F-47B0-9D6F-F0CC3DE80ADF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7260ADC2-A47F-47B0-9D6F-F0CC3DE80ADF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4612D564-DB85-45DE-9196-CF4F3FC3BCF8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4612D564-DB85-45DE-9196-CF4F3FC3BCF8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4612D564-DB85-45DE-9196-CF4F3FC3BCF8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4612D564-DB85-45DE-9196-CF4F3FC3BCF8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
