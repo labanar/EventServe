@@ -3,8 +3,8 @@
 A C# Event Sourcing Framework with an EventStore implementation
 
 TODO:
-- Add unit tests surrounding projections
-- Add an implementation for SqlStreamStore
+- ~~Add an implementation for SqlStreamStore~~
+- Projection providers
 
 
 
