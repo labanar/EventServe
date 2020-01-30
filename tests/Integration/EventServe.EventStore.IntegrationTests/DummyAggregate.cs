@@ -48,34 +48,38 @@ namespace EventServe.EventStore.IntegrationTests
 
     public class DummyCreatedEvent: Event
     {
+        public DummyCreatedEvent() { }
         public DummyCreatedEvent(Guid aggregateId, string name, string url): base(aggregateId)
         {
             Name = name;
             Url = url;
         }
 
-        public string Name { get; private set; }
-        public string Url { get; private set; }
+        public string Name { get; set; }
+        public string Url { get; set; }
     }
 
     public class DummyNameChangedEvent : Event
     {
+        public DummyNameChangedEvent() { }
         public DummyNameChangedEvent(Guid aggregateId, string name) : base(aggregateId)
         {
             Name = name;
         }
 
-        public string Name { get; private set; }
+        public string Name { get; set; }
     }
 
     public class DummyUrlChangedEvent: Event
     {
+        public DummyUrlChangedEvent() { }
+
         public DummyUrlChangedEvent(Guid aggregateId, string url): base(aggregateId)
         {
             Url = url;
         }
 
-        public string Url { get; private set; }
+        public string Url { get; set; }
     }
 
 

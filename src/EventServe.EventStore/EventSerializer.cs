@@ -29,16 +29,16 @@ namespace EventServe.EventStore
             return @event;
         }
 
-        private EventData SeralizeEvent(Event @event)
+        private EventData SeralizeEvent<T>(T @event) where T :Event
         {
             var type = @event.GetType();
             var typeName = type.FullName;
 
-            var serializedEvent = JsonSerializer.Serialize(@event);
+            var serializedEvent = JsonSerializer.Serialize(@event, type);
             var dataBytes = Encoding.UTF8.GetBytes(serializedEvent);
 
             var metaData = new EventMetaData(@event);
-            var serializedMetaData = JsonSerializer.Serialize(metaData);
+            var serializedMetaData = JsonSerializer.Serialize(metaData, typeof(EventMetaData));
             var metaDataBytes = Encoding.UTF8.GetBytes(serializedMetaData);
 
             return new EventData(@event.EventId, typeName, true, dataBytes, metaDataBytes);

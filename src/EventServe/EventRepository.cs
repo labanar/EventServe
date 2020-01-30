@@ -44,7 +44,7 @@ namespace EventServe {
 
                 var eventCount = events.Count();
 
-                if (version > -1)
+                if (version >= -1)
                     await _streamWriter.AppendEventsToStream(streamId, events, version);
                 else
                     await _streamWriter.AppendEventsToStream(streamId, events);

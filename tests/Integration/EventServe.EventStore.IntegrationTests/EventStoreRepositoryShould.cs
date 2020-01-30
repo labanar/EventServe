@@ -57,6 +57,7 @@ namespace EventServe.EventStore.IntegrationTests
                 Name = "A new name",
                 Url = "https://url.example.com"
             });
+
             aggregate2.ResetDummy(new ResetDummyAggregateCommand
             {
                 Id = fakeAggregate.Id,

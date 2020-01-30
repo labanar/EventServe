@@ -27,10 +27,10 @@ namespace EventServe.SqlStreamStore
             var type = @event.GetType();
             var typeName = type.FullName;
 
-            var serializedEvent =  JsonSerializer.Serialize(@event);
+            var serializedEvent =  JsonSerializer.Serialize(@event, type);
 
             var metaData = new EventMetaData(@event);
-            var serializedMetaData = JsonSerializer.Serialize(metaData);
+            var serializedMetaData = JsonSerializer.Serialize(metaData, typeof(EventMetaData));
 
             return Task.FromResult(new NewStreamMessage(@event.EventId, typeName, serializedEvent, serializedMetaData));
         }
