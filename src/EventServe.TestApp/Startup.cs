@@ -61,8 +61,8 @@ namespace EventServe.TestApp
 
 
 
-            Store.Subscription = app.ApplicationServices.GetRequiredService<IPersistentSreamSubscription>();
-            var sub2 = app.ApplicationServices.GetRequiredService<IPersistentSreamSubscription>();
+            var sub1 = app.ApplicationServices.GetRequiredService<IPersistentStreamSubscription>();
+            var sub2 = app.ApplicationServices.GetRequiredService<IPersistentStreamSubscription>();
 
             var aggregateId = Guid.Parse("176a5024-6305-4f54-a2ce-e004bd62a118");
             var streamId =
@@ -124,7 +124,7 @@ namespace EventServe.TestApp
                 await streamWriter.AppendEventsToStream(streamId, writeEvents);
             });
 
-            await Store.Subscription.ConnectAsync(streamId);
+            await sub1.ConnectAsync(streamId);
             await sub2.ConnectAsync(streamId);
 
 

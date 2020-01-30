@@ -16,7 +16,7 @@ namespace EventServe.EventStore.Extensions.DependencyInjection
             services.AddTransient<IEventStreamReader, EventStoreStreamReader>();
             services.AddTransient<IEventStreamWriter, EventStoreStreamWriter>();
             services.AddTransient<IEventSerializer, EventSerializer>();
-            services.AddTransient<IPersistentSreamSubscription, EventStorePersistentSubscription>();
+            services.AddTransient<IPersistentStreamSubscription, EventStorePersistentSubscription>();
         }
     }
 }

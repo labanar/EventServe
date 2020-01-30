@@ -24,7 +24,7 @@ namespace EventServe.SqlStreamStore.Extensions.DependencyInjection
             services.AddTransient<IEventSerializer, SqlStreamStoreEventSerializer>();
             services.AddTransient<IEventStreamReader, SqlStreamStoreStreamReader>();
             services.AddTransient<IEventStreamWriter, SqlStreamStoreStreamWriter>();
-            services.AddTransient<IPersistentSreamSubscription, SqlStreamStorePersistentSubscription>();
+            services.AddTransient<IPersistentStreamSubscription, SqlStreamStorePersistentSubscription>();
         }
 
         public static void UseEventServeMsSqlStreamStore(this IApplicationBuilder app)
