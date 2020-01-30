@@ -4,7 +4,7 @@ using System.Text;
 
 namespace EventServe.SqlStreamStore.SqlServer
 {
-    public class SqlStreamStoreOptions
+    public class MsSqlStreamStoreOptions
     {
         public string ConnectionString { get; set; }
         public string SchemaName { get; set; }

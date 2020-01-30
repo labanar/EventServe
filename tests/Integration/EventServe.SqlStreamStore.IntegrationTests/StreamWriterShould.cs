@@ -23,8 +23,8 @@ namespace EventServe.SqlStreamStore.IntegrationTests
         public async Task write_events_to_stream()
         {
             var aggregateId = Guid.NewGuid();
-            var stream =
-                StreamBuilder.Create()
+            var streamId =
+                StreamIdBuilder.Create()
                 .WithAggregateId(aggregateId)
                 .WithAggregateType<DummyAggregate>()
                 .Build();
@@ -36,10 +36,10 @@ namespace EventServe.SqlStreamStore.IntegrationTests
             };
 
             var sut = new SqlStreamStoreStreamWriter(_storeProvider, _serializer);
-            await sut.AppendEventsToStream(stream.Id, writeEvents);
+            await sut.AppendEventsToStream(streamId, writeEvents);
 
             var reader = new SqlStreamStoreStreamReader(_storeProvider, _serializer);
-            var readEvents = await reader.ReadAllEventsFromStream(stream.Id);
+            var readEvents = await reader.ReadAllEventsFromStream(streamId);
             readEvents.Count.Should().Be(3);
         }
 
@@ -47,8 +47,8 @@ namespace EventServe.SqlStreamStore.IntegrationTests
         public async Task write_events_to_stream_when_expected_version_matches()
         {
             var aggregateId = Guid.NewGuid();
-            var stream =
-                StreamBuilder.Create()
+            var streamId =
+                StreamIdBuilder.Create()
                 .WithAggregateId(aggregateId)
                 .WithAggregateType<DummyAggregate>()
                 .Build();
@@ -60,18 +60,18 @@ namespace EventServe.SqlStreamStore.IntegrationTests
             };
 
             var sut = new SqlStreamStoreStreamWriter(_storeProvider, _serializer);
-            await sut.AppendEventsToStream(stream.Id, writeEvents);
+            await sut.AppendEventsToStream(streamId, writeEvents);
 
             var changeEvent = new DummyUrlChangedEvent(aggregateId, "https://newnewurl.example.com");
-            await sut.AppendEventsToStream(stream.Id, new List<Event> { changeEvent }, 2);
+            await sut.AppendEventsToStream(streamId, new List<Event> { changeEvent }, 2);
         }
 
         [Fact]
         public async Task throw_on_write_when_expected_version_does_not_match()
         {
             var aggregateId = Guid.NewGuid();
-            var stream =
-                StreamBuilder.Create()
+            var streamId =
+                StreamIdBuilder.Create()
                 .WithAggregateId(aggregateId)
                 .WithAggregateType<DummyAggregate>()
                 .Build();
@@ -84,12 +84,12 @@ namespace EventServe.SqlStreamStore.IntegrationTests
 
             //Write 3 events to the stream, this sets the version to 2
             var sut = new SqlStreamStoreStreamWriter(_storeProvider, _serializer);
-            await sut.AppendEventsToStream(stream.Id, writeEvents);
+            await sut.AppendEventsToStream(streamId, writeEvents);
 
             //Write should fail
             var changeEvent = new DummyUrlChangedEvent(aggregateId, "https://newnewurl.example.com");
             await Assert.ThrowsAsync<WrongExpectedVersionException>(
-                async () => await sut.AppendEventsToStream(stream.Id, new List<Event> { changeEvent }, 1));
+                async () => await sut.AppendEventsToStream(streamId, new List<Event> { changeEvent }, 1));
 
         }
     }

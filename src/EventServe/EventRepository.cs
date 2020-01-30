@@ -37,17 +37,17 @@ namespace EventServe {
                 if (!events.Any())
                     return 0;
 
-                var stream =
-                    StreamBuilder.Create()
+                var streamId =
+                    StreamIdBuilder.Create()
                     .FromAggregateRoot(aggregate)
                     .Build();
 
                 var eventCount = events.Count();
 
                 if (version > -1)
-                    await _streamWriter.AppendEventsToStream(stream.Id, events, version);
+                    await _streamWriter.AppendEventsToStream(streamId, events, version);
                 else
-                    await _streamWriter.AppendEventsToStream(stream.Id, events);
+                    await _streamWriter.AppendEventsToStream(streamId, events);
 
                 aggregate.MarkChangesAsCommitted();
                 return eventCount;
@@ -55,12 +55,12 @@ namespace EventServe {
 
             private async Task<List<Event>> GetAllEventsForAggregate(Guid id) {
                 try {
-                    var stream = StreamBuilder.Create()
+                    var streamId = StreamIdBuilder.Create()
                         .WithAggregateType<T>()
                         .WithAggregateId(id)
                         .Build();
 
-                    return await _streamReader.ReadAllEventsFromStream(stream.Id);
+                    return await _streamReader.ReadAllEventsFromStream(streamId);
                 } catch (StreamDeletedException streamDeleted) {
                     throw;
                 }

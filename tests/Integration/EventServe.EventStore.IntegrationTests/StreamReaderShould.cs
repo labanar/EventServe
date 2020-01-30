@@ -21,14 +21,14 @@ namespace EventServe.EventStore.IntegrationTests {
             var connectionProvider = new EventStoreConnectionProvider(Options.Create(_fixture.EventStoreConnectionOptions));
 
             var aggregateId = Guid.NewGuid();
-            var stream =
-                StreamBuilder.Create()
+            var streamId =
+                StreamIdBuilder.Create()
                 .WithAggregateId(aggregateId)
                 .WithAggregateType<DummyAggregate>()
                 .Build();
 
             var reader = new EventStoreStreamReader(connectionProvider, _serializer);
-            await Assert.ThrowsAsync<StreamNotFoundException>(async() => await reader.ReadAllEventsFromStream(stream.Id));
+            await Assert.ThrowsAsync<StreamNotFoundException>(async() => await reader.ReadAllEventsFromStream(streamId));
         }
     }
 }
