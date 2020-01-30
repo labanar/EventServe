@@ -2,53 +2,53 @@
 
 namespace EventServe
 {
-    public class StreamBuilder
+    public class StreamIdBuilder
     {
         private string aggregateName;
         private Guid aggregateId;
 
         private string streamId;
 
-        private StreamBuilder() { }
+        private StreamIdBuilder() { }
 
-        public static StreamBuilder Create()
+        public static StreamIdBuilder Create()
         {
-            return new StreamBuilder();
+            return new StreamIdBuilder();
         }
 
 
-        public StreamBuilder WithAggregateType<T>()
+        public StreamIdBuilder WithAggregateType<T>()
             where T: AggregateRoot
         {
             this.aggregateName = typeof(T).Name;
             return this;
         }
 
-        public StreamBuilder WithAggregateId(Guid id)
+        public StreamIdBuilder WithAggregateId(Guid id)
         {
             this.aggregateId = id;
             return this;
         }
 
-        public StreamBuilder FromAggregateRoot(AggregateRoot aggregate)
+        public StreamIdBuilder FromAggregateRoot(AggregateRoot aggregate)
         {
             this.aggregateId = aggregate.Id;
             this.aggregateName = aggregate.GetType().Name;
             return this;
         }
 
-        public StreamBuilder FromStreamId(string id)
+        public StreamIdBuilder FromStreamId(string id)
         {
             this.streamId = id;
             return this;
         }
 
-        public Stream Build()
+        public string Build()
         {
             if (!string.IsNullOrEmpty(streamId))
-                return new Stream(streamId);
+                return streamId;
             else if (!string.IsNullOrEmpty(aggregateName) && aggregateId != default && aggregateId != null)
-                return new Stream($"{aggregateName.ToUpper()}-{aggregateId}");
+                return $"{aggregateName.ToUpper()}-{aggregateId}";
 
             throw new ArgumentException("StreamId or Aggregate must be supplied.");
         }

@@ -27,14 +27,14 @@ namespace EventServe.EventStore.IntegrationTests
             var fakeAggregate = await CreateDummyAggregate();
 
             var reader = CreateStreamReader();
-            var stream = StreamBuilder.Create()
+            var streamId = StreamIdBuilder.Create()
                 .WithAggregateType<DummyAggregate>()
                 .WithAggregateId(fakeAggregate.Id)
                 .Build();
 
             fakeAggregate.Version.Should().Be(0);
 
-            var events = await reader.ReadAllEventsFromStream(stream.Id);
+            var events = await reader.ReadAllEventsFromStream(streamId);
             events.Count.Should().Be(1);
         }
 
@@ -57,6 +57,7 @@ namespace EventServe.EventStore.IntegrationTests
                 Name = "A new name",
                 Url = "https://url.example.com"
             });
+
             aggregate2.ResetDummy(new ResetDummyAggregateCommand
             {
                 Id = fakeAggregate.Id,

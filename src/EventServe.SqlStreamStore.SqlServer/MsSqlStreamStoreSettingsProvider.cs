@@ -13,9 +13,9 @@ namespace EventServe.SqlStreamStore.SqlServer
 
     public class MsSqlStreamStoreSettingsProvider: IMsSqlStreamStoreSettingsProvider
     {
-        private readonly SqlStreamStoreOptions _options;
+        private readonly MsSqlStreamStoreOptions _options;
 
-        public MsSqlStreamStoreSettingsProvider(IOptions<SqlStreamStoreOptions> options)
+        public MsSqlStreamStoreSettingsProvider(IOptions<MsSqlStreamStoreOptions> options)
         {
             _options = options.Value;
         }

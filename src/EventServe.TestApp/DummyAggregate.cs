@@ -1,9 +1,11 @@
-using System;
-using Xunit;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace EventServe.EventStore.IntegrationTests
+namespace EventServe.TestApp
 {
-    public class DummyAggregate: AggregateRoot
+    public class DummyAggregate : AggregateRoot
     {
         public override Guid Id => _id;
 
@@ -46,10 +48,11 @@ namespace EventServe.EventStore.IntegrationTests
     }
 
 
-    public class DummyCreatedEvent: Event
+    public class DummyCreatedEvent : Event
     {
         public DummyCreatedEvent() { }
-        public DummyCreatedEvent(Guid aggregateId, string name, string url): base(aggregateId)
+
+        public DummyCreatedEvent(Guid aggregateId, string name, string url) : base(aggregateId)
         {
             Name = name;
             Url = url;
@@ -62,6 +65,7 @@ namespace EventServe.EventStore.IntegrationTests
     public class DummyNameChangedEvent : Event
     {
         public DummyNameChangedEvent() { }
+
         public DummyNameChangedEvent(Guid aggregateId, string name) : base(aggregateId)
         {
             Name = name;
@@ -70,11 +74,11 @@ namespace EventServe.EventStore.IntegrationTests
         public string Name { get; set; }
     }
 
-    public class DummyUrlChangedEvent: Event
+    public class DummyUrlChangedEvent : Event
     {
         public DummyUrlChangedEvent() { }
 
-        public DummyUrlChangedEvent(Guid aggregateId, string url): base(aggregateId)
+        public DummyUrlChangedEvent(Guid aggregateId, string url) : base(aggregateId)
         {
             Url = url;
         }

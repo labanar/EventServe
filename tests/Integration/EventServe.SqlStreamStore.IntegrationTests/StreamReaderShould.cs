@@ -21,14 +21,14 @@ namespace EventServe.SqlStreamStore.IntegrationTests
         public async Task Throw_stream_not_found_exception_if_stream_does_not_exist()
         {
             var aggregateId = Guid.NewGuid();
-            var stream =
-                StreamBuilder.Create()
+            var streamId =
+                StreamIdBuilder.Create()
                 .WithAggregateId(aggregateId)
                 .WithAggregateType<DummyAggregate>()
                 .Build();
 
             var reader = new SqlStreamStoreStreamReader(_storeProvider, _serializer);
-            await Assert.ThrowsAsync<StreamNotFoundException>(async () => await reader.ReadAllEventsFromStream(stream.Id));
+            await Assert.ThrowsAsync<StreamNotFoundException>(async () => await reader.ReadAllEventsFromStream(streamId));
         }
     }
 }
