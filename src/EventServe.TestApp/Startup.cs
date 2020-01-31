@@ -10,10 +10,7 @@ using EventServe.Services;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using EventServe.SqlStreamStore.SqlServer;
 using EventServe.SqlStreamStore.MsSql.DependencyInjection;
-using EventServe.EventStore;
-using EventServe.EventStore.DependencyInjection;
 
 namespace EventServe.TestApp
 {
@@ -57,7 +54,7 @@ namespace EventServe.TestApp
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseEventStore<MsSqlStreamStoreOptions>();
+            app.UseEventServe();
 
             var sub1 = app.ApplicationServices.GetRequiredService<IPersistentStreamSubscription>();
             var sub2 = app.ApplicationServices.GetRequiredService<IPersistentStreamSubscription>();

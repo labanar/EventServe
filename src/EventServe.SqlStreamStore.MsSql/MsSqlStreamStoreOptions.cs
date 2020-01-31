@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace EventServe.SqlStreamStore.SqlServer
+namespace EventServe.SqlStreamStore.MsSql
 {
     public class MsSqlStreamStoreOptions
     {

@@ -1,10 +1,12 @@
 ﻿using EventServe.Services;
-using EventServe.SqlStreamStore.SqlServer;
+using EventServe.SqlStreamStore.MsSql;
 using EventServe.SqlStreamStore.Subscriptions;
 using EventServe.Subscriptions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using SqlStreamStore;
 using System;
+using System.Threading.Tasks;
 
 namespace EventServe.SqlStreamStore.MsSql.DependencyInjection
 {
@@ -17,7 +19,7 @@ namespace EventServe.SqlStreamStore.MsSql.DependencyInjection
             services.AddTransient<IEventStreamWriter, SqlStreamStoreStreamWriter>();
             services.AddTransient(typeof(IEventRepository<>), typeof(EventRepository<>));
             services.AddTransient<IPersistentStreamSubscription, SqlStreamStorePersistentSubscription>();
-            services.AddTransient<ISqlStreamStoreSubscriptionManager, SqlStreamStoreSubscriptionManager>();
+            services.AddTransient<SqlStreamStoreSubscriptionManager, SqlStreamStoreSubscriptionManager>();
         }
 
 
@@ -30,10 +32,36 @@ namespace EventServe.SqlStreamStore.MsSql.DependencyInjection
             services.AddTransient<ISqlStreamStoreProvider, MsSqlStreamStoreProvider>();
         }
 
-
-        public static void UseEventStore<MsSqlStreamStoreOptions>(this IApplicationBuilder app)
+        public static void UseEventServe(this IApplicationBuilder applicationBuilder)
         {
-            app.MigrateMsSqlStreamStore();
+            using (var scope = applicationBuilder.ApplicationServices.CreateScope())
+            {
+                var settingsProvider = scope.ServiceProvider.GetRequiredService<IMsSqlStreamStoreSettingsProvider>();
+
+                var settings = settingsProvider.GetSettings();
+                Task.WaitAll(settings);
+
+                var store = new MsSqlStreamStore(settings.Result);
+                var checkResult = store.CheckSchema();
+                Task.WaitAll(checkResult);
+
+                if (checkResult.Result.CurrentVersion != checkResult.Result.ExpectedVersion)
+                {
+                    store.CreateSchema();
+                }
+
+
+                var subscriptionStore = new MsSqlStreamStore(new MsSqlStreamStoreSettings(settings.Result.ConnectionString)
+                {
+                    Schema = "Subscriptions"
+                });
+                checkResult = subscriptionStore.CheckSchema();
+                if (checkResult.Result.CurrentVersion != checkResult.Result.ExpectedVersion)
+                {
+                    subscriptionStore.CreateSchema();
+                }
+            }
         }
+
     }
 }

@@ -1,7 +1,7 @@
 ﻿using SqlStreamStore;
 using System.Threading.Tasks;
 
-namespace EventServe.SqlStreamStore.SqlServer
+namespace EventServe.SqlStreamStore.MsSql
 {
     public class MsSqlStreamStoreProvider : ISqlStreamStoreProvider, ISqlStreamStoreSubscriptionStoreProvider
     {

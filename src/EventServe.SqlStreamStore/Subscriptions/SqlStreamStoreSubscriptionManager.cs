@@ -1,6 +1,4 @@
-﻿using EventServe.Services;
-using SqlStreamStore;
-using System;
+﻿using System;
 using System.Threading.Tasks;
 
 namespace EventServe.SqlStreamStore.Subscriptions
@@ -12,7 +10,7 @@ namespace EventServe.SqlStreamStore.Subscriptions
         Task<long?> GetStreamSubscriptionPosition(Guid subscriptionId);
     }
 
-    public class SqlStreamStoreSubscriptionManager: ISqlStreamStoreSubscriptionManager
+    public class SqlStreamStoreSubscriptionManager : ISqlStreamStoreSubscriptionManager
     {
         private readonly ISqlStreamStoreProvider _storeProvider;
         private readonly IEventSerializer _eventSerializer;

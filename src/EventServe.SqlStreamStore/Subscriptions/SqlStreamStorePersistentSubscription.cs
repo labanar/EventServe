@@ -13,7 +13,7 @@ namespace EventServe.SqlStreamStore.Subscriptions
     public class SqlStreamStorePersistentSubscription : PersistentStreamSubscription
     {
         private readonly ILogger<SqlStreamStorePersistentSubscription> _logger;
-        private readonly ISqlStreamStoreSubscriptionManager _subscriptionManager;
+        private readonly SqlStreamStoreSubscriptionManager _subscriptionManager;
         private readonly IEventSerializer _eventSerializer;
         private readonly ISqlStreamStoreProvider _storeProvider;
         private IStreamStore _store;
@@ -21,7 +21,7 @@ namespace EventServe.SqlStreamStore.Subscriptions
         public SqlStreamStorePersistentSubscription(
             IEventSerializer eventSerializer,
             ISqlStreamStoreProvider storeProvider,
-            ISqlStreamStoreSubscriptionManager subscriptionManager,
+            SqlStreamStoreSubscriptionManager subscriptionManager,
             ILogger<SqlStreamStorePersistentSubscription> logger,
             IMediator mediator) : base(mediator)
         {

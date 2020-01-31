@@ -10,7 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\EventServe.SqlStreamStore.SqlServer\EventServe.SqlStreamStore.MsSql.csproj" />
+    <ProjectReference Include="..\EventServe.SqlStreamStore.MsSql\EventServe.SqlStreamStore.MsSql.csproj" />
     <ProjectReference Include="..\EventServe.SqlStreamStore\EventServe.SqlStreamStore.csproj" />
     <ProjectReference Include="..\EventServe\EventServe.csproj" />
   </ItemGroup>

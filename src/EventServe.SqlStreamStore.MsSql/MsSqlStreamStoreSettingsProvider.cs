@@ -4,7 +4,7 @@ using Microsoft.Extensions.Options;
 using SqlStreamStore;
 
 
-namespace EventServe.SqlStreamStore.SqlServer
+namespace EventServe.SqlStreamStore.MsSql
 {
     public interface IMsSqlStreamStoreSettingsProvider
     {
