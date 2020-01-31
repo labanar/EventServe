@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="3.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EventServe.SqlStreamStore.SqlServer\EventServe.SqlStreamStore.MsSql.csproj" />
+    <ProjectReference Include="..\EventServe.SqlStreamStore\EventServe.SqlStreamStore.csproj" />
+    <ProjectReference Include="..\EventServe\EventServe.csproj" />
+  </ItemGroup>
+
+</Project>

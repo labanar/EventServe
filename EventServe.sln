@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventServe.EventStore", "sr
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventServe.EventStore.IntegrationTests", "tests\Integration\EventServe.EventStore.IntegrationTests\EventServe.EventStore.IntegrationTests.csproj", "{D0167A85-A68D-41EF-96FD-75DA0D9A490C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventServe.EventStore.Extensions.DependencyInjection", "src\EventServe.EventStore.Extensions.DependencyInjection\EventServe.EventStore.Extensions.DependencyInjection.csproj", "{814FC299-910E-4418-B181-98876AF4816D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventServe.EventStore.DependencyInjection", "src\EventServe.EventStore.Extensions.DependencyInjection\EventServe.EventStore.DependencyInjection.csproj", "{814FC299-910E-4418-B181-98876AF4816D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventServe.SqlStreamStore", "src\EventServe.SqlStreamStore\EventServe.SqlStreamStore.csproj", "{EE46684C-05FD-42E4-8DFA-9ED136A45CA5}"
 EndProject
@@ -17,9 +17,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventServe.SqlStreamStore.I
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventServe.SqlStreamStore.MsSql", "src\EventServe.SqlStreamStore.SqlServer\EventServe.SqlStreamStore.MsSql.csproj", "{4612D564-DB85-45DE-9196-CF4F3FC3BCF8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventServe.TestApp", "src\EventServe.TestApp\EventServe.TestApp.csproj", "{CBF63A47-7EEF-45FD-910E-9E1A482F8A7C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventServe.TestApp", "src\EventServe.TestApp\EventServe.TestApp.csproj", "{CBF63A47-7EEF-45FD-910E-9E1A482F8A7C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventServe.SqlStreamStore.Extensions.DependencyInjection", "src\EventServe.SqlStreamStore.DependencyInjection\EventServe.SqlStreamStore.Extensions.DependencyInjection.csproj", "{43279FF4-AC95-4C2A-ABED-EF78364E2732}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventServe.SqlStreamStore.MsSql.DependencyInjection", "src\EventServe.SqlStreamStore.MsSql.DependencyInjection\EventServe.SqlStreamStore.MsSql.DependencyInjection.csproj", "{064D9625-8E70-48EA-8BEA-EFF9D5479695}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -59,10 +59,10 @@ Global
 		{CBF63A47-7EEF-45FD-910E-9E1A482F8A7C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CBF63A47-7EEF-45FD-910E-9E1A482F8A7C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CBF63A47-7EEF-45FD-910E-9E1A482F8A7C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{43279FF4-AC95-4C2A-ABED-EF78364E2732}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{43279FF4-AC95-4C2A-ABED-EF78364E2732}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{43279FF4-AC95-4C2A-ABED-EF78364E2732}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{43279FF4-AC95-4C2A-ABED-EF78364E2732}.Release|Any CPU.Build.0 = Release|Any CPU
+		{064D9625-8E70-48EA-8BEA-EFF9D5479695}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{064D9625-8E70-48EA-8BEA-EFF9D5479695}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{064D9625-8E70-48EA-8BEA-EFF9D5479695}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{064D9625-8E70-48EA-8BEA-EFF9D5479695}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

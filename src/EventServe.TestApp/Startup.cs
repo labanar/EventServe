@@ -10,7 +10,10 @@ using EventServe.Services;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using EventServe.SqlStreamStore.Extensions.DependencyInjection;
+using EventServe.SqlStreamStore.SqlServer;
+using EventServe.SqlStreamStore.MsSql.DependencyInjection;
+using EventServe.EventStore;
+using EventServe.EventStore.DependencyInjection;
 
 namespace EventServe.TestApp
 {
@@ -29,15 +32,16 @@ namespace EventServe.TestApp
             services.AddMediatR(typeof(Startup).Assembly, typeof(EventStorePersistentSubscription).Assembly, typeof(PersistentStreamSubscription).Assembly);
             services.AddControllers();
 
-            //services.AddEventServeEventStore(options =>
+            //services.AddEventServe(options =>
             //{
-            //    var connOptions =  Configuration.GetSection("EventStoreConnectionOptions").Get<EventStoreConnectionOptions>();
+            //    var connOptions = Configuration.GetSection("EventStoreConnectionOptions").Get<EventStoreConnectionOptions>();
             //    options.Host = connOptions.Host;
             //    options.Port = connOptions.Port;
             //    options.Username = connOptions.Username;
             //    options.Password = connOptions.Password;
             //});
-            services.AddEventServeMsSqlStreamStore(options =>
+
+            services.AddEventServe(options =>
             {
                 options.ConnectionString = Configuration["ConnectionStrings:MsSqlStreamStoreDb"];
                 options.SchemaName = Configuration["MsSqlStreamStoreOptions:SchemaName"];
@@ -53,9 +57,7 @@ namespace EventServe.TestApp
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseEventServeMsSqlStreamStore();
-
-
+            app.UseEventStore<MsSqlStreamStoreOptions>();
 
             var sub1 = app.ApplicationServices.GetRequiredService<IPersistentStreamSubscription>();
             var sub2 = app.ApplicationServices.GetRequiredService<IPersistentStreamSubscription>();
@@ -67,8 +69,6 @@ namespace EventServe.TestApp
                 .WithAggregateType<DummyAggregate>()
                 .Build();
             var random = new Random();
-
-
 
 
             await Task.Factory.StartNew(async () =>
@@ -122,7 +122,6 @@ namespace EventServe.TestApp
 
             await sub1.ConnectAsync(streamId);
             await sub2.ConnectAsync(streamId);
-
 
             app.UseHttpsRedirection();
             app.UseRouting();

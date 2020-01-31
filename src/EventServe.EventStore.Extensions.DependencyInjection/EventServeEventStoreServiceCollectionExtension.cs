@@ -5,11 +5,11 @@ using EventServe.Subscriptions;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 
-namespace EventServe.EventStore.Extensions.DependencyInjection
+namespace EventServe.EventStore.DependencyInjection
 {
     public static class EventServeEventStoreServiceCollectionExtension
     {
-        public static void AddEventServeEventStore(this IServiceCollection services, Action<EventStoreConnectionOptions> setupAction)
+        public static void AddEventServe(this IServiceCollection services, Action<EventStoreConnectionOptions> setupAction)
         {
             services.Configure(setupAction);
             services.AddTransient<IEventStoreConnectionProvider, EventStoreConnectionProvider>();

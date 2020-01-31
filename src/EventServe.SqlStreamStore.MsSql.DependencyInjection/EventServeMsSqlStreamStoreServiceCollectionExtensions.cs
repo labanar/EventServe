@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 
-namespace EventServe.SqlStreamStore.Extensions.DependencyInjection
+namespace EventServe.SqlStreamStore.MsSql.DependencyInjection
 {
     public static class EventServeSqlStreamStoreServiceCollectionExtensions
     {
