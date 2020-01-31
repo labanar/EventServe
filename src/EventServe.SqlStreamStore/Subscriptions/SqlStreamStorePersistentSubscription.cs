@@ -35,8 +35,8 @@ namespace EventServe.SqlStreamStore.Subscriptions
         {
             //Get subscription position
             var pos = await _subscriptionManager.GetStreamSubscriptionPosition(_id);
-            if (pos == null)
-                await _subscriptionManager.CreateStreamSubscription(_id);
+            if (pos == -1)
+                await _subscriptionManager.CreateStreamSubscription(_id, streamId);
 
 
             _store = await _storeProvider.GetStreamStore();
@@ -61,14 +61,15 @@ namespace EventServe.SqlStreamStore.Subscriptions
 
         protected override async Task AcknowledgeEvent<T>(T @event)
         {
-            await _subscriptionManager.PersistAcknowledgement(_id, @event);
-
-            //We need to wait for the acknowledgement to 
+            await _subscriptionManager.PersistAcknowledgement(_id, @event.EventId);
         }
 
         private void HandleSubscriptionDropped(IAllStreamSubscription subscription, SubscriptionDroppedReason reason, Exception exception = null)
         {
-            _logger.LogInformation($"{subscription.Name} subscription dropped: {reason.ToString()}");
+            if(exception != null)
+                _logger.LogError(exception, $"{subscription.Name} subscription dropped: {reason.ToString()}");
+            else
+                _logger.LogError($"{subscription.Name} subscription dropped: {reason.ToString()}");
             _connected = false;
         }
     }

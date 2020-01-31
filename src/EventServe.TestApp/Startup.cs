@@ -1,5 +1,3 @@
-using EventServe.EventStore;
-using EventServe.EventStore.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -11,10 +9,8 @@ using EventServe.Subscriptions;
 using EventServe.Services;
 using System;
 using System.Collections.Generic;
-using EventServe.Subscriptions.Notifications;
 using System.Threading.Tasks;
 using EventServe.SqlStreamStore.Extensions.DependencyInjection;
-using EventServe.SqlStreamStore.SqlServer;
 
 namespace EventServe.TestApp
 {
@@ -71,11 +67,11 @@ namespace EventServe.TestApp
                 .WithAggregateType<DummyAggregate>()
                 .Build();
             var random = new Random();
-            
 
 
 
-            await Task.Factory.StartNew(async() =>
+
+            await Task.Factory.StartNew(async () =>
             {
                 var writeEvents = new List<Event> {
                 new DummyNameChangedEvent(aggregateId, $"The new name {random.Next(100,9999)}"),

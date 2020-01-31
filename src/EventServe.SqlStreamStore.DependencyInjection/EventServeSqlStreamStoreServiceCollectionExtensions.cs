@@ -18,13 +18,15 @@ namespace EventServe.SqlStreamStore.Extensions.DependencyInjection
             {
                 options.UseSqlServer(connectionString);
             });
-            services.AddTransient<ISqlStreamStoreSubscriptionManager, MsSqlStreamStoreSubscriptionManager>();
             services.AddTransient<IMsSqlStreamStoreSettingsProvider, MsSqlStreamStoreSettingsProvider>();
+            services.AddTransient<ISqlStreamStoreSubscriptionStoreProvider, MsSqlStreamStoreSubscriptionStoreProvider>();
             services.AddTransient<ISqlStreamStoreProvider, MsSqlStreamStoreProvider>();
             services.AddTransient<IEventSerializer, SqlStreamStoreEventSerializer>();
             services.AddTransient<IEventStreamReader, SqlStreamStoreStreamReader>();
             services.AddTransient<IEventStreamWriter, SqlStreamStoreStreamWriter>();
+            services.AddTransient<IEventRepository<SqlStreamStoreSubscriptionAggregate>, EventRepository<SqlStreamStoreSubscriptionAggregate>>();
             services.AddTransient<IPersistentStreamSubscription, SqlStreamStorePersistentSubscription>();
+            services.AddTransient<ISqlStreamStoreSubscriptionManager, SqlStreamStoreSubscriptionManager>();
         }
 
         public static void UseEventServeMsSqlStreamStore(this IApplicationBuilder app)

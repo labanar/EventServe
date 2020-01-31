@@ -15,7 +15,7 @@ namespace EventServe.SqlStreamStore.SqlServer
             _serviceProvider = serviceProvider;
         }
 
-        public async Task CreateStreamSubscription(Guid subscriptionId)
+        public async Task CreateStreamSubscription(Guid subscriptionId, string streamId)
         {
             using (var scope = _serviceProvider.CreateScope())
             {
@@ -24,7 +24,7 @@ namespace EventServe.SqlStreamStore.SqlServer
                     var position = new MsSqlStreamSubscriptionPosition()
                     {
                         Id = subscriptionId,
-                        Name = subscriptionId.ToString()
+                        Name = $"SQLSTREAMSTORESUBSCRIPTION-{subscriptionId}-{streamId}"
                     };
                     await context.AddAsync(position);
                     await context.SaveChangesAsync();
@@ -44,7 +44,7 @@ namespace EventServe.SqlStreamStore.SqlServer
             }
         }
 
-        public async Task PersistAcknowledgement<T>(Guid subscriptionId, T @event) where T : Event
+        public async Task PersistAcknowledgement(Guid subscriptionId, Guid eventId)
         {
             using (var scope = _serviceProvider.CreateScope())
             {

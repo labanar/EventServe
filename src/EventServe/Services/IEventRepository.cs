@@ -9,6 +9,6 @@ namespace EventServe.Services
        where T : AggregateRoot
     {
         Task<T> GetById(Guid id);
-        Task<long> SaveAsync(AggregateRoot aggregate, long version = 0);
+        Task<long> SaveAsync(AggregateRoot aggregate, long version);
     }
 }

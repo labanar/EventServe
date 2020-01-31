@@ -28,7 +28,7 @@ namespace EventServe {
                 return aggregate;
             }
 
-            public async Task<long> SaveAsync(AggregateRoot aggregate, long version = -1) {
+            public async Task<long> SaveAsync(AggregateRoot aggregate, long version = -2) {
                 if (aggregate == null)
                     return 0;
 

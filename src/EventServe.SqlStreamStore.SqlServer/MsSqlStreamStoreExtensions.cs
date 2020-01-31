@@ -27,6 +27,17 @@ namespace EventServe.SqlStreamStore.SqlServer
                 {
                     store.CreateSchema();
                 }
+
+
+                var subscriptionStore = new MsSqlStreamStore(new MsSqlStreamStoreSettings(settings.Result.ConnectionString)
+                {
+                    Schema = "Subscriptions"
+                });
+                checkResult = subscriptionStore.CheckSchema();
+                if (checkResult.Result.CurrentVersion != checkResult.Result.ExpectedVersion)
+                {
+                    subscriptionStore.CreateSchema();
+                }
             }
         }
     }
