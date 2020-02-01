@@ -1,16 +1,17 @@
+using System;
+using System.Collections.Generic;
+using EventServe.SqlStreamStore.MsSql.DependencyInjection;
+using EventServe.SqlStreamStore.Subscriptions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using MediatR;
 using EventServe.EventStore.Subscriptions;
 using EventServe.Subscriptions;
-using EventServe.Services;
-using System;
-using System.Collections.Generic;
+using MediatR;
 using System.Threading.Tasks;
-using EventServe.SqlStreamStore.MsSql.DependencyInjection;
+using EventServe.Services;
 
 namespace EventServe.TestApp
 {
@@ -55,9 +56,7 @@ namespace EventServe.TestApp
             }
 
             app.UseEventServe();
-
-            var sub1 = app.ApplicationServices.GetRequiredService<IPersistentStreamSubscription>();
-            var sub2 = app.ApplicationServices.GetRequiredService<IPersistentStreamSubscription>();
+            var manager = app.ApplicationServices.GetRequiredService<ISqlStreamStoreSubscriptionManager>();
 
             var aggregateId = Guid.Parse("176a5024-6305-4f54-a2ce-e004bd62a118");
             var streamId =
@@ -67,58 +66,29 @@ namespace EventServe.TestApp
                 .Build();
             var random = new Random();
 
-
-            await Task.Factory.StartNew(async () =>
+            //Load subscriptions from repo and start them
+            var subscriptions = await manager.GetAllStreamSubscriptions();
+            var persistentSubscriptions = new List<IPersistentStreamSubscription>();
+            foreach(var subscription in subscriptions)
             {
-                var writeEvents = new List<Event> {
-                new DummyNameChangedEvent(aggregateId, $"The new name {random.Next(100,9999)}"),
-                new DummyUrlChangedEvent(aggregateId, $"https://newurl{random.Next(100,9999)}.example.com")
-                };
+                var sub = app.ApplicationServices.GetRequiredService<IPersistentStreamSubscription>();
+                await sub.StartAsync(subscription.SubscriptionId, subscription.StreamId);
+            }
 
-                await Task.Delay(TimeSpan.FromMinutes(2));
-                var streamWriter = app.ApplicationServices.GetRequiredService<IEventStreamWriter>();
-                await streamWriter.AppendEventsToStream(streamId, writeEvents);
-            });
+            //await Task.Factory.StartNew(async () =>
+            //{
+            //    for (var i = 0; i < 10000; i++)
+            //    {
+            //        var writeEvents = new List<Event> {
+            //            new DummyNameChangedEvent(aggregateId, $"The new name {random.Next(100,9999)}"),
+            //            new DummyUrlChangedEvent(aggregateId, $"https://newurl{random.Next(100,9999)}.example.com")
+            //        };
 
-            await Task.Factory.StartNew(async () =>
-            {
-                var writeEvents = new List<Event> {
-                new DummyNameChangedEvent(aggregateId, $"The new name {random.Next(100,9999)}"),
-                new DummyUrlChangedEvent(aggregateId, $"https://newurl{random.Next(100,9999)}.example.com")
-                };
-
-                await Task.Delay(TimeSpan.FromMinutes(4));
-                var streamWriter = app.ApplicationServices.GetRequiredService<IEventStreamWriter>();
-                await streamWriter.AppendEventsToStream(streamId, writeEvents);
-            });
-
-            await Task.Factory.StartNew(async () =>
-            {
-                var writeEvents = new List<Event> {
-                new DummyNameChangedEvent(aggregateId, $"The new name {random.Next(100,9999)}"),
-                new DummyUrlChangedEvent(aggregateId, $"https://newurl{random.Next(100,9999)}.example.com")
-                };
-
-                await Task.Delay(TimeSpan.FromMinutes(8));
-                var streamWriter = app.ApplicationServices.GetRequiredService<IEventStreamWriter>();
-                await streamWriter.AppendEventsToStream(streamId, writeEvents);
-            });
-
-
-            await Task.Factory.StartNew(async () =>
-            {
-                var writeEvents = new List<Event> {
-                new DummyNameChangedEvent(aggregateId, $"The new name {random.Next(100,9999)}"),
-                new DummyUrlChangedEvent(aggregateId, $"https://newurl{random.Next(100,9999)}.example.com")
-                };
-
-                await Task.Delay(TimeSpan.FromMinutes(15));
-                var streamWriter = app.ApplicationServices.GetRequiredService<IEventStreamWriter>();
-                await streamWriter.AppendEventsToStream(streamId, writeEvents);
-            });
-
-            await sub1.ConnectAsync(streamId);
-            await sub2.ConnectAsync(streamId);
+            //        await Task.Delay(TimeSpan.FromMilliseconds(50));
+            //        var streamWriter = app.ApplicationServices.GetRequiredService<IEventStreamWriter>();
+            //        await streamWriter.AppendEventsToStream(streamId, writeEvents);
+            //    }
+            //});
 
             app.UseHttpsRedirection();
             app.UseRouting();

@@ -13,7 +13,7 @@ namespace EventServe.SqlStreamStore.Subscriptions
     public class SqlStreamStorePersistentSubscription : PersistentStreamSubscription
     {
         private readonly ILogger<SqlStreamStorePersistentSubscription> _logger;
-        private readonly SqlStreamStoreSubscriptionManager _subscriptionManager;
+        private readonly ISqlStreamStoreSubscriptionManager _subscriptionManager;
         private readonly IEventSerializer _eventSerializer;
         private readonly ISqlStreamStoreProvider _storeProvider;
         private IStreamStore _store;
@@ -21,7 +21,7 @@ namespace EventServe.SqlStreamStore.Subscriptions
         public SqlStreamStorePersistentSubscription(
             IEventSerializer eventSerializer,
             ISqlStreamStoreProvider storeProvider,
-            SqlStreamStoreSubscriptionManager subscriptionManager,
+            ISqlStreamStoreSubscriptionManager subscriptionManager,
             ILogger<SqlStreamStorePersistentSubscription> logger,
             IMediator mediator) : base(mediator)
         {
@@ -31,16 +31,12 @@ namespace EventServe.SqlStreamStore.Subscriptions
             _storeProvider = storeProvider;
         }
 
-        public override async Task ConnectAsync(string streamId)
+        protected override async Task ConnectAsync(string streamId)
         {
             //Get subscription position
             var pos = await _subscriptionManager.GetStreamSubscriptionPosition(_id);
-            if (pos == -1)
-                await _subscriptionManager.CreateStreamSubscription(_id, streamId);
-
-
             _store = await _storeProvider.GetStreamStore();
-            _store.SubscribeToAll(null,
+            _store.SubscribeToAll(pos,
                 (_, message, cancellationToken) =>
                 {
                     return HandleEvent(message, cancellationToken);

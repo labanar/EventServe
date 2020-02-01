@@ -4,35 +4,26 @@ using System.Text;
 
 namespace EventServe.SqlStreamStore.Subscriptions
 {
-    public class SqlStreamStoreSubscriptionAggregate : AggregateRoot
+    public class SqlStreamSubscriptionManagerAggregate : AggregateRoot
     {
-        public override Guid Id => _id;
-        public long? Position => _version;
+        public override Guid Id => Guid.Empty;
 
-        private Guid _id;
-        private string _streamId;
-        private long? _version;
-        private HashSet<Guid> _acknowledgedEventIds = new HashSet<Guid>();
+        public List<SqlStreamStoreSubscriptionPosition> Subscriptions = new List<SqlStreamStoreSubscriptionPosition>();
 
-        private SqlStreamStoreSubscriptionAggregate() { }
-        public SqlStreamStoreSubscriptionAggregate(Guid subscriptionId, string streamId)
+        public SqlStreamSubscriptionManagerAggregate() { }
+
+        public void CreateStreamSubscription(Guid subscriptionId, string streamId)
         {
             ApplyChange(new SqlStreamStoreSubscriptionCreatedEvent(subscriptionId, streamId));
-        }
-        public void AcknowledgeEvent(Guid eventId)
-        {
-            ApplyChange(new SqlStreamStoreSubscriptionAcknowledgeEvent(_id, eventId));
         }
 
         private void Apply(SqlStreamStoreSubscriptionCreatedEvent @event)
         {
-            _id = @event.AggregateId;
-            _streamId = @event.StreamId;
-        }
-        private void Apply(SqlStreamStoreSubscriptionAcknowledgeEvent @event)
-        {
-            _version += 1;
-            _acknowledgedEventIds.Add(@event.EventId);
+            Subscriptions.Add(new SqlStreamStoreSubscriptionPosition
+            {
+                SubscriptionId = @event.SubscriptionId,
+                StreamId = @event.StreamId
+            });
         }
     }
 }

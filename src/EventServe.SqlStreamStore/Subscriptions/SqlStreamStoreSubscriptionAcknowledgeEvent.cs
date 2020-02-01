@@ -11,5 +11,6 @@ namespace EventServe.SqlStreamStore.Subscriptions
         }
 
         public Guid AcknowledgedEventId { get; set; }
+
     }
 }

@@ -29,7 +29,7 @@ namespace EventServe.EventStore.Subscriptions
             _connectionProvider = connectionProvider;
         }
 
-        public override async Task ConnectAsync(string streamId)
+        protected override async Task ConnectAsync(string streamId)
         {
             _streamId = streamId;
             await Connect();

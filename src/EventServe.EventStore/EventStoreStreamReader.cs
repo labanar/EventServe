@@ -32,7 +32,6 @@ namespace EventServe.EventStore
                 do
                 {
                     slices = await conn.ReadStreamEventsForwardAsync(stream, position, 4096, false, credentials);
-
                     switch (slices.Status)
                     {
                         case SliceReadStatus.StreamDeleted: throw new StreamDeletedException(stream);
