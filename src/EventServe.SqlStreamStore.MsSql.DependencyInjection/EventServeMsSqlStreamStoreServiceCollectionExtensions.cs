@@ -1,33 +1,29 @@
-﻿using EventServe.Services;
-using EventServe.SqlStreamStore.MsSql;
-using EventServe.SqlStreamStore.Subscriptions;
-using EventServe.Subscriptions;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using SqlStreamStore;
 using System;
 using System.Threading.Tasks;
+using EventServe;
+using System.Reflection;
 
 namespace EventServe.SqlStreamStore.MsSql.DependencyInjection
 {
     public static class EventServeSqlStreamStoreServiceCollectionExtensions
     {
-        private static void AddEventServeSqlStreamStore(this IServiceCollection services)
+        public static void AddEventServe(this IServiceCollection services, Action<MsSqlStreamStoreOptions> setupAction, string connectionString, Assembly[] assemblies)
         {
-            services.AddTransient<ISqlStreamStoreSubscriptionManager, SqlStreamStoreSubscriptionManager>();
-            services.AddTransient<IEventSerializer, SqlStreamStoreEventSerializer>();
-            services.AddTransient<IEventStreamReader, SqlStreamStoreStreamReader>();
-            services.AddTransient<IEventStreamWriter, SqlStreamStoreStreamWriter>();
-            services.AddTransient(typeof(IEventRepository<>), typeof(EventRepository<>));
-            services.AddTransient<IPersistentStreamSubscription, SqlStreamStorePersistentSubscription>();
-        }
-
-
-        public static void AddEventServe(this IServiceCollection services, Action<MsSqlStreamStoreOptions> setupAction, string connectionString)
-        {
+            services.UseEventServeCore(assemblies);
             services.AddEventServeSqlStreamStore();
             services.Configure(setupAction);
-            services.AddTransient<IMsSqlStreamStoreSettingsProvider, MsSqlStreamStoreSettingsProvider>();
+            services.AddTransient<IMsSqlStreamStoreSettingsProvider>(_ => new MsSqlStreamStoreSettingsProvider(connectionString));
+            services.AddDbContext<SqlStreamStoreContext>(options =>
+            {
+                options.UseSqlServer(connectionString, sqlServerOptions =>
+                {
+                    sqlServerOptions.MigrationsAssembly(typeof(MsSqlStreamStoreOptions).Assembly.FullName);
+                });
+            });
             services.AddTransient<ISqlStreamStoreSubscriptionStoreProvider, MsSqlStreamStoreSubscriptionStoreProvider>();
             services.AddTransient<ISqlStreamStoreProvider, MsSqlStreamStoreProvider>();
         }
@@ -46,20 +42,15 @@ namespace EventServe.SqlStreamStore.MsSql.DependencyInjection
                 Task.WaitAll(checkResult);
 
                 if (checkResult.Result.CurrentVersion != checkResult.Result.ExpectedVersion)
-                {
-                    store.CreateSchema();
-                }
+                    store.CreateSchema().Wait();
+            }
 
 
-                var subscriptionStore = new MsSqlStreamStore(new MsSqlStreamStoreSettings(settings.Result.ConnectionString)
-                {
-                    Schema = "Subscriptions"
-                });
-                checkResult = subscriptionStore.CheckSchema();
-                if (checkResult.Result.CurrentVersion != checkResult.Result.ExpectedVersion)
-                {
-                    subscriptionStore.CreateSchema();
-                }
+            using (var scope = applicationBuilder.ApplicationServices.CreateScope())
+            {
+                var context = scope.ServiceProvider.GetRequiredService<SqlStreamStoreContext>();
+                context.Database.EnsureCreated();
+                context.Database.Migrate();
             }
         }
 

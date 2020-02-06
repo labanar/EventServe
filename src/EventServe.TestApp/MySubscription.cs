@@ -1,24 +1,42 @@
-﻿using EventServe.Subscriptions.Notifications;
+﻿using EventServe.Subscriptions;
+using EventServe.Subscriptions.Domain;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace EventServe.TestApp
 {
-    public class SubscriptionHandler :INotificationHandler<StreamSubscriptionEventNotification>
-    {
-        private readonly ILogger<SubscriptionHandler> _logger;
+    //Name of this doesn't matter so much
+    public class MyStreamSubscription : StreamSubscription { }
 
-        public SubscriptionHandler(ILogger<SubscriptionHandler> logger)
+    public class MyStreamSubscriptionHandler : 
+        IStreamSubscriptionEventHandler<MyStreamSubscription, DummyCreatedEvent>,
+        IStreamSubscriptionEventHandler<MyStreamSubscription, DummyUrlChangedEvent>,
+        IStreamSubscriptionEventHandler<MyStreamSubscription, DummyNameChangedEvent>
+
+    {
+        private readonly ILogger<MyStreamSubscription> _logger;
+
+        public MyStreamSubscriptionHandler(ILogger<MyStreamSubscription> logger)
         {
             _logger = logger;
         }
 
-        public async Task Handle(StreamSubscriptionEventNotification notification, CancellationToken cancellationToken)
+        public async Task HandleEvent(DummyCreatedEvent @event)
         {
-            _logger.LogInformation(notification.Event.AggregateId.ToString());
-            await notification.AcknowledgementCallback(notification.Event);
+            //_logger.LogInformation($"EVENT RECEIVED: {@event.EventId}");
+        }
+
+        public async Task HandleEvent(DummyUrlChangedEvent @event)
+        {
+            //_logger.LogInformation($"EVENT RECEIVED: {@event.EventId}");
+        }
+
+        public async Task HandleEvent(DummyNameChangedEvent @event)
+        {
+            //_logger.LogInformation($"EVENT RECEIVED: {@event.EventId}");
         }
     }
 }

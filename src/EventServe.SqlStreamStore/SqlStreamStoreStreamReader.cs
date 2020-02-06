@@ -25,7 +25,7 @@ namespace EventServe.SqlStreamStore
             var pos = 0;
             var end = false;
             var streamId = new StreamId(stream);
-            var page = await store.ReadStreamForwards(streamId, 0, PAGE_SIZE);
+            var page = await store.ReadStreamForwards(streamId.Id, 0, PAGE_SIZE);
 
             if (page.Status == PageReadStatus.StreamNotFound)
                 throw new StreamNotFoundException(stream);
@@ -41,7 +41,7 @@ namespace EventServe.SqlStreamStore
                 if(!page.IsEnd)
                 {
                     pos += PAGE_SIZE;
-                    page = await store.ReadStreamForwards(streamId, pos, PAGE_SIZE);
+                    page = await store.ReadStreamForwards(streamId.Id, pos, PAGE_SIZE);
                 }
                 else
                 {

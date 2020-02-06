@@ -1,23 +1,25 @@
-﻿using System;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
-using EventServe.EventStore.Interfaces;
+﻿using EventServe.EventStore.Interfaces;
 using EventServe.Subscriptions;
 using EventStore.ClientAPI;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Threading.Tasks;
+
+using ESSubscription = EventStore.ClientAPI.EventStoreSubscription;
 
 namespace EventServe.EventStore.Subscriptions
 {
-    public class EventStorePersistentSubscription : PersistentStreamSubscription
+    public class EventStoreTransientSubscription : TransientStreamSubscription
     {
         private readonly ILogger<EventStorePersistentSubscription> _logger;
         private readonly IEventSerializer _eventSerializer;
         private readonly IEventStoreConnectionProvider _connectionProvider;
 
         private IEventStoreConnection _connection;
-        private EventStorePersistentSubscriptionBase _subscriptionBase;
         private string _streamId;
+        private ESSubscription _subscriptionBase;
 
-        public EventStorePersistentSubscription(
+        public EventStoreTransientSubscription(
             IEventSerializer eventSerializer,
             IEventStoreConnectionProvider connectionProvider,
             ILogger<EventStorePersistentSubscription> logger)
@@ -38,37 +40,41 @@ namespace EventServe.EventStore.Subscriptions
         {
             _connection = _connectionProvider.GetConnection();
             await _connection.ConnectAsync();
-            await _connection.CreateSubscription(_filter.SubscribedStreamId == StreamId.All ? "$all" : _filter.SubscribedStreamId.Id,
-                                                 _subscriptionName,
-                                                 await _connectionProvider.GetCredentials(),
-                                                 _logger);
+            await _connection.CreateSubscription(_streamId, Guid.NewGuid().ToString(), await _connectionProvider.GetCredentials(), _logger);
 
-
-            Func<EventStorePersistentSubscriptionBase, ResolvedEvent, int?, Task> processEvent = (subscriptionBase, resolvedEvent, c) => {
+            Func<ESSubscription, ResolvedEvent, Task> processEvent = (subscriptionBase, resolvedEvent) => {
                 return HandleEvent(subscriptionBase, resolvedEvent);
             };
 
-
-            _subscriptionBase = await _connection.ConnectToPersistentSubscriptionAsync(
-                _filter.SubscribedStreamId == StreamId.All ? "$all" : _filter.SubscribedStreamId.Id,
-                _subscriptionName,
+            if(_filter.SubscribedStreamId == StreamId.All)
+            {
+                _subscriptionBase = await _connection.SubscribeToAllAsync(
+                true,
                 processEvent,
-                bufferSize: 10,
-                subscriptionDropped: SubscriptionDropped,
-                autoAck: false);
-            _connected = true;
+                subscriptionDropped: SubscriptionDropped);
+                _connected = true;
+            }
+            else
+            {
+                _subscriptionBase = await _connection.SubscribeToStreamAsync(
+                    _filter.SubscribedStreamId.Id,
+                    true,
+                    processEvent,
+                    subscriptionDropped: SubscriptionDropped);
+                                _connected = true;
+            }
         }
 
-        private async Task HandleEvent(EventStorePersistentSubscriptionBase subscriptionBase, ResolvedEvent resolvedEvent)
+        private async Task HandleEvent(ESSubscription subscriptionBase, ResolvedEvent resolvedEvent)
         {
             var @event = _eventSerializer.DeseralizeEvent(resolvedEvent);
             await RaiseEvent(@event, resolvedEvent.OriginalStreamId);
         }
 
-        private void SubscriptionDropped(EventStorePersistentSubscriptionBase eventStorePersistentSubscriptionBase,
+        private void SubscriptionDropped(ESSubscription subscription,
             SubscriptionDropReason subscriptionDropReason, Exception ex)
         {
-            if(_cancellationRequestedByUser)
+            if (_cancellationRequestedByUser)
             {
                 _logger.LogInformation(ex, $"Subscription stopped by user: {subscriptionDropReason.ToString()}");
                 return;
@@ -76,21 +82,12 @@ namespace EventServe.EventStore.Subscriptions
 
             _logger.LogError(ex, $"Subscription dropped: {subscriptionDropReason.ToString()}");
             _connection.Dispose();
-            Connect().Wait();   
-        }
-
-        protected override Task AcknowledgeEvent<T>(T @event)
-        {
-            if (_subscriptionBase == null)
-                throw new ApplicationException("Subscription is not connected, therefore acknowledgement cannot be sent.");
-
-            _subscriptionBase.Acknowledge(@event.EventId);
-            return Task.CompletedTask;
+            Connect().Wait();
         }
 
         protected override Task DisconnectAsync()
         {
-            if(_subscriptionBase == null)
+            if (_subscriptionBase == null)
             {
                 _connected = false;
                 _cancellationRequestedByUser = true;

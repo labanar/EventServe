@@ -64,7 +64,7 @@ namespace EventServe {
                 } catch (StreamDeletedException streamDeleted) {
                     throw;
                 }
-                //Stream not found usually indicates that the stream has not yet been created, log and swallow
+                //Stream not found usually indicates that the stream has not yet been created, log and swallow (this is bad TODO)
                 catch (StreamNotFoundException streamNotFound) {
                     return new List<Event>();
                 }

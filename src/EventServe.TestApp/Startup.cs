@@ -1,7 +1,5 @@
 using System;
-using System.Collections.Generic;
 using EventServe.SqlStreamStore.MsSql.DependencyInjection;
-using EventServe.SqlStreamStore.Subscriptions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -10,8 +8,12 @@ using Microsoft.Extensions.Hosting;
 using EventServe.EventStore.Subscriptions;
 using EventServe.Subscriptions;
 using MediatR;
+using EventServe.Subscriptions.Domain;
+using System.Reflection;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using EventServe.Services;
+using EventServe.Subscriptions.Persistent;
 
 namespace EventServe.TestApp
 {
@@ -39,12 +41,16 @@ namespace EventServe.TestApp
             //    options.Password = connOptions.Password;
             //});
 
+
             services.AddEventServe(options =>
             {
                 options.ConnectionString = Configuration["ConnectionStrings:MsSqlStreamStoreDb"];
                 options.SchemaName = Configuration["MsSqlStreamStoreOptions:SchemaName"];
             },
-            Configuration["ConnectionStrings:MsSqlStreamStoreDb"]);
+            Configuration["ConnectionStrings:MsSqlStreamStoreDb"],
+            new Assembly[] { 
+                typeof(Startup).Assembly 
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -56,7 +62,7 @@ namespace EventServe.TestApp
             }
 
             app.UseEventServe();
-            var manager = app.ApplicationServices.GetRequiredService<ISqlStreamStoreSubscriptionManager>();
+            var manager = app.ApplicationServices.GetRequiredService<ISubscriptionRootManager>();
 
             var aggregateId = Guid.Parse("176a5024-6305-4f54-a2ce-e004bd62a118");
             var streamId =
@@ -66,29 +72,32 @@ namespace EventServe.TestApp
                 .Build();
             var random = new Random();
 
-            //Load subscriptions from repo and start them
-            var subscriptions = await manager.GetAllStreamSubscriptions();
-            var persistentSubscriptions = new List<IPersistentStreamSubscription>();
-            foreach(var subscription in subscriptions)
-            {
-                var sub = app.ApplicationServices.GetRequiredService<IPersistentStreamSubscription>();
-                await sub.StartAsync(subscription.SubscriptionId, subscription.StreamId);
-            }
 
-            //await Task.Factory.StartNew(async () =>
-            //{
-            //    for (var i = 0; i < 10000; i++)
-            //    {
-            //        var writeEvents = new List<Event> {
-            //            new DummyNameChangedEvent(aggregateId, $"The new name {random.Next(100,9999)}"),
-            //            new DummyUrlChangedEvent(aggregateId, $"https://newurl{random.Next(100,9999)}.example.com")
-            //        };
+            var subscriptionRootManagerStreamId =
+                StreamIdBuilder.Create()
+                .WithAggregateId(Guid.Empty)
+                .WithAggregateType<SubscriptionManagerRoot>()
+                .Build();
 
-            //        await Task.Delay(TimeSpan.FromMilliseconds(50));
-            //        var streamWriter = app.ApplicationServices.GetRequiredService<IEventStreamWriter>();
-            //        await streamWriter.AppendEventsToStream(streamId, writeEvents);
-            //    }
-            //});
+            var streamWriter = app.ApplicationServices.GetRequiredService<IEventStreamWriter>();
+            //await CreateStreamData(aggregateId, streamId, streamWriter);
+
+            //var builder = app.ApplicationServices.GetRequiredService<ITransientSubscriptionBuilder<MyStreamSubscription>>();
+            //var subscription = builder
+            //    .SubscribeToAggregateCategory<DummyAggregate>()
+            //    .ListenFor<DummyNameChangedEvent>()
+            //    .ListenFor<DummyUrlChangedEvent>()
+            //    .ListenFor<DummyCreatedEvent>()
+            //    .StartAtBeginningOfStream()
+            //    .Build();
+
+            var builder = app.ApplicationServices.GetRequiredService<IPersistentSubscriptionBuilder<MyStreamSubscription>>();
+            var subscription = builder
+                .SubscribeToAggregateCategory<DummyAggregate>()
+                .ListenFor<DummyNameChangedEvent>()
+                .ListenFor<DummyUrlChangedEvent>()
+                .ListenFor<DummyCreatedEvent>()
+                .Build();
 
             app.UseHttpsRedirection();
             app.UseRouting();
@@ -96,6 +105,24 @@ namespace EventServe.TestApp
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+            });
+        }
+
+        private async Task CreateStreamData(Guid aggregateId, string streamId, IEventStreamWriter streamWriter)
+        {
+            var random = new Random();
+            await Task.Factory.StartNew(async () =>
+            {
+                for (var i = 0; i < 10000; i++)
+                {
+                    var writeEvents = new List<Event> {
+                        new DummyNameChangedEvent(aggregateId, $"The new name {random.Next(100,9999)}"),
+                        new DummyUrlChangedEvent(aggregateId, $"https://newurl{random.Next(100,9999)}.example.com")
+                    };
+
+                    await Task.Delay(TimeSpan.FromMilliseconds(50));
+                    await streamWriter.AppendEventsToStream(streamId, writeEvents);
+                }
             });
         }
     }
