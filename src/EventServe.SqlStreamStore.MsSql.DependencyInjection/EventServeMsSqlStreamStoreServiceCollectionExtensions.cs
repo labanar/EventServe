@@ -6,6 +6,7 @@ using System;
 using System.Threading.Tasks;
 using EventServe;
 using System.Reflection;
+using System.Linq;
 
 namespace EventServe.SqlStreamStore.MsSql.DependencyInjection
 {
@@ -13,6 +14,7 @@ namespace EventServe.SqlStreamStore.MsSql.DependencyInjection
     {
         public static void AddEventServe(this IServiceCollection services, Action<MsSqlStreamStoreOptions> setupAction, string connectionString, Assembly[] assemblies)
         {
+            services.RegisterAllTypes<EventServe.Subscriptions.IStreamSubscription>(assemblies, ServiceLifetime.Singleton);
             services.UseEventServeCore(assemblies);
             services.AddEventServeSqlStreamStore();
             services.Configure(setupAction);
@@ -26,6 +28,14 @@ namespace EventServe.SqlStreamStore.MsSql.DependencyInjection
             });
             services.AddTransient<ISqlStreamStoreSubscriptionStoreProvider, MsSqlStreamStoreSubscriptionStoreProvider>();
             services.AddTransient<ISqlStreamStoreProvider, MsSqlStreamStoreProvider>();
+        }
+
+        public static void RegisterAllTypes<T>(this IServiceCollection services, Assembly[] assemblies,
+        ServiceLifetime lifetime = ServiceLifetime.Transient)
+        {
+            var typesFromAssemblies = assemblies.SelectMany(a => a.DefinedTypes.Where(x => x.GetInterfaces().Contains(typeof(T))));
+            foreach (var type in typesFromAssemblies)
+                services.Add(new ServiceDescriptor(typeof(T), type, lifetime));
         }
 
         public static void UseEventServe(this IApplicationBuilder applicationBuilder)
@@ -51,6 +61,12 @@ namespace EventServe.SqlStreamStore.MsSql.DependencyInjection
                 var context = scope.ServiceProvider.GetRequiredService<SqlStreamStoreContext>();
                 context.Database.EnsureCreated();
                 context.Database.Migrate();
+            }
+
+
+            using (var scope = applicationBuilder.ApplicationServices.CreateScope())
+            {
+                var subscriptions = scope.ServiceProvider.GetServices<EventServe.Subscriptions.IStreamSubscription>();
             }
         }
 

@@ -17,7 +17,7 @@ namespace EventServe
         public static void UseEventServeCore(this IServiceCollection services, Assembly[] assemblies)
         {
             services.ConnectImplementationsToTypesClosing(typeof(IStreamSubscriptionEventHandler<,>), assemblies, false);
-            //services.ConnectImplementationsToTypesClosing(typeof(PersistentSubscriptionProfile<>), assemblies, false, ServiceLifetime.Singleton);
+            services.ConnectImplementationsToTypesClosing(typeof(PersistentSubscriptionProfile<>), assemblies, false, ServiceLifetime.Singleton);
             services.ConnectImplementationsToTypesClosing(typeof(TransientSubscriptionProfile<>), assemblies, false, ServiceLifetime.Singleton);
             services.AddTransient(typeof(ITransientSubscriptionBuilder<>), typeof(TransientSubscriptionBuilder<>));
             services.AddTransient(typeof(IPersistentSubscriptionBuilder<>), typeof(PersistentSubscriptionBuilder<>));

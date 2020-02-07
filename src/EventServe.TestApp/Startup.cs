@@ -81,40 +81,6 @@ namespace EventServe.TestApp
             var streamWriter = app.ApplicationServices.GetRequiredService<IEventStreamWriter>();
             //await CreateStreamData(aggregateId, streamId, streamWriter);
 
-            //var builder = app.ApplicationServices.GetRequiredService<ITransientSubscriptionBuilder<MyStreamSubscription>>();
-            //var subscription = builder
-            //    .SubscribeToAggregateCategory<DummyAggregate>()
-            //    .ListenFor<DummyNameChangedEvent>()
-            //    .ListenFor<DummyUrlChangedEvent>()
-            //    .ListenFor<DummyCreatedEvent>()
-            //    .StartAtBeginningOfStream()
-            //    .Build();
-
-            //var builder = app.ApplicationServices.GetRequiredService<IPersistentSubscriptionBuilder<MyStreamSubscription>>();
-            //var subscription = builder
-            //    .SubscribeToAggregateCategory<DummyAggregate>()
-            //    .ListenFor<DummyNameChangedEvent>()
-            //    .ListenFor<DummyUrlChangedEvent>()
-            //    .ListenFor<DummyCreatedEvent>()
-            //    .Build();
-
-
-            var builder2 = app.ApplicationServices.GetRequiredService<IPersistentSubscriptionBuilder<MyTestSubscription>>();
-            var subscription2 = builder2
-                .SubscribeToAggregateCategory<DummyAggregate>()
-                .ListenFor<DummyNameChangedEvent>()
-                .ListenFor<DummyUrlChangedEvent>()
-                .ListenFor<DummyCreatedEvent>()
-                .Build();
-
-
-            //var builder3 = app.ApplicationServices.GetRequiredService<IPersistentSubscriptionBuilder<MyStreamSubscription3>>();
-            //var subscription3 = builder3
-            //    .SubscribeToAggregateCategory<DummyAggregate>()
-            //    .ListenFor<DummyNameChangedEvent>()
-            //    .ListenFor<DummyUrlChangedEvent>()
-            //    .ListenFor<DummyCreatedEvent>()
-            //    .Build();
 
             app.UseHttpsRedirection();
             app.UseRouting();
