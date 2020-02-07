@@ -47,7 +47,7 @@ namespace EventServe
         {
             if (!string.IsNullOrEmpty(streamId))
                 return streamId;
-            else if (!string.IsNullOrEmpty(aggregateName) && aggregateId != default && aggregateId != null)
+            else if (!string.IsNullOrEmpty(aggregateName) && aggregateId != null)
                 return $"{aggregateName.ToUpper()}-{aggregateId}";
 
             throw new ArgumentException("StreamId or Aggregate must be supplied.");

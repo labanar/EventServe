@@ -4,7 +4,6 @@ using Microsoft.Extensions.Logging;
 using EventServe.EventStore.Interfaces;
 using EventServe.Subscriptions;
 using EventStore.ClientAPI;
-using MediatR;
 
 namespace EventServe.EventStore.Subscriptions
 {
@@ -21,17 +20,17 @@ namespace EventServe.EventStore.Subscriptions
         public EventStorePersistentSubscription(
             IEventSerializer eventSerializer,
             IEventStoreConnectionProvider connectionProvider,
-            ILogger<EventStorePersistentSubscription> logger,
-            IMediator mediator) : base(mediator)
+            ILogger<EventStorePersistentSubscription> logger)
         {
             _logger = logger;
             _eventSerializer = eventSerializer;
             _connectionProvider = connectionProvider;
         }
 
-        public override async Task ConnectAsync(string streamId)
+        protected override async Task ConnectAsync()
         {
-            _streamId = streamId;
+            _cancellationRequestedByUser = false;
+            _connected = false;
             await Connect();
         }
 
@@ -39,30 +38,42 @@ namespace EventServe.EventStore.Subscriptions
         {
             _connection = _connectionProvider.GetConnection();
             await _connection.ConnectAsync();
-            await _connection.CreateSubscription(_streamId, _id.ToString(), await _connectionProvider.GetCredentials(), _logger);
+            await _connection.CreateSubscription(_filter.SubscribedStreamId == StreamId.All ? "$all" : _filter.SubscribedStreamId.Id,
+                                                 _subscriptionName,
+                                                 await _connectionProvider.GetCredentials(),
+                                                 _logger);
+
 
             Func<EventStorePersistentSubscriptionBase, ResolvedEvent, int?, Task> processEvent = (subscriptionBase, resolvedEvent, c) => {
                 return HandleEvent(subscriptionBase, resolvedEvent);
             };
 
+
             _subscriptionBase = await _connection.ConnectToPersistentSubscriptionAsync(
-                _streamId,
-                _id.ToString(),
+                _filter.SubscribedStreamId == StreamId.All ? "$all" : _filter.SubscribedStreamId.Id,
+                _subscriptionName,
                 processEvent,
                 bufferSize: 10,
                 subscriptionDropped: SubscriptionDropped,
                 autoAck: false);
+            _connected = true;
         }
 
         private async Task HandleEvent(EventStorePersistentSubscriptionBase subscriptionBase, ResolvedEvent resolvedEvent)
         {
             var @event = _eventSerializer.DeseralizeEvent(resolvedEvent);
-            await RaiseEvent(@event);
+            await RaiseEvent(@event, resolvedEvent.OriginalStreamId);
         }
 
         private void SubscriptionDropped(EventStorePersistentSubscriptionBase eventStorePersistentSubscriptionBase,
             SubscriptionDropReason subscriptionDropReason, Exception ex)
         {
+            if(_cancellationRequestedByUser)
+            {
+                _logger.LogInformation(ex, $"Subscription stopped by user: {subscriptionDropReason.ToString()}");
+                return;
+            }
+
             _logger.LogError(ex, $"Subscription dropped: {subscriptionDropReason.ToString()}");
             _connection.Dispose();
             Connect().Wait();   
@@ -74,6 +85,21 @@ namespace EventServe.EventStore.Subscriptions
                 throw new ApplicationException("Subscription is not connected, therefore acknowledgement cannot be sent.");
 
             _subscriptionBase.Acknowledge(@event.EventId);
+            return Task.CompletedTask;
+        }
+
+        protected override Task DisconnectAsync()
+        {
+            if(_subscriptionBase == null)
+            {
+                _connected = false;
+                _cancellationRequestedByUser = true;
+                return Task.CompletedTask;
+            }
+
+            _cancellationRequestedByUser = true;
+            _connection.Close();
+            _connection.Dispose();
             return Task.CompletedTask;
         }
     }

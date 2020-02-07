@@ -1,27 +1,79 @@
-﻿using EventServe.Subscriptions.Notifications;
-using MediatR;
+﻿using EventServe.Subscriptions;
+using EventServe.Subscriptions.Persistent;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace EventServe.TestApp
 {
-    public class SubscriptionHandler :INotificationHandler<StreamSubscriptionEventNotification>
+    public class MySubscriptionProfile : PersistentSubscriptionProfile<MySubscriptionProfile>
     {
-        private readonly ILogger<SubscriptionHandler> _logger;
-
-        public SubscriptionHandler(ILogger<SubscriptionHandler> logger)
+        public MySubscriptionProfile(IPersistentSubscriptionBuilder<MySubscriptionProfile> builder) : base(builder)
         {
-            _logger = logger;
+            builder
+                .SubscribeToAggregateCategory<DummyAggregate>()
+                .ListenFor<DummyUrlChangedEvent>()
+                .ListenFor<DummyNameChangedEvent>()
+                .Build();
         }
 
-        public async Task Handle(StreamSubscriptionEventNotification notification, CancellationToken cancellationToken)
+        public class Handler :
+            IStreamSubscriptionEventHandler<MySubscriptionProfile, DummyUrlChangedEvent>,
+            IStreamSubscriptionEventHandler<MySubscriptionProfile, DummyNameChangedEvent>
         {
-            _logger.LogInformation(notification.Event.AggregateId.ToString());
-            await notification.AcknowledgementCallback(notification.Event);
+            private readonly ILogger<Handler> _logger;
+
+            public Handler(ILogger<Handler> logger)
+            {
+                _logger = logger;
+            }
+
+            public Task HandleEvent(DummyUrlChangedEvent @event)
+            {
+                _logger.LogInformation($"Event received: {@event.GetType().Name} [{@event.EventId}]");
+                return Task.CompletedTask;
+            }
+
+            public Task HandleEvent(DummyNameChangedEvent @event)
+            {
+                _logger.LogInformation($"Event received: {@event.GetType().Name} [{@event.EventId}]");
+                return Task.CompletedTask;
+            }
+        }
+    }
+
+    public class MySubscriptionProfile2 : PersistentSubscriptionProfile<MySubscriptionProfile2>
+    {
+        public MySubscriptionProfile2(IPersistentSubscriptionBuilder<MySubscriptionProfile2> builder) : base(builder)
+        {
+            builder
+                .SubscribeToAggregateCategory<DummyAggregate>()
+                .ListenFor<DummyUrlChangedEvent>()
+                .ListenFor<DummyNameChangedEvent>()
+                .Build();
+        }
+
+        public class Handler :
+            IStreamSubscriptionEventHandler<MySubscriptionProfile2, DummyUrlChangedEvent>,
+            IStreamSubscriptionEventHandler<MySubscriptionProfile2, DummyNameChangedEvent>
+        {
+            private readonly ILogger<Handler> _logger;
+
+            public Handler(ILogger<Handler> logger)
+            {
+                _logger = logger;
+            }
+
+            public Task HandleEvent(DummyUrlChangedEvent @event)
+            {
+                _logger.LogInformation($"Event received: {@event.GetType().Name} [{@event.EventId}]");
+                return Task.CompletedTask;
+            }
+
+            public Task HandleEvent(DummyNameChangedEvent @event)
+            {
+                _logger.LogInformation($"Event received: {@event.GetType().Name} [{@event.EventId}]");
+                return Task.CompletedTask;
+            }
         }
     }
 }

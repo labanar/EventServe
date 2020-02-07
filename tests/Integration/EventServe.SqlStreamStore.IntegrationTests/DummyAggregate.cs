@@ -56,8 +56,8 @@ namespace EventServe.SqlStreamStore.IntegrationTests
             Url = url;
         }
 
-        public string Name { get; private set; }
-        public string Url { get; private set; }
+        public string Name { get; set; }
+        public string Url { get; set; }
     }
 
     public class DummyNameChangedEvent : Event
@@ -69,7 +69,7 @@ namespace EventServe.SqlStreamStore.IntegrationTests
             Name = name;
         }
 
-        public string Name { get; private set; }
+        public string Name { get; set; }
     }
 
     public class DummyUrlChangedEvent : Event
@@ -81,7 +81,7 @@ namespace EventServe.SqlStreamStore.IntegrationTests
             Url = url;
         }
 
-        public string Url { get; private set; }
+        public string Url { get; set; }
     }
 
 

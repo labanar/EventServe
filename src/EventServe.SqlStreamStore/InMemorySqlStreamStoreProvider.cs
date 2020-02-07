@@ -8,7 +8,13 @@ namespace EventServe.SqlStreamStore
         Task<IStreamStore> GetStreamStore();
     }
 
-    public class InMemorySqlStreamStoreProvider: ISqlStreamStoreProvider
+    //TODO - abstract factory this maybe?
+    public interface ISqlStreamStoreSubscriptionStoreProvider: ISqlStreamStoreProvider
+    {
+
+    }
+
+    public class InMemorySqlStreamStoreProvider: ISqlStreamStoreProvider, ISqlStreamStoreSubscriptionStoreProvider
     {
         private readonly InMemoryStreamStore _store;
 
@@ -17,9 +23,11 @@ namespace EventServe.SqlStreamStore
             _store = new InMemoryStreamStore();
         }
 
-        public async Task<IStreamStore> GetStreamStore()
+        public Task<IStreamStore> GetStreamStore()
         {
-            return _store;
+            return Task.FromResult<IStreamStore>(_store);
         }
     }
+
+
 }

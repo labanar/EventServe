@@ -42,7 +42,7 @@ namespace EventServe.SqlStreamStore.IntegrationTests
             var readEvents = await reader.ReadAllEventsFromStream(streamId);
             readEvents.Count.Should().Be(3);
 
-            var subscription = new SqlStreamStorePersistentSubscription(_serializer, _storeProvider, null, null, null);
+            var subscription = new SqlStreamStorePersistentSubscription(_serializer, _storeProvider, null, null);
 
         }
     }

@@ -2,6 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <LangVersion>8.0</LangVersion>
+
   </PropertyGroup>
 
   <ItemGroup>
@@ -10,13 +12,14 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="SimpleInjector" Version="4.9.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\EventServe.EventStore.Extensions.DependencyInjection\EventServe.EventStore.Extensions.DependencyInjection.csproj" />
+    <ProjectReference Include="..\EventServe.EventStore.Extensions.DependencyInjection\EventServe.EventStore.DependencyInjection.csproj" />
     <ProjectReference Include="..\EventServe.EventStore\EventServe.EventStore.csproj" />
-    <ProjectReference Include="..\EventServe.SqlStreamStore.DependencyInjection\EventServe.SqlStreamStore.Extensions.DependencyInjection.csproj" />
-    <ProjectReference Include="..\EventServe.SqlStreamStore.SqlServer\EventServe.SqlStreamStore.MsSql.csproj" />
+    <ProjectReference Include="..\EventServe.SqlStreamStore.MsSql.DependencyInjection\EventServe.SqlStreamStore.MsSql.DependencyInjection.csproj" />
+    <ProjectReference Include="..\EventServe.SqlStreamStore.MsSql\EventServe.SqlStreamStore.MsSql.csproj" />
     <ProjectReference Include="..\EventServe.SqlStreamStore\EventServe.SqlStreamStore.csproj" />
     <ProjectReference Include="..\EventServe\EventServe.csproj" />
   </ItemGroup>
