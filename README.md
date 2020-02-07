@@ -1,6 +1,6 @@
 # [WIP] EventServe 
 
-A C# Event Sourcing Framework with an EventStore and SqlStreamStore (MsSql) implementations
+A C# Event Sourcing Framework with EventStore and SqlStreamStore (MsSql) implementations
 
 TODO:
 - Projection providers
