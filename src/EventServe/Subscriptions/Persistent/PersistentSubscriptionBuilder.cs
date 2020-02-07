@@ -1,19 +1,19 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace EventServe.Subscriptions.Persistent
 {
     public interface IPersistentSubscriptionBuilder<TSubscription>
-        where TSubscription : StreamSubscription
+        where TSubscription : IStreamSubscription
     {
-        PersistentSubscriptionBuilder<TSubscription> SubscribeToAggregateCategory<T>() where T : AggregateRoot;
-        PersistentSubscriptionBuilder<TSubscription> SubscribeToAggregate<T>(Guid id) where T : AggregateRoot;
-        PersistentSubscriptionBuilder<TSubscription> SubscribeToStream(string id);
-        PersistentSubscriptionBuilder<TSubscription> ListenFor<T>() where T : Event;
+        IPersistentSubscriptionBuilder<TSubscription> SubscribeToAggregateCategory<T>() where T : AggregateRoot;
+        IPersistentSubscriptionBuilder<TSubscription> SubscribeToAggregate<T>(Guid id) where T : AggregateRoot;
+        IPersistentSubscriptionBuilder<TSubscription> SubscribeToStream(string id);
+        IPersistentSubscriptionBuilder<TSubscription> ListenFor<T>() where T : Event;
+        IPersistentStreamSubscription Build();
     }
 
     public class PersistentSubscriptionBuilder<TSubscription> : IPersistentSubscriptionBuilder<TSubscription>
-        where TSubscription : StreamSubscription
+        where TSubscription : IStreamSubscription
     {
         private readonly IPersistentStreamSubscription _subscription;
         private readonly IServiceProvider _serviceProvider;
@@ -28,26 +28,26 @@ namespace EventServe.Subscriptions.Persistent
             _serviceProvider = serviceProvider;
         }
 
-        public PersistentSubscriptionBuilder<TSubscription> SubscribeToAggregateCategory<T>()
+        public IPersistentSubscriptionBuilder<TSubscription> SubscribeToAggregateCategory<T>()
             where T : AggregateRoot
         {
             _subscriptionFilterBuilder.SubscribeToAggregateCategory<T>();
             return this;
         }
 
-        public PersistentSubscriptionBuilder<TSubscription> SubscribeToAggregate<T>(Guid id)
+        public IPersistentSubscriptionBuilder<TSubscription> SubscribeToAggregate<T>(Guid id)
             where T : AggregateRoot
         {
             _subscriptionFilterBuilder.SubscribeToAggregate<T>(id);
             return this;
         }
 
-        public PersistentSubscriptionBuilder<TSubscription> SubscribeToStream(string id)
+        public IPersistentSubscriptionBuilder<TSubscription> SubscribeToStream(string id)
         {
             _subscriptionFilterBuilder.SubscribeToStream(id);
             return this;
         }
-        public PersistentSubscriptionBuilder<TSubscription> ListenFor<T>() where T : Event
+        public IPersistentSubscriptionBuilder<TSubscription> ListenFor<T>() where T : Event
         {
             //TODO - avoid service locator?
             var resolver = (ISubscriptionHandlerResolver)_serviceProvider.GetService(typeof(ISubscriptionHandlerResolver));

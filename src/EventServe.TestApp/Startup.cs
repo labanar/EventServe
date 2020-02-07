@@ -41,7 +41,6 @@ namespace EventServe.TestApp
             //    options.Password = connOptions.Password;
             //});
 
-
             services.AddEventServe(options =>
             {
                 options.ConnectionString = Configuration["ConnectionStrings:MsSqlStreamStoreDb"];
@@ -91,13 +90,31 @@ namespace EventServe.TestApp
             //    .StartAtBeginningOfStream()
             //    .Build();
 
-            var builder = app.ApplicationServices.GetRequiredService<IPersistentSubscriptionBuilder<MyStreamSubscription>>();
-            var subscription = builder
+            //var builder = app.ApplicationServices.GetRequiredService<IPersistentSubscriptionBuilder<MyStreamSubscription>>();
+            //var subscription = builder
+            //    .SubscribeToAggregateCategory<DummyAggregate>()
+            //    .ListenFor<DummyNameChangedEvent>()
+            //    .ListenFor<DummyUrlChangedEvent>()
+            //    .ListenFor<DummyCreatedEvent>()
+            //    .Build();
+
+
+            var builder2 = app.ApplicationServices.GetRequiredService<IPersistentSubscriptionBuilder<MyTestSubscription>>();
+            var subscription2 = builder2
                 .SubscribeToAggregateCategory<DummyAggregate>()
                 .ListenFor<DummyNameChangedEvent>()
                 .ListenFor<DummyUrlChangedEvent>()
                 .ListenFor<DummyCreatedEvent>()
                 .Build();
+
+
+            //var builder3 = app.ApplicationServices.GetRequiredService<IPersistentSubscriptionBuilder<MyStreamSubscription3>>();
+            //var subscription3 = builder3
+            //    .SubscribeToAggregateCategory<DummyAggregate>()
+            //    .ListenFor<DummyNameChangedEvent>()
+            //    .ListenFor<DummyUrlChangedEvent>()
+            //    .ListenFor<DummyCreatedEvent>()
+            //    .Build();
 
             app.UseHttpsRedirection();
             app.UseRouting();
@@ -107,6 +124,8 @@ namespace EventServe.TestApp
                 endpoints.MapControllers();
             });
         }
+
+        public class MyTestSubscription: IStreamSubscription { }
 
         private async Task CreateStreamData(Guid aggregateId, string streamId, IEventStreamWriter streamWriter)
         {

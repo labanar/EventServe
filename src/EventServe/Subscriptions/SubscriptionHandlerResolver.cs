@@ -6,7 +6,7 @@ namespace EventServe.Subscriptions
     public interface ISubscriptionHandlerResolver
     {
         Task<IStreamSubscriptionEventHandler<TSubscription, TEvent>> Resolve<TSubscription, TEvent>()
-            where TSubscription : StreamSubscription
+            where TSubscription : IStreamSubscription
             where TEvent : Event;
     }
 
@@ -20,7 +20,7 @@ namespace EventServe.Subscriptions
         }
 
         public Task<IStreamSubscriptionEventHandler<TSubscription, TEvent>> Resolve<TSubscription, TEvent>()
-            where TSubscription : StreamSubscription
+            where TSubscription : IStreamSubscription
             where TEvent : Event
         {
             var handler = (IStreamSubscriptionEventHandler<TSubscription, TEvent>)_serviceProvider.GetService(typeof(IStreamSubscriptionEventHandler<TSubscription, TEvent>));

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using EventServe.Subscriptions.Domain;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -6,7 +7,8 @@ namespace EventServe.Subscriptions
 {
     public interface ISubscriptionManager
     {
-        Task AddSubscription(SubscriptionBase subscription);
+        Task AddSubscription(Guid subscriptionId, ITransientStreamSubscription subscription);
+        Task AddSubscription(Guid subscriptionId, IPersistentStreamSubscription subscription);
         Task StartSubscription(Guid subscriptionId);
         Task StopSubscription(Guid subscriptionId);
     }
@@ -16,7 +18,6 @@ namespace EventServe.Subscriptions
         private readonly IServiceProvider _serivceProvider;
         private Dictionary<Guid, ITransientStreamSubscription> _transientSubscriptions = new Dictionary<Guid, ITransientStreamSubscription>();
         private Dictionary<Guid, IPersistentStreamSubscription> _persistentSubscriptions = new Dictionary<Guid, IPersistentStreamSubscription>();
-        private Dictionary<Guid, SubscriptionBase> _subscriptions = new Dictionary<Guid, SubscriptionBase>();
 
         //TODO - anyway to avoid the service locator pattern here?
         public SubscriptionManager(IServiceProvider serviceProvider)
@@ -25,35 +26,20 @@ namespace EventServe.Subscriptions
         }
 
 
-        public Task AddSubscription(SubscriptionBase subscription)
+        public Task AddSubscription(Guid subscriptionId, ITransientStreamSubscription subscription)
         {
-            if(subscription.Type == Domain.Enums.SubscriptionType.Persistent)
-            {
-                var sub = _serivceProvider.GetService(typeof(IPersistentStreamSubscription)) as IPersistentStreamSubscription;
-                _persistentSubscriptions[subscription.SubscriptionId] = sub;
-            }
-            else
-            {
-                var sub = _serivceProvider.GetService(typeof(ITransientStreamSubscription)) as ITransientStreamSubscription;
-                _transientSubscriptions[subscription.SubscriptionId] = sub;
-            }
-
-            _subscriptions[subscription.SubscriptionId] = subscription;
-            return Task.CompletedTask;
-        }
-
-        public Task AddTransentSubscription(Guid subscriptionId)
-        {
-            var subscription = _serivceProvider.GetService(typeof(ITransientStreamSubscription)) as ITransientStreamSubscription;
             _transientSubscriptions[subscriptionId] = subscription;
             return Task.CompletedTask;
         }
-
+        public Task AddSubscription(Guid subscriptionId, IPersistentStreamSubscription subscription)
+        {
+            _persistentSubscriptions[subscriptionId] = subscription;
+            return Task.CompletedTask;
+        }
+      
         public async Task StartSubscription(Guid subscriptionId)
         {
-            var subscription = _subscriptions[subscriptionId];
-            if (subscription == null)
-                return;
+
 
             //if (subscription.Type == Domain.Enums.SubscriptionType.Persistent)
             //    await _persistentSubscriptions[subscriptionId].Start(subscriptionId, subscription.StreamId);
@@ -63,14 +49,47 @@ namespace EventServe.Subscriptions
 
         public async Task StopSubscription(Guid subscriptionId)
         {
-            var subscription = _subscriptions[subscriptionId];
-            if (subscription == null)
-                return;
 
-            if (subscription.Type == Domain.Enums.SubscriptionType.Persistent)
-                await _persistentSubscriptions[subscriptionId].Stop();
-            else
-                await _transientSubscriptions[subscriptionId].Stop();
+
+          
         }
-    }  
+    }
+
+
+    public class StreamSubscriptionManagerSubscription : IStreamSubscription { }
+
+    public class StreamSubscriptionManagerEventHandler :
+        IStreamSubscriptionEventHandler<StreamSubscriptionManagerSubscription, SubscriptionCreatedEvent>,
+        IStreamSubscriptionEventHandler<StreamSubscriptionManagerSubscription, SubscriptionStartedEvent>,
+        IStreamSubscriptionEventHandler<StreamSubscriptionManagerSubscription, SubscriptionStoppedEvent>,
+        IStreamSubscriptionEventHandler<StreamSubscriptionManagerSubscription, SubscriptionDeletedEvent>
+    {
+        private readonly ISubscriptionManager _subscriptionManager;
+
+        public StreamSubscriptionManagerEventHandler(ISubscriptionManager subscriptionManager)
+        {
+            _subscriptionManager = subscriptionManager;
+        }
+
+
+        public Task HandleEvent(SubscriptionCreatedEvent @event)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task HandleEvent(SubscriptionStartedEvent @event)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task HandleEvent(SubscriptionStoppedEvent @event)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task HandleEvent(SubscriptionDeletedEvent @event)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }

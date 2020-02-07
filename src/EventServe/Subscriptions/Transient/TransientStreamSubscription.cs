@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using System;
 
+
 namespace EventServe.Subscriptions
 {
     public interface ITransientStreamSubscription: IObservable<Event>

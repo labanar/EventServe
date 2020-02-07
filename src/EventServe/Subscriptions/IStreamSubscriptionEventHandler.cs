@@ -4,9 +4,8 @@ namespace EventServe.Subscriptions
 {
     public interface IStreamSubscriptionEventHandler<TSubscription,TEvent>
         where TEvent: Event
-        where TSubscription: StreamSubscription
+        where TSubscription: IStreamSubscription
     {
-
         Task HandleEvent(TEvent @event);
     }
 }

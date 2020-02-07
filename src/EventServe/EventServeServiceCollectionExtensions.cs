@@ -1,13 +1,14 @@
 ﻿using EventServe.Services;
 using EventServe.Subscriptions;
 using EventServe.Subscriptions.Persistent;
+using EventServe.Subscriptions.Transient;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 
 namespace EventServe
 {
@@ -16,7 +17,8 @@ namespace EventServe
         public static void UseEventServeCore(this IServiceCollection services, Assembly[] assemblies)
         {
             services.ConnectImplementationsToTypesClosing(typeof(IStreamSubscriptionEventHandler<,>), assemblies, false);
-            services.AddTransient(typeof(IProjectionQuery<>), typeof(OnDemandProjectionQuery<>));
+            //services.ConnectImplementationsToTypesClosing(typeof(PersistentSubscriptionProfile<>), assemblies, false, ServiceLifetime.Singleton);
+            services.ConnectImplementationsToTypesClosing(typeof(TransientSubscriptionProfile<>), assemblies, false, ServiceLifetime.Singleton);
             services.AddTransient(typeof(ITransientSubscriptionBuilder<>), typeof(TransientSubscriptionBuilder<>));
             services.AddTransient(typeof(IPersistentSubscriptionBuilder<>), typeof(PersistentSubscriptionBuilder<>));
             services.AddTransient<ISubscriptionHandlerResolver, SubscriptionHandlerResolver>();
@@ -24,7 +26,8 @@ namespace EventServe
 
         private static void ConnectImplementationsToTypesClosing(this IServiceCollection services, Type openRequestInterface,        
            IEnumerable<Assembly> assembliesToScan,
-           bool addIfAlreadyExists)
+           bool addIfAlreadyExists,
+           ServiceLifetime lifetime = ServiceLifetime.Transient)
         {
             var concretions = new List<Type>();
             var interfaces = new List<Type>();
@@ -51,7 +54,12 @@ namespace EventServe
                 {
                     foreach (var type in exactMatches)
                     {
-                        services.AddTransient(@interface, type);
+                        switch(lifetime)
+                        {
+                            case ServiceLifetime.Transient: services.AddTransient(@interface, type); break;
+                            case ServiceLifetime.Scoped: services.AddScoped(@interface, type); break;
+                            case ServiceLifetime.Singleton: services.AddSingleton(@interface, type); break;
+                        }
                     }
                 }
                 else
@@ -69,7 +77,7 @@ namespace EventServe
 
                 if (!@interface.IsOpenGeneric())
                 {
-                    AddConcretionsThatCouldBeClosed(@interface, concretions, services);
+                    AddConcretionsThatCouldBeClosed(@interface, concretions, services, lifetime);
                 }
             }
         }
@@ -96,14 +104,19 @@ namespace EventServe
             return false;
         }
 
-        private static void AddConcretionsThatCouldBeClosed(Type @interface, List<Type> concretions, IServiceCollection services)
+        private static void AddConcretionsThatCouldBeClosed(Type @interface, List<Type> concretions, IServiceCollection services, ServiceLifetime lifetime)
         {
             foreach (var type in concretions
                 .Where(x => x.IsOpenGeneric() && x.CouldCloseTo(@interface)))
             {
                 try
                 {
-                    services.TryAddTransient(@interface, type.MakeGenericType(@interface.GenericTypeArguments));
+                    switch (lifetime)
+                    {
+                        case ServiceLifetime.Transient: services.TryAddTransient(@interface, type); break;
+                        case ServiceLifetime.Scoped: services.TryAddScoped(@interface, type); break;
+                        case ServiceLifetime.Singleton: services.TryAddSingleton(@interface, type); break;
+                    }
                 }
                 catch (Exception)
                 {

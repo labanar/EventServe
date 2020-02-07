@@ -5,7 +5,7 @@ namespace EventServe.Subscriptions
 {
     public class StreamSubscriptionObserver<TSubscription, TEvent> : IObserver<Event>
         where TEvent: Event
-        where TSubscription: StreamSubscription
+        where TSubscription: IStreamSubscription
     {
         private readonly ISubscriptionHandlerResolver _resolver;
 

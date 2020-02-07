@@ -3,21 +3,22 @@
 namespace EventServe.Subscriptions
 {
     public interface ITransientSubscriptionBuilder<TSubscription>
-        where TSubscription : StreamSubscription
+        where TSubscription : IStreamSubscription
     {
-        TransientSubscriptionBuilder<TSubscription> SubscribeToAggregateCategory<T>() where T : AggregateRoot;
-        TransientSubscriptionBuilder<TSubscription> SubscribeToAggregate<T>(Guid id) where T : AggregateRoot;
-        TransientSubscriptionBuilder<TSubscription> SubscribeToStream(string id);
-        TransientSubscriptionBuilder<TSubscription> ListenFor<T>() where T : Event;
-        TransientSubscriptionBuilder<TSubscription> StartAtBeginningOfStream();
-        TransientSubscriptionBuilder<TSubscription> StartAtEndOfStream();
+        ITransientSubscriptionBuilder<TSubscription> SubscribeToAggregateCategory<T>() where T : AggregateRoot;
+        ITransientSubscriptionBuilder<TSubscription> SubscribeToAggregate<T>(Guid id) where T : AggregateRoot;
+        ITransientSubscriptionBuilder<TSubscription> SubscribeToStream(string id);
+        ITransientSubscriptionBuilder<TSubscription> ListenFor<T>() where T : Event;
+        ITransientSubscriptionBuilder<TSubscription> StartAtBeginningOfStream();
+        ITransientSubscriptionBuilder<TSubscription> StartAtEndOfStream();
+        ITransientStreamSubscription Build();
     }
 
     public class TransientSubscriptionBuilder<TSubscription> : ITransientSubscriptionBuilder<TSubscription>
-        where TSubscription : StreamSubscription
+        where TSubscription : IStreamSubscription
     {
         private readonly Guid _id;
-        private readonly ISubscriptionRootManager _subscriptionRootManager;
+        private readonly ISubscriptionManager _subscriptionManager;
         private readonly ITransientStreamSubscription _subscription;
         private readonly IServiceProvider _serviceProvider;
         private readonly SubscriptionFilterBuilder _subscriptionFilterBuilder = new SubscriptionFilterBuilder();
@@ -27,49 +28,49 @@ namespace EventServe.Subscriptions
 
         public TransientSubscriptionBuilder(
             ITransientStreamSubscription transientStreamSubscription,
-            ISubscriptionRootManager subscriptionRootManager,
+            ISubscriptionManager subscriptionManager,
             IServiceProvider serviceProvider
             )
         {
             _id = Guid.NewGuid();
-            _subscriptionRootManager = subscriptionRootManager;
+            _subscriptionManager = subscriptionManager;
             _subscription = transientStreamSubscription;
             _serviceProvider = serviceProvider;
         }
 
-        public TransientSubscriptionBuilder<TSubscription> SubscribeToAggregateCategory<T>()
+        public ITransientSubscriptionBuilder<TSubscription> SubscribeToAggregateCategory<T>()
             where T : AggregateRoot
         {
             _subscriptionFilterBuilder.SubscribeToAggregateCategory<T>();
             return this;
         }
 
-        public TransientSubscriptionBuilder<TSubscription> SubscribeToAggregate<T>(Guid id)
+        public ITransientSubscriptionBuilder<TSubscription> SubscribeToAggregate<T>(Guid id)
             where T : AggregateRoot
         {
             _subscriptionFilterBuilder.SubscribeToAggregate<T>(id);
             return this;
         }
 
-        public TransientSubscriptionBuilder<TSubscription> SubscribeToStream(string id)
+        public ITransientSubscriptionBuilder<TSubscription> SubscribeToStream(string id)
         {
             _subscriptionFilterBuilder.SubscribeToStream(id);
             return this;
         }
 
-        public TransientSubscriptionBuilder<TSubscription> StartAtBeginningOfStream()
+        public ITransientSubscriptionBuilder<TSubscription> StartAtBeginningOfStream()
         {
             _startPosition = 0;
             return this;
         }
 
-        public TransientSubscriptionBuilder<TSubscription> StartAtEndOfStream()
+        public ITransientSubscriptionBuilder<TSubscription> StartAtEndOfStream()
         {
             _startPosition = -1;
             return this;
         }
 
-        public TransientSubscriptionBuilder<TSubscription> ListenFor<T>() where T : Event
+        public ITransientSubscriptionBuilder<TSubscription> ListenFor<T>() where T : Event
         {
             //TODO - avoid service locator?
             var resolver = (ISubscriptionHandlerResolver)_serviceProvider.GetService(typeof(ISubscriptionHandlerResolver));
@@ -82,11 +83,8 @@ namespace EventServe.Subscriptions
         {
             var filter = _subscriptionFilterBuilder.Build();
             _subscription.Start(_startPosition, filter).Wait();
+
             return _subscription;
-
-            //TODO - return subscription base here
         }
-
-
     }
 }
