@@ -1,22 +1,24 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace EventServe.Subscriptions
 {
-    public class StreamSubscriptionObserver<TSubscription, TEvent> : IObserver<Event>
-        where TEvent: Event
-        where TSubscription: IStreamSubscription
+    public class SubscriptionObserver<TProfile, TEvent> : IObserver<Event>
+        where TProfile : ISubscriptionProfile
+        where TEvent : Event
     {
-        private readonly ISubscriptionHandlerResolver _resolver;
+        private readonly ISusbcriptionProfileHandlerResolver _resolver;
 
-        public StreamSubscriptionObserver(ISubscriptionHandlerResolver resolver)
+        public SubscriptionObserver(ISusbcriptionProfileHandlerResolver resolver)
         {
             _resolver = resolver;
         }
 
         public void OnCompleted()
         {
-            
+
         }
 
         public void OnError(Exception error)
@@ -30,7 +32,7 @@ namespace EventServe.Subscriptions
             if (!(@event is TEvent))
                 return;
 
-            var handlerTask = _resolver.Resolve<TSubscription, TEvent>();
+            var handlerTask = _resolver.Resolve<TProfile, TEvent>();
             Task.WaitAll(handlerTask);
 
             var handler = handlerTask.Result;

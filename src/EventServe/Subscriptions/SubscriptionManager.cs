@@ -54,42 +54,4 @@ namespace EventServe.Subscriptions
           
         }
     }
-
-
-    public class StreamSubscriptionManagerSubscription : IStreamSubscription { }
-
-    public class StreamSubscriptionManagerEventHandler :
-        IStreamSubscriptionEventHandler<StreamSubscriptionManagerSubscription, SubscriptionCreatedEvent>,
-        IStreamSubscriptionEventHandler<StreamSubscriptionManagerSubscription, SubscriptionStartedEvent>,
-        IStreamSubscriptionEventHandler<StreamSubscriptionManagerSubscription, SubscriptionStoppedEvent>,
-        IStreamSubscriptionEventHandler<StreamSubscriptionManagerSubscription, SubscriptionDeletedEvent>
-    {
-        private readonly ISubscriptionManager _subscriptionManager;
-
-        public StreamSubscriptionManagerEventHandler(ISubscriptionManager subscriptionManager)
-        {
-            _subscriptionManager = subscriptionManager;
-        }
-
-
-        public Task HandleEvent(SubscriptionCreatedEvent @event)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task HandleEvent(SubscriptionStartedEvent @event)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task HandleEvent(SubscriptionStoppedEvent @event)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task HandleEvent(SubscriptionDeletedEvent @event)
-        {
-            throw new NotImplementedException();
-        }
-    }
 }

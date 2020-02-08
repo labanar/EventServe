@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\EventServe.EventStore\EventServe.EventStore.csproj" />
+    <ProjectReference Include="..\EventServe.Extensions.Microsoft.DependencyInjection\EventServe.Extensions.Microsoft.DependencyInjection.csproj" />
   </ItemGroup>
 
 </Project>

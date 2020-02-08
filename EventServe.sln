@@ -7,19 +7,21 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventServe.EventStore", "sr
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventServe.EventStore.IntegrationTests", "tests\Integration\EventServe.EventStore.IntegrationTests\EventServe.EventStore.IntegrationTests.csproj", "{D0167A85-A68D-41EF-96FD-75DA0D9A490C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventServe.EventStore.DependencyInjection", "src\EventServe.EventStore.Extensions.DependencyInjection\EventServe.EventStore.DependencyInjection.csproj", "{814FC299-910E-4418-B181-98876AF4816D}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventServe.SqlStreamStore", "src\EventServe.SqlStreamStore\EventServe.SqlStreamStore.csproj", "{EE46684C-05FD-42E4-8DFA-9ED136A45CA5}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventServe.SqlStreamStore.IntegrationTests", "tests\Integration\EventServe.SqlStreamStore.IntegrationTests\EventServe.SqlStreamStore.IntegrationTests.csproj", "{7260ADC2-A47F-47B0-9D6F-F0CC3DE80ADF}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventServe.TestApp", "src\EventServe.TestApp\EventServe.TestApp.csproj", "{CBF63A47-7EEF-45FD-910E-9E1A482F8A7C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventServe.SqlStreamStore.MsSql.DependencyInjection", "src\EventServe.SqlStreamStore.MsSql.DependencyInjection\EventServe.SqlStreamStore.MsSql.DependencyInjection.csproj", "{064D9625-8E70-48EA-8BEA-EFF9D5479695}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventServe.SqlStreamStore.MsSql", "src\EventServe.SqlStreamStore.MsSql\EventServe.SqlStreamStore.MsSql.csproj", "{B777F53A-7613-4427-9F9A-A75E4CFF30E2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventServe", "src\EventServe\EventServe.csproj", "{868712AB-437C-4A9C-B4CE-4339D2058482}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventServe", "src\EventServe\EventServe.csproj", "{868712AB-437C-4A9C-B4CE-4339D2058482}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventServe.Extensions.Microsoft.DependencyInjection", "src\EventServe.Extensions.Microsoft.DependencyInjection\EventServe.Extensions.Microsoft.DependencyInjection.csproj", "{B1A39665-50F9-46BC-9B8B-097E8E8BB859}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventServe.EventStore.Extensions.Microsoft.DepdendencyInjection", "src\EventServe.EventStore.Extensions.Microsoft.DependencyInjection\EventServe.EventStore.Extensions.Microsoft.DepdendencyInjection.csproj", "{434C5DCC-FF2D-4AF6-B756-AECE90A577E4}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventServe.SqlStreamStore.MsSql.Extensions.Microsoft.DependencyInjection", "src\EventServe.SqlStreamStore.MsSql.Extensions.Microsoft.DependencyInjection\EventServe.SqlStreamStore.MsSql.Extensions.Microsoft.DependencyInjection.csproj", "{404A5643-A95C-4675-861A-693550FB561E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,10 +37,6 @@ Global
 		{D0167A85-A68D-41EF-96FD-75DA0D9A490C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D0167A85-A68D-41EF-96FD-75DA0D9A490C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D0167A85-A68D-41EF-96FD-75DA0D9A490C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{814FC299-910E-4418-B181-98876AF4816D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{814FC299-910E-4418-B181-98876AF4816D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{814FC299-910E-4418-B181-98876AF4816D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{814FC299-910E-4418-B181-98876AF4816D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{EE46684C-05FD-42E4-8DFA-9ED136A45CA5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{EE46684C-05FD-42E4-8DFA-9ED136A45CA5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EE46684C-05FD-42E4-8DFA-9ED136A45CA5}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -51,10 +49,6 @@ Global
 		{CBF63A47-7EEF-45FD-910E-9E1A482F8A7C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CBF63A47-7EEF-45FD-910E-9E1A482F8A7C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CBF63A47-7EEF-45FD-910E-9E1A482F8A7C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{064D9625-8E70-48EA-8BEA-EFF9D5479695}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{064D9625-8E70-48EA-8BEA-EFF9D5479695}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{064D9625-8E70-48EA-8BEA-EFF9D5479695}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{064D9625-8E70-48EA-8BEA-EFF9D5479695}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B777F53A-7613-4427-9F9A-A75E4CFF30E2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B777F53A-7613-4427-9F9A-A75E4CFF30E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B777F53A-7613-4427-9F9A-A75E4CFF30E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -63,6 +57,18 @@ Global
 		{868712AB-437C-4A9C-B4CE-4339D2058482}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{868712AB-437C-4A9C-B4CE-4339D2058482}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{868712AB-437C-4A9C-B4CE-4339D2058482}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1A39665-50F9-46BC-9B8B-097E8E8BB859}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1A39665-50F9-46BC-9B8B-097E8E8BB859}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1A39665-50F9-46BC-9B8B-097E8E8BB859}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1A39665-50F9-46BC-9B8B-097E8E8BB859}.Release|Any CPU.Build.0 = Release|Any CPU
+		{434C5DCC-FF2D-4AF6-B756-AECE90A577E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{434C5DCC-FF2D-4AF6-B756-AECE90A577E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{434C5DCC-FF2D-4AF6-B756-AECE90A577E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{434C5DCC-FF2D-4AF6-B756-AECE90A577E4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{404A5643-A95C-4675-861A-693550FB561E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{404A5643-A95C-4675-861A-693550FB561E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{404A5643-A95C-4675-861A-693550FB561E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{404A5643-A95C-4675-861A-693550FB561E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

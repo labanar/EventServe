@@ -4,14 +4,35 @@ using System.Text;
 
 namespace EventServe.Subscriptions.Transient
 {
-    public abstract class TransientSubscriptionProfile<TProfile> : IStreamSubscription
-        where TProfile : TransientSubscriptionProfile<TProfile>
+    public interface ITransientSubscriptionProfile
     {
-        private readonly ITransientSubscriptionBuilder<TProfile> _builder;
+        SubscriptionFilter Filter { get; }
+        HashSet<Type> SubscribedEvents { get; }
+        int StartPosition { get; }
 
-        public TransientSubscriptionProfile(ITransientSubscriptionBuilder<TProfile> builder)
+        ITransientSubscriptionPositionExpression CreateProfile();
+    }
+
+    public abstract class TransientSubscriptionProfile : ITransientSubscriptionProfile, ISubscriptionProfile
+    {
+        public SubscriptionFilter Filter => _subscriptionFilterBuilder.Build();
+        public HashSet<Type> SubscribedEvents => _subscribedEvents;
+        public int StartPosition => _position.Position;
+
+        private readonly SubscriptionFilterBuilder _subscriptionFilterBuilder;
+        private readonly HashSet<Type> _subscribedEvents;
+        private StreamPosition _position = StreamPosition.EndOfStream();
+
+        public TransientSubscriptionProfile()
         {
-            _builder = builder;
+            _subscriptionFilterBuilder = new SubscriptionFilterBuilder();
+            _subscribedEvents = new HashSet<Type>();
+        }
+
+        public ITransientSubscriptionPositionExpression CreateProfile()
+        {
+            var expression = new TransientSubscriptionProfileExpression(_subscriptionFilterBuilder, _subscribedEvents, _position);
+            return expression;
         }
     }
 }
