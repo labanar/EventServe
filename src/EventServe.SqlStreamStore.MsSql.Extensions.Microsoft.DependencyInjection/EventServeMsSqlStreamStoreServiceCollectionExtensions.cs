@@ -28,7 +28,7 @@ namespace EventServe.SqlStreamStore.MsSql.Extensions.Microsoft.DependencyInjecti
             services.AddTransient<ISqlStreamStoreProvider, MsSqlStreamStoreProvider>();
         }
 
-        public static void UseEventServe(this IApplicationBuilder applicationBuilder)
+        public static void UseEventServeMsSqlStreamStore(this IApplicationBuilder applicationBuilder)
         {
             using (var scope = applicationBuilder.ApplicationServices.CreateScope())
             {

@@ -1,5 +1,6 @@
 using System;
 using EventServe.SqlStreamStore.MsSql.Extensions.Microsoft.DependencyInjection;
+using EventServe.EventStore.Extensions.Microsoft.DepdendencyInjection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -14,6 +15,8 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using EventServe.Services;
 using EventServe.Subscriptions.Persistent;
+using EventServe.EventStore;
+using EventServe.Extensions.Microsoft.DependencyInjection;
 
 namespace EventServe.TestApp
 {
@@ -39,6 +42,10 @@ namespace EventServe.TestApp
             //    options.Port = connOptions.Port;
             //    options.Username = connOptions.Username;
             //    options.Password = connOptions.Password;
+            //}, 
+            //new Assembly[] {
+            //    typeof(Startup).Assembly ,
+            //    typeof(PersistentSubscriptionProfile).Assembly
             //});
 
             services.AddEventServe(options =>
@@ -47,7 +54,7 @@ namespace EventServe.TestApp
                 options.SchemaName = Configuration["MsSqlStreamStoreOptions:SchemaName"];
             },
             Configuration["ConnectionStrings:MsSqlStreamStoreDb"],
-            new Assembly[] { 
+            new Assembly[] {
                 typeof(Startup).Assembly ,
                 typeof(PersistentSubscriptionProfile).Assembly
             });
@@ -61,8 +68,7 @@ namespace EventServe.TestApp
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseEventServe();
-            var manager = app.ApplicationServices.GetRequiredService<ISubscriptionRootManager>();
+            app.UseEventServeMsSqlStreamStore();
 
             var aggregateId = Guid.Parse("176a5024-6305-4f54-a2ce-e004bd62a118");
             var streamId =
@@ -70,18 +76,9 @@ namespace EventServe.TestApp
                 .WithAggregateId(Guid.Parse("176a5024-6305-4f54-a2ce-e004bd62a118"))
                 .WithAggregateType<DummyAggregate>()
                 .Build();
-            var random = new Random();
-
-
-            var subscriptionRootManagerStreamId =
-                StreamIdBuilder.Create()
-                .WithAggregateId(Guid.Empty)
-                .WithAggregateType<SubscriptionManagerRoot>()
-                .Build();
 
             var streamWriter = app.ApplicationServices.GetRequiredService<IEventStreamWriter>();
-            await CreateStreamData(aggregateId, streamId, streamWriter);
-
+            //await CreateStreamData(aggregateId, streamId, streamWriter);
 
             app.UseHttpsRedirection();
             app.UseRouting();

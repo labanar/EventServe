@@ -7,10 +7,13 @@ using ES = EventStore.ClientAPI;
 
 namespace EventServe.EventStore
 {
+
+    //TODO - implement IDisposable
     public class EventStoreStreamWriter : IEventStreamWriter
     {
         private readonly IEventStoreConnectionProvider _connectionProvider;
         private readonly IEventSerializer _eventSerializer;
+        private readonly IEventStoreConnection _conn;
 
         public EventStoreStreamWriter(
             IEventStoreConnectionProvider connectionProvider,
@@ -18,6 +21,8 @@ namespace EventServe.EventStore
         {
             _connectionProvider = connectionProvider;
             _eventSerializer = eventSerializer;
+            _conn = _connectionProvider.GetConnection();
+            _conn.ConnectAsync().Wait();
         }
 
         public Task AppendEventToStream(string stream, Event @event)
@@ -42,22 +47,16 @@ namespace EventServe.EventStore
 
         private async Task AppendEvent(string stream, Event @event, long expectedVersion)
         {
-            var eventData = _eventSerializer.SerializeEvent(@event);
-
-            using (var conn = _connectionProvider.GetConnection())
+            var eventData = _eventSerializer.SerializeEvent(@event);    
+            try
             {
-                await conn.ConnectAsync();
-
-                try
-                {
-                    await conn.AppendToStreamAsync(stream, expectedVersion, eventData);
-                }
-                catch (ES.Exceptions.WrongExpectedVersionException wrongVersionException)
-                {
-                    throw new WrongExpectedVersionException($"Stream version does not match the expected version {expectedVersion}.");
-                }
+                await _conn.AppendToStreamAsync(stream, expectedVersion, eventData);
             }
-        }
+            catch (ES.Exceptions.WrongExpectedVersionException wrongVersionException)
+            {
+                throw new WrongExpectedVersionException($"Stream version does not match the expected version {expectedVersion}.");
+            }
+         }
 
         private async Task AppendEvents(string stream, List<Event> events, long expectedVersion)
         {
@@ -65,18 +64,13 @@ namespace EventServe.EventStore
             foreach (var @event in events)
                 eventDatas.Add(_eventSerializer.SerializeEvent(@event));
 
-            using (var conn = _connectionProvider.GetConnection())
+            try
             {
-                await conn.ConnectAsync();
-
-                try
-                {
-                    await conn.AppendToStreamAsync(stream, expectedVersion, eventDatas);
-                }
-                catch (ES.Exceptions.WrongExpectedVersionException wrongVersionException)
-                {
-                    throw new WrongExpectedVersionException($"Stream version does not match the expected version {expectedVersion}.");
-                }
+                await _conn.AppendToStreamAsync(stream, expectedVersion, eventDatas);
+            }
+            catch (ES.Exceptions.WrongExpectedVersionException wrongVersionException)
+            {
+                throw new WrongExpectedVersionException($"Stream version does not match the expected version {expectedVersion}.");
             }
         }
     }

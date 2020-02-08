@@ -7,6 +7,7 @@ namespace EventServe.Subscriptions
     public class SubscriptionFilterBuilder
     {
         private StreamId _streamId;
+        private Type _aggregateType;
         private readonly HashSet<string> _streamExpressions = new HashSet<string>();
 
         public SubscriptionFilterBuilder() { }
@@ -14,10 +15,12 @@ namespace EventServe.Subscriptions
         public SubscriptionFilterBuilder SubscribeToAggregate<T>(Guid id)
             where T: AggregateRoot
         {
+            if (_aggregateType != null && _aggregateType != typeof(T))
+                throw new ArgumentException("You cannot subscribe to more than one aggregate type per subscription.");
+
+            _aggregateType = typeof(T);
             if (_streamId == null)
                 _streamId = new StreamId($"{typeof(T).Name.ToUpper()}-{id}");
-            else
-                _streamId = StreamId.All;
 
             _streamExpressions.Add($"^{typeof(T).Name.ToUpper()}-{id}$");
             return this;
@@ -26,25 +29,21 @@ namespace EventServe.Subscriptions
         public SubscriptionFilterBuilder SubscribeToAggregateCategory<T>()
          where T : AggregateRoot
         {
-            _streamId = StreamId.All;
+            if (_aggregateType != null && _aggregateType != typeof(T))
+                throw new ArgumentException("You cannot subscribe to more than one aggregate type per subscription.");
+
+            _aggregateType = typeof(T);
             var guidExpression = @"[({]?[a-fA-F0-9]{8}[-]?([a-fA-F0-9]{4}[-]?){3}[a-fA-F0-9]{12}[})]?";
             _streamExpressions.Add($"^{typeof(T).Name.ToUpper()}-{guidExpression}$");
             return this;
         }
-
-        public SubscriptionFilterBuilder SubscribeToStream(string streamId)
-        {
-            if (_streamId == null)
-                _streamId = new StreamId(streamId);
-            else
-                _streamId = StreamId.All;
-
-            return this;
-        }
-
         public SubscriptionFilter Build()
         {
-            return new SubscriptionFilter(_streamId, _streamExpressions);
+            //TODO - Argument check
+            if (_aggregateType != null)
+                return new SubscriptionFilter(_aggregateType, _streamExpressions);
+            else
+                return new SubscriptionFilter(_streamId, _streamExpressions);
         }
     }
 
@@ -53,9 +52,10 @@ namespace EventServe.Subscriptions
     {
         private readonly StreamId _streamId;
         private readonly HashSet<string> _streamExpressions;
+        private readonly Type _aggregateType;
 
         public StreamId SubscribedStreamId => _streamId;
-
+        public Type AggregateType => _aggregateType;
 
         public SubscriptionFilter(StreamId streamId, HashSet<string> streamExpressions)
         {
@@ -63,9 +63,16 @@ namespace EventServe.Subscriptions
             _streamExpressions = streamExpressions;
         }
 
+        public SubscriptionFilter(Type aggregateType, HashSet<string> streamExpressions)
+        {
+            _aggregateType = aggregateType;
+            _streamExpressions = streamExpressions;
+        }
+
+
         public bool DoesStreamIdPassFilter(string streamId)
         {
-            if (_streamId == StreamId.All)
+            if (_aggregateType != null)
             {
                 foreach (var pattern in _streamExpressions)
                 {

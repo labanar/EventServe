@@ -8,6 +8,5 @@ namespace EventServe.Subscriptions.Transient
     {
         ITransientSubscriptionHandlerExpression SubscribeToAggregate<T>(Guid id) where T : AggregateRoot;
         ITransientSubscriptionHandlerExpression SubscribeToAggregateCategory<T>() where T : AggregateRoot;
-        ITransientSubscriptionHandlerExpression SubscribeToStream(string streamId);
     }
 }

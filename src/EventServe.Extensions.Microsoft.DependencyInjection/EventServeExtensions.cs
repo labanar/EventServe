@@ -19,6 +19,11 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
             services.ConnectImplementationsToTypesClosing(typeof(ISubscriptionEventHandler<,>), assemblies, false);
         }
 
+        public static void UseEventServe(this IApplicationBuilder applicationBuilder)
+        {
+            applicationBuilder.RegisterEventServeSubscriptions();
+        }
+
         public static void RegisterEventServeSubscriptions(this IApplicationBuilder applicationBuilder)
         {
             var pSubs = new List<IPersistentStreamSubscription>();

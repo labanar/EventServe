@@ -41,6 +41,9 @@ namespace EventServe.EventStore
 
                     foreach (var resolvedEvent in slices.Events)
                     {
+                        if (resolvedEvent.OriginalStreamId[0] == '$')
+                            continue;
+
                         events.Add(_eventSerializer.DeseralizeEvent(resolvedEvent));
                         position = resolvedEvent.Event.EventNumber;
                     }

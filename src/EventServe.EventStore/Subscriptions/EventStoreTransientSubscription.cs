@@ -16,8 +16,8 @@ namespace EventServe.EventStore.Subscriptions
         private readonly IEventStoreConnectionProvider _connectionProvider;
 
         private IEventStoreConnection _connection;
-        private string _streamId;
         private ESSubscription _subscriptionBase;
+        private EventStoreCatchUpSubscription _catchUpSubscriptionBase;
 
         public EventStoreTransientSubscription(
             IEventSerializer eventSerializer,
@@ -40,39 +40,71 @@ namespace EventServe.EventStore.Subscriptions
         {
             _connection = _connectionProvider.GetConnection();
             await _connection.ConnectAsync();
-            await _connection.CreateSubscription(_streamId, Guid.NewGuid().ToString(), await _connectionProvider.GetCredentials(), _logger);
 
-            Func<ESSubscription, ResolvedEvent, Task> processEvent = (subscriptionBase, resolvedEvent) => {
-                return HandleEvent(subscriptionBase, resolvedEvent);
+
+            Func<EventStoreCatchUpSubscription, ResolvedEvent, Task> processEvent = (subscriptionBase, resolvedEvent) => {
+                return HandleEvent(resolvedEvent);
             };
 
-            if(_filter.SubscribedStreamId == StreamId.All)
+            Func<ESSubscription, ResolvedEvent, Task> processEventAlt = (subscriptionBase, resolvedEvent) => {
+                return HandleEvent(resolvedEvent);
+            };
+
+            var streamId = _filter.SubscribedStreamId == null ? $"$ce-{_filter.AggregateType.Name.ToUpper()}" : _filter.SubscribedStreamId.Id;
+
+
+            if (_startPosition == -1)
             {
-                _subscriptionBase = await _connection.SubscribeToAllAsync(
-                true,
-                processEvent,
-                subscriptionDropped: SubscriptionDropped);
                 _connected = true;
+                _subscriptionBase = await _connection.SubscribeToStreamAsync(
+                    streamId,
+                    true,
+                    processEventAlt,
+                    subscriptionDropped: SubscriptionDropped);
             }
             else
             {
-                _subscriptionBase = await _connection.SubscribeToStreamAsync(
-                    _filter.SubscribedStreamId.Id,
-                    true,
+                _connected = true;
+                _catchUpSubscriptionBase = _connection.SubscribeToStreamFrom(
+                    streamId,
+                    _startPosition,
+                    new CatchUpSubscriptionSettings(
+                        CatchUpSubscriptionSettings.Default.MaxLiveQueueSize,
+                        CatchUpSubscriptionSettings.Default.ReadBatchSize,
+                        false,
+                        true,
+                        CatchUpSubscriptionSettings.Default.SubscriptionName),
                     processEvent,
                     subscriptionDropped: SubscriptionDropped);
-                                _connected = true;
+
             }
         }
 
-        private async Task HandleEvent(ESSubscription subscriptionBase, ResolvedEvent resolvedEvent)
+        private async Task HandleEvent(ResolvedEvent resolvedEvent)
         {
             var @event = _eventSerializer.DeseralizeEvent(resolvedEvent);
-            await RaiseEvent(@event, resolvedEvent.OriginalStreamId);
+            @event.EventId = resolvedEvent.OriginalEvent.EventId;
+            await RaiseEvent(@event, resolvedEvent.Event.EventStreamId);
         }
 
-        private void SubscriptionDropped(ESSubscription subscription,
+
+        private void SubscriptionDropped(EventStoreCatchUpSubscription subscription,
             SubscriptionDropReason subscriptionDropReason, Exception ex)
+        {
+            if (_cancellationRequestedByUser)
+            {
+                _logger.LogInformation(ex, $"Subscription stopped by user: {subscriptionDropReason.ToString()}");
+                return;
+            }
+
+            _logger.LogError(ex, $"Subscription dropped: {subscriptionDropReason.ToString()}");
+            _connection.Dispose();
+            Connect().Wait();
+        }
+
+
+        private void SubscriptionDropped(ESSubscription subscription,
+           SubscriptionDropReason subscriptionDropReason, Exception ex)
         {
             if (_cancellationRequestedByUser)
             {

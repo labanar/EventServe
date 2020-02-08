@@ -15,7 +15,6 @@ namespace EventServe.EventStore.Subscriptions
 
         private IEventStoreConnection _connection;
         private EventStorePersistentSubscriptionBase _subscriptionBase;
-        private string _streamId;
 
         public EventStorePersistentSubscription(
             IEventSerializer eventSerializer,
@@ -38,7 +37,10 @@ namespace EventServe.EventStore.Subscriptions
         {
             _connection = _connectionProvider.GetConnection();
             await _connection.ConnectAsync();
-            await _connection.CreateSubscription(_filter.SubscribedStreamId == StreamId.All ? "$all" : _filter.SubscribedStreamId.Id,
+
+
+            var streamId = _filter.SubscribedStreamId == null ? $"$ce-{_filter.AggregateType.Name.ToUpper()}" : _filter.SubscribedStreamId.Id;
+            await _connection.CreateSubscription(streamId,
                                                  _subscriptionName,
                                                  await _connectionProvider.GetCredentials(),
                                                  _logger);
@@ -48,9 +50,8 @@ namespace EventServe.EventStore.Subscriptions
                 return HandleEvent(subscriptionBase, resolvedEvent);
             };
 
-
             _subscriptionBase = await _connection.ConnectToPersistentSubscriptionAsync(
-                _filter.SubscribedStreamId == StreamId.All ? "$all" : _filter.SubscribedStreamId.Id,
+                streamId,
                 _subscriptionName,
                 processEvent,
                 bufferSize: 10,
@@ -62,7 +63,8 @@ namespace EventServe.EventStore.Subscriptions
         private async Task HandleEvent(EventStorePersistentSubscriptionBase subscriptionBase, ResolvedEvent resolvedEvent)
         {
             var @event = _eventSerializer.DeseralizeEvent(resolvedEvent);
-            await RaiseEvent(@event, resolvedEvent.OriginalStreamId);
+            @event.EventId = resolvedEvent.OriginalEvent.EventId;
+            await RaiseEvent(@event, resolvedEvent.Event.EventStreamId);
         }
 
         private void SubscriptionDropped(EventStorePersistentSubscriptionBase eventStorePersistentSubscriptionBase,

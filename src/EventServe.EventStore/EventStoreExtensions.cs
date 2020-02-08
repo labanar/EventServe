@@ -35,18 +35,22 @@ namespace EventServe.EventStore
             Microsoft.Extensions.Logging.ILogger logger,
             bool startFromCurrent = false)
         {
-            var settings = (startFromCurrent) ?
-                PersistentSubscriptionSettings
-                .Create()
-                .DoNotResolveLinkTos()
-                .StartFromCurrent() :
-                PersistentSubscriptionSettings
-                .Create()
-                .DoNotResolveLinkTos()
-                .StartFromBeginning();
 
             try
             {
+                var settings = (startFromCurrent) ?
+                PersistentSubscriptionSettings
+                    .Create()
+                    .ResolveLinkTos()
+                    .StartFromCurrent()
+                    .Build() :
+                PersistentSubscriptionSettings
+                    .Create()
+                    .ResolveLinkTos()
+                    .StartFromBeginning()
+                    .Build();
+
+
                 await conn.CreatePersistentSubscriptionAsync(stream, group, settings, credentials);
                 return true;
             }

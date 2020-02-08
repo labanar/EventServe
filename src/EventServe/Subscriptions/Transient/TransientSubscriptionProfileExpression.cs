@@ -5,9 +5,9 @@ using System.Text;
 namespace EventServe.Subscriptions.Transient
 {
     public class TransientSubscriptionProfileExpression :
-        ITransientSubscriptionStreamExpression,
         ITransientSubscriptionPositionExpression,
-        ITransientSubscriptionHandlerExpression
+        ITransientSubscriptionHandlerExpression,
+        ITransientSubscriptionStreamExpression
 
     {
         private readonly SubscriptionFilterBuilder _filterBuilder;
@@ -45,16 +45,10 @@ namespace EventServe.Subscriptions.Transient
             return this;
         }
 
-        public ITransientSubscriptionHandlerExpression SubscribeToStream(string streamId)
-        {
-            _filterBuilder.SubscribeToStream(streamId);
-            return this;
-        }
         public ITransientSubscriptionHandlerExpression HandleEvent<T>() where T : Event
         {
             _subscribedEventTypes.Add(typeof(T));
             return this;
         }
-
     }
 }

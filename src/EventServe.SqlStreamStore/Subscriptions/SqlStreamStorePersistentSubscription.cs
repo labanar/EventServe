@@ -40,7 +40,7 @@ namespace EventServe.SqlStreamStore.Subscriptions
 
             _store = await _storeProvider.GetStreamStore();
 
-            if(_filter.SubscribedStreamId == StreamId.All)
+            if(_filter.SubscribedStreamId == null)
             {
                 _allSubscription = _store.SubscribeToAll(intPos,
                    (_, message, cancellationToken) =>

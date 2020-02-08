@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\EventServe.EventStore.Extensions.Microsoft.DependencyInjection\EventServe.EventStore.Extensions.Microsoft.DepdendencyInjection.csproj" />
     <ProjectReference Include="..\EventServe.EventStore\EventServe.EventStore.csproj" />
     <ProjectReference Include="..\EventServe.SqlStreamStore.MsSql.Extensions.Microsoft.DependencyInjection\EventServe.SqlStreamStore.MsSql.Extensions.Microsoft.DependencyInjection.csproj" />
     <ProjectReference Include="..\EventServe.SqlStreamStore.MsSql\EventServe.SqlStreamStore.MsSql.csproj" />

@@ -21,10 +21,11 @@ namespace EventServe.EventStore
         private Event DeserializeEvent(ResolvedEvent resolvedEvent)
         {
             var metaDataJson = Encoding.UTF8.GetString(resolvedEvent.Event.Metadata);
-            var metaData = JsonSerializer.Deserialize<EventMetaData>(metaDataJson);
-
             var eventDataJson = Encoding.UTF8.GetString(resolvedEvent.Event.Data);
+
+            var metaData = JsonSerializer.Deserialize<EventMetaData>(metaDataJson);
             var eventType = Type.GetType(metaData.AssemblyQualifiedName);
+
             var @event = JsonSerializer.Deserialize(eventDataJson, eventType) as Event;
             return @event;
         }

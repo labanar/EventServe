@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Reflection;
 using EventServe.Extensions.Microsoft.DependencyInjection;
+using Microsoft.AspNetCore.Builder;
 
 namespace EventServe.EventStore.Extensions.Microsoft.DepdendencyInjection
 {
@@ -20,6 +21,8 @@ namespace EventServe.EventStore.Extensions.Microsoft.DepdendencyInjection
             services.AddTransient<IEventStreamWriter, EventStoreStreamWriter>();
             services.AddTransient<IEventSerializer, EventSerializer>();
             services.AddTransient<IPersistentStreamSubscription, EventStorePersistentSubscription>();
+            services.AddTransient<ITransientStreamSubscription, EventStoreTransientSubscription>();
+
         }
     }
 }
