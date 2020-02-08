@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace EventServe.Subscriptions
@@ -28,8 +26,7 @@ namespace EventServe.Subscriptions
 
         public void OnNext(Event @event)
         {
-            //TODO - this does not feel right
-            if (!(@event is TEvent))
+            if (!(@event is TEvent typedEvent))
                 return;
 
             var handlerTask = _resolver.Resolve<TProfile, TEvent>();
@@ -39,7 +36,7 @@ namespace EventServe.Subscriptions
             if (handler == null)
                 return;
 
-            handler.HandleEvent(@event as TEvent).Wait();
+            handler.HandleEvent(typedEvent).Wait();
         }
     }
 }
