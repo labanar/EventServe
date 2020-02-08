@@ -32,7 +32,6 @@ namespace EventServe.Subscriptions
             _filter = filter;
             await ConnectAsync();
         }   
-
         public async Task Stop()
         {
             _cancellationRequestedByUser = true;
@@ -46,7 +45,7 @@ namespace EventServe.Subscriptions
         {
             //Check if this event passes through the filter
             if (_filter != null && !_filter.DoesStreamIdPassFilter(sourceStreamId))
-                return;
+                await AcknowledgeEvent(@event);
 
             //Add event to raising queue
             _dispatchQueue.Enqueue(DispatchEvent(@event));

@@ -1,5 +1,5 @@
 using System;
-using EventServe.SqlStreamStore.MsSql.DependencyInjection;
+using EventServe.SqlStreamStore.MsSql.Extensions.Microsoft.DependencyInjection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -48,7 +48,8 @@ namespace EventServe.TestApp
             },
             Configuration["ConnectionStrings:MsSqlStreamStoreDb"],
             new Assembly[] { 
-                typeof(Startup).Assembly 
+                typeof(Startup).Assembly ,
+                typeof(PersistentSubscriptionProfile).Assembly
             });
         }
 
@@ -79,7 +80,7 @@ namespace EventServe.TestApp
                 .Build();
 
             var streamWriter = app.ApplicationServices.GetRequiredService<IEventStreamWriter>();
-            //await CreateStreamData(aggregateId, streamId, streamWriter);
+            await CreateStreamData(aggregateId, streamId, streamWriter);
 
 
             app.UseHttpsRedirection();
@@ -90,8 +91,6 @@ namespace EventServe.TestApp
                 endpoints.MapControllers();
             });
         }
-
-        public class MyTestSubscription: IStreamSubscription { }
 
         private async Task CreateStreamData(Guid aggregateId, string streamId, IEventStreamWriter streamWriter)
         {

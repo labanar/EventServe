@@ -1,17 +1,34 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace EventServe.Subscriptions.Persistent
 {
-    public abstract class PersistentSubscriptionProfile<TProfile> : IStreamSubscription
-        where TProfile : PersistentSubscriptionProfile<TProfile>
-    {
-        private readonly IPersistentSubscriptionBuilder<TProfile> _builder;
 
-        public PersistentSubscriptionProfile(IPersistentSubscriptionBuilder<TProfile> builder)
+    public interface IPersistentSubscriptionProfile
+    {
+        SubscriptionFilter Filter { get; }
+        HashSet<Type> SubscribedEvents { get; }
+        IPersistentSubscriptionProfileExpression CreateProfile();
+    }
+
+    public abstract class PersistentSubscriptionProfile: IPersistentSubscriptionProfile, ISubscriptionProfile
+    {
+        public SubscriptionFilter Filter => _subscriptionFilterBuilder.Build();
+        public HashSet<Type> SubscribedEvents => _subscribedEvents;
+
+        private readonly SubscriptionFilterBuilder _subscriptionFilterBuilder;
+        private readonly HashSet<Type> _subscribedEvents;
+
+        public PersistentSubscriptionProfile()
         {
-            _builder = builder;
+            _subscriptionFilterBuilder = new SubscriptionFilterBuilder();
+            _subscribedEvents = new HashSet<Type>();
+        }
+
+        public IPersistentSubscriptionProfileExpression CreateProfile()
+        {
+            var expression = new PersistentSubcriptionBuilderExpression(_subscriptionFilterBuilder, _subscribedEvents);
+            return expression;
         }
     }
 }

@@ -6,21 +6,27 @@ namespace EventServe.Subscriptions
 {
     public class SubscriptionFilterBuilder
     {
-        private string _streamId;
-        private readonly List<string> _streamExpressions = new List<string>();
+        private StreamId _streamId;
+        private readonly HashSet<string> _streamExpressions = new HashSet<string>();
 
         public SubscriptionFilterBuilder() { }
 
         public SubscriptionFilterBuilder SubscribeToAggregate<T>(Guid id)
             where T: AggregateRoot
         {
-            _streamId = $"{typeof(T).Name.ToUpper()}-{id}";
+            if (_streamId == null)
+                _streamId = new StreamId($"{typeof(T).Name.ToUpper()}-{id}");
+            else
+                _streamId = StreamId.All;
+
+            _streamExpressions.Add($"^{typeof(T).Name.ToUpper()}-{id}$");
             return this;
         }
 
         public SubscriptionFilterBuilder SubscribeToAggregateCategory<T>()
          where T : AggregateRoot
         {
+            _streamId = StreamId.All;
             var guidExpression = @"[({]?[a-fA-F0-9]{8}[-]?([a-fA-F0-9]{4}[-]?){3}[a-fA-F0-9]{12}[})]?";
             _streamExpressions.Add($"^{typeof(T).Name.ToUpper()}-{guidExpression}$");
             return this;
@@ -28,55 +34,47 @@ namespace EventServe.Subscriptions
 
         public SubscriptionFilterBuilder SubscribeToStream(string streamId)
         {
-            _streamId = streamId;
+            if (_streamId == null)
+                _streamId = new StreamId(streamId);
+            else
+                _streamId = StreamId.All;
+
             return this;
         }
 
-
         public SubscriptionFilter Build()
         {
-            if (!string.IsNullOrEmpty(_streamId))
-                return new SubscriptionFilter(_streamId);
-            else
-                return new SubscriptionFilter(_streamExpressions);
+            return new SubscriptionFilter(_streamId, _streamExpressions);
         }
     }
 
 
     public class SubscriptionFilter
     {
-        private readonly string _streamId;
-        private readonly StreamId _sId;
-        private readonly List<string> _streamExpressions;
+        private readonly StreamId _streamId;
+        private readonly HashSet<string> _streamExpressions;
 
-        public StreamId SubscribedStreamId => (string.IsNullOrEmpty(_streamId)) ? StreamId.All : _sId;
+        public StreamId SubscribedStreamId => _streamId;
 
-        public SubscriptionFilter(string streamId)
+
+        public SubscriptionFilter(StreamId streamId, HashSet<string> streamExpressions)
         {
             _streamId = streamId;
-            _sId = new StreamId(streamId);
-        }
-
-        public SubscriptionFilter(List<string> streamExpressions)
-        {
             _streamExpressions = streamExpressions;
         }
 
         public bool DoesStreamIdPassFilter(string streamId)
         {
-            if (_streamId == StreamId.All.Id)
-                return true;
-
-            if (!string.IsNullOrEmpty(_streamId))
-                return _streamId == streamId;
-
-            foreach (var pattern in _streamExpressions)
+            if (_streamId == StreamId.All)
             {
-                if (Regex.IsMatch(streamId, pattern, RegexOptions.IgnoreCase))
-                    return true;
+                foreach (var pattern in _streamExpressions)
+                {
+                    if (Regex.IsMatch(streamId, pattern, RegexOptions.IgnoreCase))
+                        return true;
+                }
             }
 
-            return false;
+            return _streamId.Id == streamId;
         }
     }
 }
