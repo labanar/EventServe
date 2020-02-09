@@ -5,6 +5,6 @@ namespace EventServe.Services
 {
     public interface IEventStreamReader
     {
-        Task<List<Event>> ReadAllEventsFromStream(string stream);
+        IAsyncEnumerable<Event> ReadAllEventsFromStreamAsync(string stream);
     }
 }

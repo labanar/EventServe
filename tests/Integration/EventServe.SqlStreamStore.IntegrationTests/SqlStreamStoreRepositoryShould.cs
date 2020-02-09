@@ -32,8 +32,12 @@ namespace EventServe.SqlStreamStore.IntegrationTests
 
             fakeAggregate.Version.Should().Be(0);
 
-            var events = await reader.ReadAllEventsFromStream(streamId);
-            events.Count.Should().Be(1);
+            var count = 0;
+            var enumerator = reader.ReadAllEventsFromStreamAsync(streamId).GetAsyncEnumerator();
+            while (await enumerator.MoveNextAsync())
+                count++;
+            await enumerator.DisposeAsync();
+            count.Should().Be(1);
         }
 
         [Fact]

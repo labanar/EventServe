@@ -33,6 +33,12 @@ namespace EventServe
             }
         }
 
+        public void LoadFromHistory(Event @event)
+        {
+            ApplyChange(@event, false);
+            Version++;
+        }
+
         private void ApplyChange(Event @event, bool isNew)
         {
             this.AsDynamic().Apply(@event);

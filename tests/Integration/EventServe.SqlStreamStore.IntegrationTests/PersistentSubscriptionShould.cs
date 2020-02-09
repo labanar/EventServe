@@ -39,11 +39,12 @@ namespace EventServe.SqlStreamStore.IntegrationTests
             await sut.AppendEventsToStream(streamId, writeEvents);
 
             var reader = new SqlStreamStoreStreamReader(_storeProvider, _serializer);
-            var readEvents = await reader.ReadAllEventsFromStream(streamId);
-            readEvents.Count.Should().Be(3);
 
-            var subscription = new SqlStreamStorePersistentSubscription(_serializer, _storeProvider, null, null);
-
+            var count = 0;
+            var enumerator = reader.ReadAllEventsFromStreamAsync(streamId).GetAsyncEnumerator();
+            while (await enumerator.MoveNextAsync())
+                count++;
+            await enumerator.DisposeAsync();
         }
     }
 }
