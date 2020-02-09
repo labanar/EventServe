@@ -18,7 +18,7 @@ namespace EventServe.SqlStreamStore
             _eventSerializer = eventSerializer;
         }
 
-        public async Task<List<Event>> ReadAllEventsFromStream(string stream)
+        public async IAsyncEnumerable<Event> ReadAllEventsFromStreamAsync(string stream)
         {
             var store = await _streamStoreProvider.GetStreamStore();
 
@@ -30,15 +30,20 @@ namespace EventServe.SqlStreamStore
             if (page.Status == PageReadStatus.StreamNotFound)
                 throw new StreamNotFoundException(stream);
 
-            var events = new List<Event>();
-            while(!end)
+            while (!end)
             {
                 //process page results
+                var serializationTasks = new List<Task<Event>>();
                 foreach (var message in page.Messages)
-                    events.Add(await _eventSerializer.DeseralizeEvent(message));
+                    serializationTasks.Add(_eventSerializer.DeseralizeEvent(message));
+
+                await Task.WhenAll(serializationTasks);
+
+                foreach (var task in serializationTasks)
+                    yield return task.Result;
 
                 //Check next page
-                if(!page.IsEnd)
+                if (!page.IsEnd)
                 {
                     pos += PAGE_SIZE;
                     page = await store.ReadStreamForwards(streamId.Id, pos, PAGE_SIZE);
@@ -48,8 +53,6 @@ namespace EventServe.SqlStreamStore
                     end = true;
                 }
             }
-
-            return events;
         }
     }
 }

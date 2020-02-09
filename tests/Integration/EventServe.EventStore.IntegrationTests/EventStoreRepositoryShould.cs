@@ -34,8 +34,13 @@ namespace EventServe.EventStore.IntegrationTests
 
             fakeAggregate.Version.Should().Be(0);
 
-            var events = await reader.ReadAllEventsFromStream(streamId);
-            events.Count.Should().Be(1);
+
+            var enumerator = reader.ReadAllEventsFromStreamAsync(streamId).GetAsyncEnumerator();
+            var count = 0;
+            while (await enumerator.MoveNextAsync())
+                count++;
+            await enumerator.DisposeAsync();
+            count.Should().Be(1);
         }
 
         [Fact]

@@ -19,9 +19,8 @@ namespace EventServe.EventStore
             _eventSerializer = eventSerializer;
         }
 
-        public async Task<List<Event>> ReadAllEventsFromStream(string stream)
+        public async IAsyncEnumerable<Event> ReadAllEventsFromStreamAsync(string stream)
         {
-            var events = new List<Event>();
             using (var conn = _connectionProvider.GetConnection())
             {
                 await conn.ConnectAsync();
@@ -44,13 +43,12 @@ namespace EventServe.EventStore
                         if (resolvedEvent.OriginalStreamId[0] == '$')
                             continue;
 
-                        events.Add(_eventSerializer.DeseralizeEvent(resolvedEvent));
                         position = resolvedEvent.Event.EventNumber;
+                        yield return _eventSerializer.DeseralizeEvent(resolvedEvent);
                     }
                 }
                 while (!slices.IsEndOfStream);
             }
-            return events;
         }
     }
 }

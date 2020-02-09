@@ -28,7 +28,12 @@ namespace EventServe.EventStore.IntegrationTests {
                 .Build();
 
             var reader = new EventStoreStreamReader(connectionProvider, _serializer);
-            await Assert.ThrowsAsync<StreamNotFoundException>(async() => await reader.ReadAllEventsFromStream(streamId));
+            await Assert.ThrowsAsync<StreamNotFoundException>(async() =>
+            {
+                var enumerator = reader.ReadAllEventsFromStreamAsync(streamId).GetAsyncEnumerator();
+                while (await enumerator.MoveNextAsync()) ;
+                await enumerator.DisposeAsync();
+            });
         }
     }
 }
