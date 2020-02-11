@@ -81,7 +81,7 @@ namespace EventServe.TestApp
 
             var streamWriter = app.ApplicationServices.GetRequiredService<IEventStreamWriter>();
             var streamReader = app.ApplicationServices.GetRequiredService<IEventStreamReader>();
-            await CreateStreamData(aggregateId, streamId, streamWriter);
+            //await CreateStreamData(aggregateId, streamId, streamWriter);
 
             app.UseHttpsRedirection();
             app.UseRouting();

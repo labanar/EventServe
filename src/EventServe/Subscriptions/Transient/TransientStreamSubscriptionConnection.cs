@@ -47,12 +47,8 @@ namespace EventServe.Subscriptions
         protected abstract Task ConnectAsync();
         protected abstract Task DisconnectAsync();
 
-        protected async Task RaiseEvent<T>(T @event, string sourceStreamId) where T : Event
+        protected async Task RaiseEvent<T>(T @event) where T : Event
         {
-            //Check if this event passes through the filter
-            if (_filter != null && !_filter.DoesStreamIdPassFilter(sourceStreamId))
-                return;
-
             //Add event to raising queue
             _dispatchQueue.Enqueue(DispatchEvent(@event));
 

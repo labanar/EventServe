@@ -15,7 +15,6 @@ namespace EventServe.SqlStreamStore.Subscriptions
         private readonly ILogger<SqlStreamStoreTransientSubscriptionConnection> _logger;
         private readonly IEventSerializer _eventSerializer;
         private readonly ISqlStreamStoreProvider _storeProvider;
-        private  int _count;
         private IStreamStore _store;
         private IAllStreamSubscription _allSubscription;
         private IStreamSubscription _streamSubscription;
@@ -28,7 +27,6 @@ namespace EventServe.SqlStreamStore.Subscriptions
             _logger = logger;
             _eventSerializer = eventSerializer;
             _storeProvider = storeProvider;
-            _count = 0;
         }
 
         protected override async Task ConnectAsync()
@@ -63,12 +61,14 @@ namespace EventServe.SqlStreamStore.Subscriptions
 
         private async Task HandleEvent(StreamMessage message, CancellationToken cancellation)
         {
-            //_logger.LogInformation($"Event received: {message.Type} [{message.MessageId}]");
-            _logger.LogInformation($"[{_count.ToString().PadLeft(6, '0')}] {message.Type} [{message.MessageId}]");
+            //Check if this event passes through the filter
+            if (_filter != null && !_filter.DoesStreamIdPassFilter(message.StreamId))
+                return;
+
+            _logger.LogInformation($"Event received: {message.Type} [{message.MessageId}]");
             var @event = await _eventSerializer.DeseralizeEvent(message);
-            await RaiseEvent(@event, message.StreamId);
-            _count+=1;
-            //_logger.LogInformation($"Event rasied successfully: {message.Type} [{message.MessageId}]");
+            await RaiseEvent(@event);
+            _logger.LogInformation($"Event rasied successfully: {message.Type} [{message.MessageId}]");
         }
 
 

@@ -58,8 +58,8 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
 
                     var connectionSettings = new TransientStreamSubscriptionConnectionSettings(profile.StartPosition, profile.Filter);
                     var subId = Guid.NewGuid();
-                    manager.Add(subId, subscription, connectionSettings);
-                    manager.Connect(subId);
+                    manager.Add(subId, subscription, connectionSettings).Wait();
+                    manager.Connect(subId).Wait();
                 }
             }
 
@@ -86,16 +86,14 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
                     if(sub == default)
                     {
                         var subscriptionBase = rootManager.CreateTransientSubscription(profile.GetType().Name).Result;
-                        rootManager.StartSubscription(subscriptionBase.SubscriptionId);
+                        rootManager.StartSubscription(subscriptionBase.SubscriptionId).Wait();
                     }
                     else
                     {
-                        manager.Add(sub.SubscriptionId, subscription, connectionSettings);
+                        manager.Add(sub.SubscriptionId, subscription, connectionSettings).Wait();
                         if (sub.Connected)
-                            manager.Connect(sub.SubscriptionId);
-                    }
-
-                    
+                            manager.Connect(sub.SubscriptionId).Wait();
+                    }           
                 }
             }
 
@@ -121,13 +119,13 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
                     if (sub == default)
                     {
                         var subscriptionBase = rootManager.CreatePersistentSubscription(profile.GetType().Name).Result;
-                        rootManager.StartSubscription(subscriptionBase.SubscriptionId);
+                        rootManager.StartSubscription(subscriptionBase.SubscriptionId).Wait();
                     }
                     else
                     {
-                        manager.Add(sub.SubscriptionId, subscription, connectionSettings);
+                        manager.Add(sub.SubscriptionId, subscription, connectionSettings).Wait();
                         if (sub.Connected)
-                            manager.Connect(sub.SubscriptionId);
+                            manager.Connect(sub.SubscriptionId).Wait();
                     }
                 }
             }

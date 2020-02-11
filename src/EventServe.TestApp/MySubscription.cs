@@ -42,39 +42,39 @@ namespace EventServe.TestApp
         }
     }
 
-    //public class MyTransientSubscription : TransientSubscriptionProfile
-    //{
-    //    public MyTransientSubscription()
-    //    {
-    //        CreateProfile()
-    //            .StartFromBeginning()
-    //            .SubscribeToAggregateCategory<DummyAggregate>()
-    //            .HandleEvent<DummyUrlChangedEvent>()
-    //            .HandleEvent<DummyNameChangedEvent>();
-    //    }
+    public class MyTransientSubscription : TransientSubscriptionProfile
+    {
+        public MyTransientSubscription()
+        {
+            CreateProfile()
+                .StartFromEnd()
+                .SubscribeToAggregateCategory<DummyAggregate>()
+                .HandleEvent<DummyUrlChangedEvent>()
+                .HandleEvent<DummyNameChangedEvent>();
+        }
 
-    //    public class Handler :
-    //        ISubscriptionEventHandler<MyTransientSubscription, DummyUrlChangedEvent>,
-    //        ISubscriptionEventHandler<MyTransientSubscription, DummyNameChangedEvent>
-    //    {
-    //        private readonly ILogger<Handler> _logger;
+        public class Handler :
+            ISubscriptionEventHandler<MyTransientSubscription, DummyUrlChangedEvent>,
+            ISubscriptionEventHandler<MyTransientSubscription, DummyNameChangedEvent>
+        {
+            private readonly ILogger<Handler> _logger;
 
-    //        public Handler(ILogger<Handler> logger)
-    //        {
-    //            _logger = logger;
-    //        }
+            public Handler(ILogger<Handler> logger)
+            {
+                _logger = logger;
+            }
 
-    //        public Task HandleEvent(DummyUrlChangedEvent @event)
-    //        {
-    //            _logger.LogInformation($"Event received: {@event.GetType().Name} [{@event.EventId}]");
-    //            return Task.CompletedTask;
-    //        }
+            public Task HandleEvent(DummyUrlChangedEvent @event)
+            {
+                _logger.LogInformation($"Event received: {@event.GetType().Name} [{@event.EventId}]");
+                return Task.CompletedTask;
+            }
 
-    //        public Task HandleEvent(DummyNameChangedEvent @event)
-    //        {
-    //            _logger.LogInformation($"Event received: {@event.GetType().Name} [{@event.EventId}]");
-    //            return Task.CompletedTask;
-    //        }
-    //    }
-    //}
+            public Task HandleEvent(DummyNameChangedEvent @event)
+            {
+                _logger.LogInformation($"Event received: {@event.GetType().Name} [{@event.EventId}]");
+                return Task.CompletedTask;
+            }
+        }
+    }
 }

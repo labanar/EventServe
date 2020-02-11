@@ -13,7 +13,7 @@ namespace EventServe.Subscriptions.Domain
         public Guid CreateTransientSubscription(string name)
         {
             var subscriptionId = Guid.NewGuid();
-            ApplyChange(new SubscriptionCreatedEvent(Guid.NewGuid(), name, SubscriptionType.Transient));
+            ApplyChange(new SubscriptionCreatedEvent(subscriptionId, name, SubscriptionType.Transient));
             return subscriptionId;
         }
 
