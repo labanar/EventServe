@@ -7,20 +7,20 @@ namespace EventServe.Subscriptions.Domain
     public class SubscriptionManagerRoot : AggregateRoot
     {
         public override Guid Id => Guid.Empty;
-        private Dictionary<Guid, PersistentSubscription> _subscriptions = new Dictionary<Guid, PersistentSubscription>();
-        public Dictionary<Guid, PersistentSubscription> Subscriptions => _subscriptions;
+        private Dictionary<Guid, Subscription> _subscriptions = new Dictionary<Guid, Subscription>();
+        public Dictionary<Guid, Subscription> Subscriptions => _subscriptions;
 
-        public Guid CreateTransientSubscription(string name, string streamId)
+        public Guid CreateTransientSubscription(string name)
         {
             var subscriptionId = Guid.NewGuid();
-            ApplyChange(new SubscriptionCreatedEvent(Guid.NewGuid(), name, streamId, SubscriptionType.Transient));
+            ApplyChange(new SubscriptionCreatedEvent(Guid.NewGuid(), name, SubscriptionType.Transient));
             return subscriptionId;
         }
 
-        public Guid CreatePersistentSubscription(string name, string streamId)
+        public Guid CreatePersistentSubscription(string name)
         {
             var subscriptionId = Guid.NewGuid();
-            ApplyChange(new SubscriptionCreatedEvent(Guid.NewGuid(), name, streamId, SubscriptionType.Persistent));
+            ApplyChange(new SubscriptionCreatedEvent(subscriptionId, name, SubscriptionType.Persistent));
             return subscriptionId;
         }
 
@@ -31,7 +31,7 @@ namespace EventServe.Subscriptions.Domain
                 if (subscription.IsConnected == false)
                     return;
 
-                ApplyChange(new SubscriptionStoppedEvent(Guid.NewGuid(),reason, exception));
+                ApplyChange(new SubscriptionStoppedEvent(id, reason, exception));
             }
         }
 
@@ -42,7 +42,7 @@ namespace EventServe.Subscriptions.Domain
                 if (subscription.IsConnected == true)
                     return;
 
-                ApplyChange(new SubscriptionStartedEvent(Guid.NewGuid()));
+                ApplyChange(new SubscriptionStartedEvent(id));
             }
         }
 
@@ -53,18 +53,17 @@ namespace EventServe.Subscriptions.Domain
                 if (subscription.IsConnected == true)
                     return;
 
-                ApplyChange(new SubscriptionDeletedEvent(Guid.NewGuid()));
+                ApplyChange(new SubscriptionDeletedEvent(id));
             }
         }
 
 
         private void Apply(SubscriptionCreatedEvent @event)
         {
-            _subscriptions[@event.SubscriptionId] = new PersistentSubscription
+            _subscriptions[@event.SubscriptionId] = new Subscription
             {
                 Id = @event.SubscriptionId,
                 Name = @event.Name,
-                StreamId = @event.StreamId,
                 IsConnected = false,
                 Type = @event.Type
             };
@@ -88,11 +87,10 @@ namespace EventServe.Subscriptions.Domain
         }
 
 
-        public class PersistentSubscription
+        public class Subscription
         {
             public Guid Id { get; set; }
             public string Name { get; set; }
-            public string StreamId { get; set; }
             public bool IsConnected { get; set; }
             public SubscriptionType Type { get; set; }
         }

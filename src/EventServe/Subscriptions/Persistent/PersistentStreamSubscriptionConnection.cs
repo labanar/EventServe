@@ -1,16 +1,17 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using System;
+using EventServe.Subscriptions.Persistent;
 
 namespace EventServe.Subscriptions
 {
-    public interface IPersistentStreamSubscription : IObservable<Event>
+    public interface IPersistentStreamSubscriptionConnection : IObservable<Event>
     {
-        Task Start(string subscriptionName, SubscriptionFilter filter);
-        Task Stop();
+        Task Connect(PersistentStreamSubscriptionConnectionSettings settings);
+        Task Disconnect();
     }
 
-    public abstract class PersistentStreamSubscription : IPersistentStreamSubscription
+    public abstract class PersistentStreamSubscriptionConnection : IPersistentStreamSubscriptionConnection
     {
         private readonly Queue<Task> _dispatchQueue;
         private readonly SemaphoreLocker _locker;
@@ -20,19 +21,19 @@ namespace EventServe.Subscriptions
         protected string _subscriptionName;
         protected SubscriptionFilter _filter;
 
-        public PersistentStreamSubscription()
+        public PersistentStreamSubscriptionConnection()
         {
             _dispatchQueue = new Queue<Task>();
             _locker = new SemaphoreLocker();
         }
 
-        public async Task Start(string subscriptionName, SubscriptionFilter filter)
+        public async Task Connect(PersistentStreamSubscriptionConnectionSettings settings)
         {
-            _subscriptionName = subscriptionName;
-            _filter = filter;
+            _subscriptionName = settings.SubscriptionName;
+            _filter = settings.Filter;
             await ConnectAsync();
         }   
-        public async Task Stop()
+        public async Task Disconnect()
         {
             _cancellationRequestedByUser = true;
             await DisconnectAsync();
@@ -40,13 +41,9 @@ namespace EventServe.Subscriptions
 
         protected abstract Task ConnectAsync();
         protected abstract Task DisconnectAsync();
-        protected abstract Task AcknowledgeEvent<T>(T @event) where T : Event;
-        protected async Task RaiseEvent<T>(T @event, string sourceStreamId) where T : Event
+        protected abstract Task AcknowledgeEvent(Guid eventId);
+        protected async Task RaiseEvent<T>(T @event) where T : Event
         {
-            //Check if this event passes through the filter
-            if (_filter != null && !_filter.DoesStreamIdPassFilter(sourceStreamId))
-                await AcknowledgeEvent(@event);
-
             //Add event to raising queue
             _dispatchQueue.Enqueue(DispatchEvent(@event));
 
@@ -64,7 +61,7 @@ namespace EventServe.Subscriptions
                 foreach (var observer in _observers)
                     observer.OnNext(@event);
 
-                await AcknowledgeEvent(@event);
+                await AcknowledgeEvent(@event.EventId);
             }
             catch
             {

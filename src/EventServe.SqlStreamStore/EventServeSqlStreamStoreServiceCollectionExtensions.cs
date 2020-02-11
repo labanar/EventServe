@@ -12,11 +12,8 @@ namespace EventServe.SqlStreamStore
             services.AddTransient<IEventSerializer, SqlStreamStoreEventSerializer>();
             services.AddTransient<IEventStreamReader, SqlStreamStoreStreamReader>();
             services.AddTransient<IEventStreamWriter, SqlStreamStoreStreamWriter>();
-            services.AddTransient(typeof(IEventRepository<>), typeof(EventRepository<>));
-            services.AddTransient<ITransientStreamSubscription, SqlStreamStoreTransientSubscription>();
-            services.AddTransient<IPersistentStreamSubscription, SqlStreamStorePersistentSubscription>();
-            services.AddTransient<ISubscriptionRootManager, SubscriptionRootManager>();
-            services.AddSingleton<ISubscriptionManager, SubscriptionManager>();
+            services.AddTransient<ITransientStreamSubscriptionConnection, SqlStreamStoreTransientSubscriptionConnection>();
+            services.AddTransient<IPersistentStreamSubscriptionConnection, SqlStreamStorePersistentSubscriptionConnection>();
             services.AddTransient<IPersistentSubscriptionPositionManager, PersistentSubscriptionPositionManager>();
         }
     }

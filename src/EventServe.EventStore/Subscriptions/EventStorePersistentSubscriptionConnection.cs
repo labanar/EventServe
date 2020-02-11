@@ -7,19 +7,19 @@ using EventStore.ClientAPI;
 
 namespace EventServe.EventStore.Subscriptions
 {
-    public class EventStorePersistentSubscription : PersistentStreamSubscription
+    public class EventStorePersistentSubscriptionConnection : PersistentStreamSubscriptionConnection
     {
-        private readonly ILogger<EventStorePersistentSubscription> _logger;
+        private readonly ILogger<EventStorePersistentSubscriptionConnection> _logger;
         private readonly IEventSerializer _eventSerializer;
         private readonly IEventStoreConnectionProvider _connectionProvider;
 
         private IEventStoreConnection _connection;
         private EventStorePersistentSubscriptionBase _subscriptionBase;
 
-        public EventStorePersistentSubscription(
+        public EventStorePersistentSubscriptionConnection(
             IEventSerializer eventSerializer,
             IEventStoreConnectionProvider connectionProvider,
-            ILogger<EventStorePersistentSubscription> logger)
+            ILogger<EventStorePersistentSubscriptionConnection> logger)
         {
             _logger = logger;
             _eventSerializer = eventSerializer;
@@ -62,9 +62,12 @@ namespace EventServe.EventStore.Subscriptions
 
         private async Task HandleEvent(EventStorePersistentSubscriptionBase subscriptionBase, ResolvedEvent resolvedEvent)
         {
+            if (_filter != null && !_filter.DoesStreamIdPassFilter(resolvedEvent.Event.EventStreamId))
+                await AcknowledgeEvent(resolvedEvent.OriginalEvent.EventId);
+
             var @event = _eventSerializer.DeseralizeEvent(resolvedEvent);
             @event.EventId = resolvedEvent.OriginalEvent.EventId;
-            await RaiseEvent(@event, resolvedEvent.Event.EventStreamId);
+            await RaiseEvent(@event);
         }
 
         private void SubscriptionDropped(EventStorePersistentSubscriptionBase eventStorePersistentSubscriptionBase,
@@ -81,12 +84,12 @@ namespace EventServe.EventStore.Subscriptions
             Connect().Wait();   
         }
 
-        protected override Task AcknowledgeEvent<T>(T @event)
+        protected override Task AcknowledgeEvent(Guid eventId)
         {
             if (_subscriptionBase == null)
                 throw new ApplicationException("Subscription is not connected, therefore acknowledgement cannot be sent.");
 
-            _subscriptionBase.Acknowledge(@event.EventId);
+            _subscriptionBase.Acknowledge(eventId);
             return Task.CompletedTask;
         }
 

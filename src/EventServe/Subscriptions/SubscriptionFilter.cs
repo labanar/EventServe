@@ -32,6 +32,7 @@ namespace EventServe.Subscriptions
             if (_aggregateType != null && _aggregateType != typeof(T))
                 throw new ArgumentException("You cannot subscribe to more than one aggregate type per subscription.");
 
+             _streamId = null;
             _aggregateType = typeof(T);
             var guidExpression = @"[({]?[a-fA-F0-9]{8}[-]?([a-fA-F0-9]{4}[-]?){3}[a-fA-F0-9]{12}[})]?";
             _streamExpressions.Add($"^{typeof(T).Name.ToUpper()}-{guidExpression}$");
@@ -40,10 +41,10 @@ namespace EventServe.Subscriptions
         public SubscriptionFilter Build()
         {
             //TODO - Argument check
-            if (_aggregateType != null)
-                return new SubscriptionFilter(_aggregateType, _streamExpressions);
-            else
+            if (_streamId != null)
                 return new SubscriptionFilter(_streamId, _streamExpressions);
+            else
+                return new SubscriptionFilter(_aggregateType, _streamExpressions);
         }
     }
 
@@ -80,6 +81,10 @@ namespace EventServe.Subscriptions
                         return true;
                 }
             }
+
+            if (_streamId == null)
+                return false;
+
 
             return _streamId.Id == streamId;
         }

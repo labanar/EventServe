@@ -49,6 +49,8 @@ namespace EventServe.EventStore
                 }
                 while (!slices.IsEndOfStream);
             }
+
+            yield break;
         }
     }
 }

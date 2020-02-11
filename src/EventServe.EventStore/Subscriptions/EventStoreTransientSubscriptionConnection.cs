@@ -9,9 +9,9 @@ using ESSubscription = EventStore.ClientAPI.EventStoreSubscription;
 
 namespace EventServe.EventStore.Subscriptions
 {
-    public class EventStoreTransientSubscription : TransientStreamSubscription
+    public class EventStoreTransientSubscriptionConnection : TransientStreamSubscriptionConnection
     {
-        private readonly ILogger<EventStorePersistentSubscription> _logger;
+        private readonly ILogger<EventStorePersistentSubscriptionConnection> _logger;
         private readonly IEventSerializer _eventSerializer;
         private readonly IEventStoreConnectionProvider _connectionProvider;
 
@@ -19,10 +19,10 @@ namespace EventServe.EventStore.Subscriptions
         private ESSubscription _subscriptionBase;
         private EventStoreCatchUpSubscription _catchUpSubscriptionBase;
 
-        public EventStoreTransientSubscription(
+        public EventStoreTransientSubscriptionConnection(
             IEventSerializer eventSerializer,
             IEventStoreConnectionProvider connectionProvider,
-            ILogger<EventStorePersistentSubscription> logger)
+            ILogger<EventStorePersistentSubscriptionConnection> logger)
         {
             _logger = logger;
             _eventSerializer = eventSerializer;

@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace EventServe.TestApp
 {
-    public class MySubscriptionProfile6 : PersistentSubscriptionProfile
+    public class MySubscriptionProfile7 : PersistentSubscriptionProfile
     {
-        public MySubscriptionProfile6()
+        public MySubscriptionProfile7()
         {
             CreateProfile()
                 .SubscribeToAggregateCategory<DummyAggregate>()
@@ -18,8 +18,8 @@ namespace EventServe.TestApp
         }
 
         public class Handler :
-            ISubscriptionEventHandler<MySubscriptionProfile6, DummyUrlChangedEvent>,
-            ISubscriptionEventHandler<MySubscriptionProfile6, DummyNameChangedEvent>
+            ISubscriptionEventHandler<MySubscriptionProfile7, DummyUrlChangedEvent>,
+            ISubscriptionEventHandler<MySubscriptionProfile7, DummyNameChangedEvent>
         {
             private readonly ILogger<Handler> _logger;
 

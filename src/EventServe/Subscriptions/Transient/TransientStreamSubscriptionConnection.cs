@@ -1,17 +1,17 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using System;
-
+using EventServe.Subscriptions.Transient;
 
 namespace EventServe.Subscriptions
 {
-    public interface ITransientStreamSubscription: IObservable<Event>
+    public interface ITransientStreamSubscriptionConnection: IObservable<Event>
     {
-        Task Start(int startPosition, SubscriptionFilter filter);
-        Task Stop();
+        Task Connect(TransientStreamSubscriptionConnectionSettings connectionSettings);
+        Task Disconnect();
     }
 
-    public abstract class TransientStreamSubscription : ITransientStreamSubscription
+    public abstract class TransientStreamSubscriptionConnection : ITransientStreamSubscriptionConnection
     {
         private readonly Queue<Task> _dispatchQueue = new Queue<Task>();
         private readonly SemaphoreLocker _locker;
@@ -21,18 +21,18 @@ namespace EventServe.Subscriptions
         protected bool _cancellationRequestedByUser = false;
         private List<IObserver<Event>> _observers = new List<IObserver<Event>>();
 
-        public TransientStreamSubscription()
+        public TransientStreamSubscriptionConnection()
         {
             _locker = new SemaphoreLocker();
         }
 
-        public async Task Start(int startPosition, SubscriptionFilter filter)
+        public async Task Connect(TransientStreamSubscriptionConnectionSettings connectionSettings)
         {
-            _filter = filter;
-            _startPosition = startPosition;
+            _filter = connectionSettings.Filter;
+            _startPosition = connectionSettings.StartPosition;
             await ConnectAsync();
         }
-        public async Task Stop()
+        public async Task Disconnect()
         {
             _cancellationRequestedByUser = true;
             await DisconnectAsync();

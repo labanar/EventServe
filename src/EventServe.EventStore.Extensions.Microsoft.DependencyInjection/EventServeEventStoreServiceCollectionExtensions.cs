@@ -20,8 +20,8 @@ namespace EventServe.EventStore.Extensions.Microsoft.DepdendencyInjection
             services.AddTransient<IEventStreamReader, EventStoreStreamReader>();
             services.AddTransient<IEventStreamWriter, EventStoreStreamWriter>();
             services.AddTransient<IEventSerializer, EventSerializer>();
-            services.AddTransient<IPersistentStreamSubscription, EventStorePersistentSubscription>();
-            services.AddTransient<ITransientStreamSubscription, EventStoreTransientSubscription>();
+            services.AddTransient<IPersistentStreamSubscriptionConnection, EventStorePersistentSubscriptionConnection>();
+            services.AddTransient<ITransientStreamSubscriptionConnection, EventStoreTransientSubscriptionConnection>();
 
         }
     }

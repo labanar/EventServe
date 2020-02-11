@@ -33,32 +33,32 @@ namespace EventServe.TestApp
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMediatR(typeof(Startup).Assembly, typeof(EventStorePersistentSubscription).Assembly, typeof(PersistentStreamSubscription).Assembly);
+            services.AddMediatR(typeof(Startup).Assembly, typeof(EventStorePersistentSubscriptionConnection).Assembly, typeof(PersistentStreamSubscriptionConnection).Assembly);
             services.AddControllers();
-
-            services.AddEventServe(options =>
-            {
-                var connOptions = Configuration.GetSection("EventStoreConnectionOptions").Get<EventStoreConnectionOptions>();
-                options.Host = connOptions.Host;
-                options.Port = connOptions.Port;
-                options.Username = connOptions.Username;
-                options.Password = connOptions.Password;
-            },
-            new Assembly[] {
-                typeof(Startup).Assembly ,
-                typeof(PersistentSubscriptionProfile).Assembly
-            });
 
             //services.AddEventServe(options =>
             //{
-            //    options.ConnectionString = Configuration["ConnectionStrings:MsSqlStreamStoreDb"];
-            //    options.SchemaName = Configuration["MsSqlStreamStoreOptions:SchemaName"];
+            //    var connOptions = Configuration.GetSection("EventStoreConnectionOptions").Get<EventStoreConnectionOptions>();
+            //    options.Host = connOptions.Host;
+            //    options.Port = connOptions.Port;
+            //    options.Username = connOptions.Username;
+            //    options.Password = connOptions.Password;
             //},
-            //Configuration["ConnectionStrings:MsSqlStreamStoreDb"],
             //new Assembly[] {
             //    typeof(Startup).Assembly ,
             //    typeof(PersistentSubscriptionProfile).Assembly
             //});
+
+            services.AddEventServe(options =>
+            {
+                options.ConnectionString = Configuration["ConnectionStrings:MsSqlStreamStoreDb"];
+                options.SchemaName = Configuration["MsSqlStreamStoreOptions:SchemaName"];
+            },
+            Configuration["ConnectionStrings:MsSqlStreamStoreDb"],
+            new Assembly[] {
+                typeof(PersistentSubscriptionProfile).Assembly,
+                typeof(Startup).Assembly,
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -69,8 +69,8 @@ namespace EventServe.TestApp
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseEventServe();
-            //app.UseEventServeMsSqlStreamStore();
+            //app.UseEventServe();
+            app.UseEventServeMsSqlStreamStore();
 
             var aggregateId = Guid.Parse("176a5024-6305-4f54-a2ce-e004bd62a118");
             var streamId =
@@ -81,7 +81,7 @@ namespace EventServe.TestApp
 
             var streamWriter = app.ApplicationServices.GetRequiredService<IEventStreamWriter>();
             var streamReader = app.ApplicationServices.GetRequiredService<IEventStreamReader>();
-            //await CreateStreamData(aggregateId, streamId, streamWriter);
+            await CreateStreamData(aggregateId, streamId, streamWriter);
 
             app.UseHttpsRedirection();
             app.UseRouting();

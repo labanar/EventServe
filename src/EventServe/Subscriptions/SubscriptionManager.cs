@@ -1,4 +1,6 @@
 ﻿using EventServe.Subscriptions.Domain;
+using EventServe.Subscriptions.Persistent;
+using EventServe.Subscriptions.Transient;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -7,51 +9,81 @@ namespace EventServe.Subscriptions
 {
     public interface ISubscriptionManager
     {
-        Task AddSubscription(Guid subscriptionId, ITransientStreamSubscription subscription);
-        Task AddSubscription(Guid subscriptionId, IPersistentStreamSubscription subscription);
-        Task StartSubscription(Guid subscriptionId);
-        Task StopSubscription(Guid subscriptionId);
+        Task Add(Guid subscriptionId, ITransientStreamSubscriptionConnection subscription, TransientStreamSubscriptionConnectionSettings connectionSettings);
+        Task Add(Guid subscriptionId, IPersistentStreamSubscriptionConnection subscription, PersistentStreamSubscriptionConnectionSettings connectionSettings);
+        Task Connect(Guid subscriptionId);
+        Task Disconnect(Guid subscriptionId);
     }
 
     public class SubscriptionManager : ISubscriptionManager
     {
-        private readonly IServiceProvider _serivceProvider;
-        private Dictionary<Guid, ITransientStreamSubscription> _transientSubscriptions = new Dictionary<Guid, ITransientStreamSubscription>();
-        private Dictionary<Guid, IPersistentStreamSubscription> _persistentSubscriptions = new Dictionary<Guid, IPersistentStreamSubscription>();
+        private Dictionary<Guid, (ITransientStreamSubscriptionConnection Connection, TransientStreamSubscriptionConnectionSettings ConnectionSettings)> _transientSubscriptions =
+            new Dictionary<Guid, (ITransientStreamSubscriptionConnection Connection, TransientStreamSubscriptionConnectionSettings ConnectionSettings)>();
 
-        //TODO - anyway to avoid the service locator pattern here?
-        public SubscriptionManager(IServiceProvider serviceProvider)
+        private Dictionary<Guid, (IPersistentStreamSubscriptionConnection Connection, PersistentStreamSubscriptionConnectionSettings ConnectionSettings)> _persistentSubscriptions =
+            new Dictionary<Guid, (IPersistentStreamSubscriptionConnection Connection, PersistentStreamSubscriptionConnectionSettings ConnectionSettings)>();
+
+        public Task Add(Guid subscriptionId, ITransientStreamSubscriptionConnection subscription, TransientStreamSubscriptionConnectionSettings connectionSettings)
         {
-            _serivceProvider = serviceProvider;
-        }
-
-
-        public Task AddSubscription(Guid subscriptionId, ITransientStreamSubscription subscription)
-        {
-            _transientSubscriptions[subscriptionId] = subscription;
+            _transientSubscriptions[subscriptionId] = (subscription, connectionSettings);
             return Task.CompletedTask;
         }
-        public Task AddSubscription(Guid subscriptionId, IPersistentStreamSubscription subscription)
+        public Task Add(Guid subscriptionId, IPersistentStreamSubscriptionConnection subscription, PersistentStreamSubscriptionConnectionSettings connectionSettings)
         {
-            _persistentSubscriptions[subscriptionId] = subscription;
+            _persistentSubscriptions[subscriptionId] = (subscription, connectionSettings);
             return Task.CompletedTask;
         }
-      
-        public async Task StartSubscription(Guid subscriptionId)
+
+        public async Task Connect(Guid subscriptionId)
         {
-
-
-            //if (subscription.Type == Domain.Enums.SubscriptionType.Persistent)
-            //    await _persistentSubscriptions[subscriptionId].Start(subscriptionId, subscription.StreamId);
-            //else
-            //    await _transientSubscriptions[subscriptionId].Start(subscriptionId, subscription.StreamId);
+            if (_persistentSubscriptions.TryGetValue(subscriptionId, out var pSub))
+                await pSub.Connection.Connect(pSub.ConnectionSettings);
+            else if (_transientSubscriptions.TryGetValue(subscriptionId, out var tSub))
+                await tSub.Connection.Connect(tSub.ConnectionSettings);
         }
 
-        public async Task StopSubscription(Guid subscriptionId)
+        public async Task Disconnect(Guid subscriptionId)
         {
+            if (_persistentSubscriptions.TryGetValue(subscriptionId, out var pSub))
+                await pSub.Connection.Disconnect();
+            else if (_transientSubscriptions.TryGetValue(subscriptionId, out var tSub))
+                await tSub.Connection.Disconnect();
+        }
+    }
 
 
-          
+    public class SubscriptionManagerProfile : TransientSubscriptionProfile
+    {
+        public SubscriptionManagerProfile()
+        {
+            CreateProfile()
+                .StartFromEnd()
+                .SubscribeToAggregate<SubscriptionManagerRoot>(Guid.Empty)
+                .HandleEvent<SubscriptionStartedEvent>()
+                .HandleEvent<SubscriptionStoppedEvent>();
+        }
+
+
+        public class Handler :
+            ISubscriptionEventHandler<SubscriptionManagerProfile, SubscriptionStartedEvent>,
+            ISubscriptionEventHandler<SubscriptionManagerProfile, SubscriptionStoppedEvent>
+{
+            private readonly ISubscriptionManager _manager;
+
+            public Handler(ISubscriptionManager manager)
+            {
+                _manager = manager;
+            }
+
+            public async Task HandleEvent(SubscriptionStartedEvent @event)
+            {
+                await _manager.Connect(@event.SubscriptionId);
+            }
+
+            public async Task HandleEvent(SubscriptionStoppedEvent @event)
+            {
+                await _manager.Disconnect(@event.SubscriptionId);
+            }
         }
     }
 }

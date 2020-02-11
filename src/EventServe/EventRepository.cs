@@ -31,11 +31,16 @@ namespace EventServe
 
                 return aggregate;
             }
+            catch
+            {
+                return aggregate;
+            }
             finally
             {
                 if(enumerator != null)
                     await enumerator.DisposeAsync();
             }
+
         }
 
         public async Task<long> SaveAsync(AggregateRoot aggregate, long version = -2) {
@@ -73,6 +78,9 @@ namespace EventServe
             var enumerator = _streamReader.ReadAllEventsFromStreamAsync(streamId).GetAsyncEnumerator();
             try
             {
+                if (enumerator == null)
+                    yield break;
+
                 while (await enumerator.MoveNextAsync())
                     yield return enumerator.Current;
             }
@@ -81,7 +89,8 @@ namespace EventServe
                 if (enumerator != null)
                     await enumerator.DisposeAsync();
             }
-   
+
+            yield break;
         }
     }
 }

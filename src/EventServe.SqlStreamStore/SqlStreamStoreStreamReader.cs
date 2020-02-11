@@ -53,6 +53,8 @@ namespace EventServe.SqlStreamStore
                     end = true;
                 }
             }
+
+            yield break;
         }
     }
 }

@@ -10,8 +10,8 @@ namespace EventServe.Subscriptions
     public interface ISubscriptionRootManager
     {
         Task<IEnumerable<SubscriptionBase>> GetSubscriptions();
-        Task<SubscriptionBase> CreatePersistentSubscription(string name, string streamId);
-        Task<SubscriptionBase> CreateTransientSubscription(string name, string streamId);
+        Task<SubscriptionBase> CreatePersistentSubscription(string name);
+        Task<SubscriptionBase> CreateTransientSubscription(string name);
         Task StopSubscription(Guid subscriptionId);
         Task StartSubscription(Guid subscriptionId);
     }
@@ -25,33 +25,31 @@ namespace EventServe.Subscriptions
             _repository = repository;
         }
 
-        public async Task<SubscriptionBase> CreatePersistentSubscription(string name, string streamId)
+        public async Task<SubscriptionBase> CreatePersistentSubscription(string name)
         {
             var managerRoot = await _repository.GetById(Guid.Empty);
             if (managerRoot == null) managerRoot = new SubscriptionManagerRoot();
-            var subscriptionId = managerRoot.CreatePersistentSubscription(name, streamId);
+            var subscriptionId = managerRoot.CreatePersistentSubscription(name);
             await _repository.SaveAsync(managerRoot, managerRoot.Version);
             return new SubscriptionBase
             {
                 SubscriptionId = subscriptionId,
                 Name = name,
-                StreamId = streamId,
                 Connected = false,
                 Type = Domain.Enums.SubscriptionType.Persistent
             };
         }
 
-        public async Task<SubscriptionBase> CreateTransientSubscription(string name, string streamId)
+        public async Task<SubscriptionBase> CreateTransientSubscription(string name)
         {
             var managerRoot = await _repository.GetById(Guid.Empty);
             if (managerRoot == null) managerRoot = new SubscriptionManagerRoot();
-            var subscriptionId = managerRoot.CreateTransientSubscription(name, streamId);
+            var subscriptionId = managerRoot.CreateTransientSubscription(name);
             await _repository.SaveAsync(managerRoot, managerRoot.Version);
             return new SubscriptionBase
             {
                 SubscriptionId = subscriptionId,
                 Name = name,
-                StreamId = streamId,
                 Connected = false,
                 Type = Domain.Enums.SubscriptionType.Transient
             };
@@ -65,7 +63,6 @@ namespace EventServe.Subscriptions
             {
                 SubscriptionId = x.Id,
                 Name = x.Name,
-                StreamId = x.StreamId,
                 Connected = x.IsConnected
             }).ToList();
         }
