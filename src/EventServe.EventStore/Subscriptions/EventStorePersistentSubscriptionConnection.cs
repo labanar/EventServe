@@ -62,7 +62,7 @@ namespace EventServe.EventStore.Subscriptions
 
         private async Task HandleEvent(EventStorePersistentSubscriptionBase subscriptionBase, ResolvedEvent resolvedEvent)
         {
-            if (_filter != null && !_filter.DoesStreamIdPassFilter(resolvedEvent.Event.EventStreamId))
+            if (_filter != null && !_filter.DoesEventPassFilter(resolvedEvent.Event.EventType, resolvedEvent.Event.EventStreamId))
                 await AcknowledgeEvent(resolvedEvent.OriginalEvent.EventId);
 
             var @event = _eventSerializer.DeseralizeEvent(resolvedEvent);

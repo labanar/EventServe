@@ -48,6 +48,7 @@ namespace EventServe.Subscriptions.Transient
         public ITransientSubscriptionHandlerExpression HandleEvent<T>() where T : Event
         {
             _subscribedEventTypes.Add(typeof(T));
+            _filterBuilder.HandleEvent<T>();
             return this;
         }
     }

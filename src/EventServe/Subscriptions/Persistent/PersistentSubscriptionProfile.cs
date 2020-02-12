@@ -14,20 +14,20 @@ namespace EventServe.Subscriptions.Persistent
     public abstract class PersistentSubscriptionProfile: IPersistentSubscriptionProfile, ISubscriptionProfile
     {
         public SubscriptionFilter Filter => _subscriptionFilterBuilder.Build();
-        public HashSet<Type> SubscribedEvents => _subscribedEvents;
+        public HashSet<Type> SubscribedEvents => _eventTypes;
 
         private readonly SubscriptionFilterBuilder _subscriptionFilterBuilder;
-        private readonly HashSet<Type> _subscribedEvents;
+        private readonly HashSet<Type> _eventTypes;
 
         public PersistentSubscriptionProfile()
         {
             _subscriptionFilterBuilder = new SubscriptionFilterBuilder();
-            _subscribedEvents = new HashSet<Type>();
+            _eventTypes = new HashSet<Type>();
         }
 
         public IPersistentSubscriptionProfileExpression CreateProfile()
         {
-            var expression = new PersistentSubcriptionBuilderExpression(_subscriptionFilterBuilder, _subscribedEvents);
+            var expression = new PersistentSubcriptionBuilderExpression(_subscriptionFilterBuilder, _eventTypes);
             return expression;
         }
     }

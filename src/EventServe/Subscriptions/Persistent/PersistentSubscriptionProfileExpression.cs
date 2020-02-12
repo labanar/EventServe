@@ -9,12 +9,12 @@ namespace EventServe.Subscriptions.Persistent
         IPersistentSubscriptionHandlerExpression
     {
         private readonly SubscriptionFilterBuilder _filterBuilder;
-        private HashSet<Type> _subscribedEventTypes = new HashSet<Type>();
+        private readonly HashSet<Type> _eventTypes;
 
-        public PersistentSubcriptionBuilderExpression(SubscriptionFilterBuilder filterBuilder, HashSet<Type> subscribedEvents)
+        public PersistentSubcriptionBuilderExpression(SubscriptionFilterBuilder filterBuilder, HashSet<Type> eventTypes)
         {
             _filterBuilder = filterBuilder;
-            _subscribedEventTypes = subscribedEvents;
+            _eventTypes = eventTypes;
         }
 
         public IPersistentSubscriptionHandlerExpression SubscribeToAggregate<T>(Guid id) where T : AggregateRoot
@@ -31,7 +31,8 @@ namespace EventServe.Subscriptions.Persistent
 
         public IPersistentSubscriptionHandlerExpression HandleEvent<T>() where T : Event
         {
-            _subscribedEventTypes.Add(typeof(T));
+            _filterBuilder.HandleEvent<T>();
+            _eventTypes.Add(typeof(T));
             return this;
         }
     }

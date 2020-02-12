@@ -83,7 +83,7 @@ namespace EventServe.EventStore.Subscriptions
         private async Task HandleEvent(ResolvedEvent resolvedEvent)
         {
             //Check if this event passes through the filter
-            if (_filter != null && !_filter.DoesStreamIdPassFilter(resolvedEvent.Event.EventStreamId))
+            if (_filter != null && !_filter.DoesEventPassFilter(resolvedEvent.Event.EventType, resolvedEvent.Event.EventStreamId))
                 return;
 
             var @event = _eventSerializer.DeseralizeEvent(resolvedEvent);
