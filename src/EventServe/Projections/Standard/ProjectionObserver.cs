@@ -1,4 +1,4 @@
-﻿using EventServe.Projections.Standard;
+﻿using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Threading.Tasks;
 
@@ -8,15 +8,11 @@ namespace EventServe.Projections
         where TProjection : Projection, new()
         where TEvent : Event
     {
-        private readonly IProjectionRepositoryResolver _repoResolver;
-        private readonly IProjectionHandlerResolver _handlerResolver;
+        private readonly IServiceProvider _serviceProvider;
 
-        public ProjectionObserver(
-            IProjectionHandlerResolver handlerResolver,
-            IProjectionRepositoryResolver repoResolver)
+        public ProjectionObserver(IServiceProvider serviceProvider)
         {
-            _repoResolver = repoResolver;
-            _handlerResolver = handlerResolver;
+            _serviceProvider = serviceProvider;
         }
 
         public void OnCompleted()
@@ -34,27 +30,28 @@ namespace EventServe.Projections
             if (!(@event is TEvent typedEvent))
                 return;
 
-            var worker = Task.Factory
-                .StartNew(async () =>
-                {
-                    var handler = await _handlerResolver.Resolve<TProjection, TEvent>();
-                    if (handler == null)
-                        return;
-
-                    var repository = await _repoResolver.Resolve();
-                    if (repository == null)
-                        return;
-
-                    var readModel = await repository.GetProjectionState<TProjection>();
-                    if (readModel == null)
-                        readModel = new TProjection();
-
-                    await handler.ProjectEvent(readModel, typedEvent);
-                    await repository.SetProjectionState(readModel);
-                });
-
             try
             {
+                var worker = Task.Factory
+                .StartNew(async () =>
+                {
+                    using (var scope = _serviceProvider.CreateScope())
+                    {
+                        var handler = scope.ServiceProvider.GetService<IProjectionEventHandler<TProjection, TEvent>>();
+                        if (handler == null)
+                            return;
+
+                        var repository = scope.ServiceProvider.GetRequiredService<IProjectionStateRepository>();
+
+                        var readModel = await repository.GetProjectionState<TProjection>();
+                        if (readModel == null)
+                            readModel = new TProjection();
+
+                        await handler.ProjectEvent(readModel, typedEvent);
+                        await repository.SetProjectionState(readModel);
+                    }
+                });
+
                 worker.Wait();
             }
             catch(AggregateException ae)

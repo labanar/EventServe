@@ -1,4 +1,5 @@
-﻿using System;
+﻿using EventServe.Projections.Standard;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -6,7 +7,7 @@ namespace EventServe.Projections
 {
     public interface IProjectionProfileExpression
     {
-        IProjectionHandlerExpression ProjectFromAggregate<T>(Guid id) where T : AggregateRoot;
-        IProjectionHandlerExpression ProjectFromAggregateCategory<T>() where T : AggregateRoot;
+        IProjectionTypeExpression ProjectFromAggregate<T>(Guid id) where T : AggregateRoot;
+        IProjectionTypeExpression ProjectFromAggregateCategory<T>() where T : AggregateRoot;
     }
 }

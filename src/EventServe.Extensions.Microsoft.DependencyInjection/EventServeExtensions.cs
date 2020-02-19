@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Linq;
+using System.Reactive.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -19,9 +20,6 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
     {
         public static void AddEventServeCore(this IServiceCollection services, Assembly[] assemblies)
         {
-            services.AddTransient<IPartitionedProjectionRepositoryResolver, PartitionedProjectionRespositoryResolver>();
-            services.AddTransient<IProjectionRepositoryResolver, ProjectionRepositoryResolver>();
-            services.AddTransient<IPartitionedProjectionHandlerResolver, PartitionedProjectionHandlerResolver>();
             services.AddTransient<ISubscriptionRootManager, SubscriptionRootManager>();
             services.AddSingleton<ISubscriptionManager, SubscriptionManager>();
             services.RegisterAllTypesWithBaseType<PartitionedProjectionProfile>(assemblies, ServiceLifetime.Singleton);
@@ -146,7 +144,6 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
             {
                 var manager = scope.ServiceProvider.GetRequiredService<ISubscriptionManager>();
                 var profiles = scope.ServiceProvider.GetServices<PartitionedProjectionProfile>();  
-                var repoResolver = applicationBuilder.ApplicationServices.GetRequiredService<IPartitionedProjectionRepositoryResolver>();
 
                 foreach (var profile in profiles)
                 {
@@ -154,7 +151,6 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
                     var subscription = applicationBuilder.ApplicationServices.GetRequiredService<IPersistentStreamSubscriptionConnection>();
                     foreach (var eventType in profile.SubscribedEvents)
                     {
-                        var handlerResolver = applicationBuilder.ApplicationServices.GetRequiredService<IPartitionedProjectionHandlerResolver>();
                         var observerType = typeof(PartitionedProjectionObserver<,>).MakeGenericType(profile.ProjectionType, eventType);
                         var observer = (IObserver<Event>)Activator.CreateInstance(observerType, applicationBuilder.ApplicationServices);
                         subscription.Subscribe(observer);
@@ -177,8 +173,38 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
             }
 
 
-            //Start up partitioned projections
+            //Start up projections
+            using (var scope = applicationBuilder.ApplicationServices.CreateScope())
+            {
+                var manager = scope.ServiceProvider.GetRequiredService<ISubscriptionManager>();
+                var profiles = scope.ServiceProvider.GetServices<ProjectionProfile>();
 
+                foreach (var profile in profiles)
+                {
+                    //Fetch a new instance persistent subscription from the IoC container
+                    var subscription = applicationBuilder.ApplicationServices.GetRequiredService<IPersistentStreamSubscriptionConnection>();
+                    foreach (var eventType in profile.SubscribedEvents)
+                    {
+                        var observerType = typeof(ProjectionObserver<,>).MakeGenericType(profile.ProjectionType, eventType);
+                        var observer = (IObserver<Event>)Activator.CreateInstance(observerType, applicationBuilder.ApplicationServices);
+                        subscription.Subscribe(observer);
+                    }
+
+                    var connectionSettings = new PersistentStreamSubscriptionConnectionSettings(profile.GetType().Name, profile.Filter);
+                    var sub = subscriptions.FirstOrDefault(x => x.Name == profile.GetType().Name);
+                    if (sub == default)
+                    {
+                        var subscriptionBase = rootManager.CreatePersistentSubscription(profile.GetType().Name).Result;
+                        rootManager.StartSubscription(subscriptionBase.SubscriptionId).Wait();
+                    }
+                    else
+                    {
+                        manager.Add(sub.SubscriptionId, subscription, connectionSettings).Wait();
+                        if (sub.Connected)
+                            manager.Connect(sub.SubscriptionId).Wait();
+                    }
+                }
+            }
 
         }
     }
