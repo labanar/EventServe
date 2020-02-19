@@ -2,13 +2,13 @@
 {
     public class PersistentStreamSubscriptionConnectionSettings
     {
-        public PersistentStreamSubscriptionConnectionSettings(string subscriptionName, SubscriptionFilter filter)
+        public PersistentStreamSubscriptionConnectionSettings(string subscriptionName, IStreamFilter filter)
         {
             SubscriptionName = subscriptionName;
             Filter = filter;
         }
 
         public string SubscriptionName { get; }
-        public SubscriptionFilter Filter { get; }
+        public IStreamFilter Filter { get; }
     }
 }

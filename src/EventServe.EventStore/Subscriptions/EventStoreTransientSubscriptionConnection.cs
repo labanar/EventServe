@@ -51,9 +51,7 @@ namespace EventServe.EventStore.Subscriptions
             };
 
             var streamId = _filter.SubscribedStreamId == null ? $"$ce-{_filter.AggregateType.Name.ToUpper()}" : _filter.SubscribedStreamId.Id;
-
-
-            if (_startPosition == -1)
+            if (_startPosition ==  StreamPosition.End)
             {
                 _connected = true;
                 _subscriptionBase = await _connection.SubscribeToStreamAsync(
@@ -67,7 +65,7 @@ namespace EventServe.EventStore.Subscriptions
                 _connected = true;
                 _catchUpSubscriptionBase = _connection.SubscribeToStreamFrom(
                     streamId,
-                    _startPosition,
+                    0,
                     new CatchUpSubscriptionSettings(
                         CatchUpSubscriptionSettings.Default.MaxLiveQueueSize,
                         CatchUpSubscriptionSettings.Default.ReadBatchSize,
@@ -76,7 +74,6 @@ namespace EventServe.EventStore.Subscriptions
                         CatchUpSubscriptionSettings.Default.SubscriptionName),
                     processEvent,
                     subscriptionDropped: SubscriptionDropped);
-
             }
         }
 

@@ -63,17 +63,17 @@ namespace EventServe.SqlStreamStore.Subscriptions
                    {
                        HandleSubscriptionDropped(sub, reason, ex);
                    });
-            }
-
-
-           
+            }          
         }
 
         private async Task HandleEvent(StreamMessage message, CancellationToken cancellation)
         {
             //Check if this event passes through the filter
             if (_filter != null && !_filter.DoesEventPassFilter(message.Type, message.StreamId))
+            {
                 await AcknowledgeEvent(message.MessageId);
+                return;
+            }
 
             _logger.LogInformation($"Event received: {message.Type} [{message.MessageId}]");
             var @event = await _eventSerializer.DeseralizeEvent(message);

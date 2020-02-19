@@ -35,7 +35,8 @@ namespace EventServe.SqlStreamStore.Subscriptions
 
             if (_filter.SubscribedStreamId == null)
             {
-                _allSubscription = _store.SubscribeToAll(_startPosition,
+                _allSubscription = _store.SubscribeToAll(
+                    _startPosition == StreamPosition.End ? -1 : 0,
                     (_, message, cancellationToken) =>
                     {
                         return HandleEvent(message, cancellationToken);
@@ -47,7 +48,9 @@ namespace EventServe.SqlStreamStore.Subscriptions
             }
             else
             {
-                _streamSubscription = _store.SubscribeToStream(_filter.SubscribedStreamId.Id, _startPosition,
+                _streamSubscription = _store.SubscribeToStream(
+                    _filter.SubscribedStreamId.Id, 
+                    _startPosition == StreamPosition.End ? -1 : 0,
                     (_, message, cancellationToken) =>
                     {
                         return HandleEvent(message, cancellationToken);

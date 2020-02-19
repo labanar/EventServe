@@ -8,7 +8,7 @@ namespace EventServe.Subscriptions.Transient
     {
         SubscriptionFilter Filter { get; }
         HashSet<Type> SubscribedEvents { get; }
-        int StartPosition { get; }
+        StreamPosition StreamPosition { get; }
 
         ITransientSubscriptionPositionExpression CreateProfile();
     }
@@ -17,11 +17,11 @@ namespace EventServe.Subscriptions.Transient
     {
         public SubscriptionFilter Filter => _subscriptionFilterBuilder.Build();
         public HashSet<Type> SubscribedEvents => _subscribedEvents;
-        public int StartPosition => _position.Position;
+        public StreamPosition StreamPosition => _position;
 
         private readonly SubscriptionFilterBuilder _subscriptionFilterBuilder;
         private readonly HashSet<Type> _subscribedEvents;
-        private StreamPosition _position = StreamPosition.EndOfStream();
+        private StreamPosition _position = StreamPosition.End;
 
         public TransientSubscriptionProfile()
         {

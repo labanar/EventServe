@@ -12,7 +12,7 @@ namespace EventServe.Subscriptions.Transient
     {
         private readonly SubscriptionFilterBuilder _filterBuilder;
         private HashSet<Type> _subscribedEventTypes = new HashSet<Type>();
-        private StreamPosition _position = StreamPosition.StartOfStream();
+        private StreamPosition _position = StreamPosition.End;
 
         public TransientSubscriptionProfileExpression(SubscriptionFilterBuilder filterBuilder, HashSet<Type> subscribedEvents, StreamPosition position)
         {

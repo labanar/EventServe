@@ -16,8 +16,8 @@ namespace EventServe.Subscriptions
         private readonly Queue<Task> _dispatchQueue = new Queue<Task>();
         private readonly SemaphoreLocker _locker;
         protected bool _connected = false;
-        protected SubscriptionFilter _filter;
-        protected int _startPosition = 0;
+        protected IStreamFilter _filter;
+        protected StreamPosition _startPosition = StreamPosition.End;
         protected bool _cancellationRequestedByUser = false;
         private List<IObserver<Event>> _observers = new List<IObserver<Event>>();
 
@@ -29,7 +29,7 @@ namespace EventServe.Subscriptions
         public async Task Connect(TransientStreamSubscriptionConnectionSettings connectionSettings)
         {
             _filter = connectionSettings.Filter;
-            _startPosition = connectionSettings.StartPosition;
+            _startPosition = connectionSettings.StreamPosition;
             await ConnectAsync();
         }
         public async Task Disconnect()

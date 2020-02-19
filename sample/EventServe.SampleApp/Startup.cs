@@ -9,17 +9,16 @@ using Microsoft.Extensions.Hosting;
 using EventServe.EventStore.Subscriptions;
 using EventServe.Subscriptions;
 using MediatR;
-using EventServe.Subscriptions.Domain;
 using System.Reflection;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 using EventServe.Services;
 using EventServe.Subscriptions.Persistent;
-using EventServe.EventStore;
-using EventServe.Extensions.Microsoft.DependencyInjection;
-using System.Diagnostics;
+using EventServe.SampleApp.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+using EventServe.Projections;
+using EventServe.SampleApp.Domain;
 
-namespace EventServe.TestApp
+namespace EventServe.SampleApp
 {
     public class Startup
     {
@@ -35,6 +34,12 @@ namespace EventServe.TestApp
         {
             services.AddMediatR(typeof(Startup).Assembly, typeof(EventStorePersistentSubscriptionConnection).Assembly, typeof(PersistentStreamSubscriptionConnection).Assembly);
             services.AddControllers();
+
+            services.AddDbContext<SampleContext>(options =>
+            {
+                options.UseSqlServer(Configuration["ConnectionStrings:ReadModelDb"]);
+            });
+            services.AddTransient<IPartitionedProjectionStateRepository, PartitionedProjectionStateRepository>();
 
             //services.AddEventServe(options =>
             //{
@@ -72,16 +77,10 @@ namespace EventServe.TestApp
             //app.UseEventServe();
             app.UseEventServeMsSqlStreamStore();
 
-            var aggregateId = Guid.Parse("176a5024-6305-4f54-a2ce-e004bd62a118");
-            var streamId =
-                StreamIdBuilder.Create()
-                .WithAggregateId(Guid.Parse("176a5024-6305-4f54-a2ce-e004bd62a118"))
-                .WithAggregateType<DummyAggregate>()
-                .Build();
 
-            var streamWriter = app.ApplicationServices.GetRequiredService<IEventStreamWriter>();
-            var streamReader = app.ApplicationServices.GetRequiredService<IEventStreamReader>();
-            //await CreateStreamData(aggregateId, streamId, streamWriter);
+
+            var productRepo = app.ApplicationServices.GetRequiredService<IEventRepository<Product>>();
+            await CreateProduct(productRepo);
 
             app.UseHttpsRedirection();
             app.UseRouting();
@@ -92,22 +91,20 @@ namespace EventServe.TestApp
             });
         }
 
-        private async Task CreateStreamData(Guid aggregateId, string streamId, IEventStreamWriter streamWriter)
+        private async Task CreateProduct(IEventRepository<Product> productRepository)
         {
-            var random = new Random();
-            await Task.Factory.StartNew(async () =>
+            var productId = Guid.NewGuid();
+            var product = new Product(new Domain.Commands.ResetProductCommand
             {
-                for (var i = 0; i < 10000; i++)
-                {
-                    var writeEvents = new List<Event> {
-                        new DummyNameChangedEvent(aggregateId, $"The new name {random.Next(100,9999)}"),
-                        new DummyUrlChangedEvent(aggregateId, $"https://newurl{random.Next(100,9999)}.example.com")
-                    };
-
-                    await Task.Delay(TimeSpan.FromMilliseconds(50));
-                    await streamWriter.AppendEventsToStream(streamId, writeEvents);
-                }
+                ProductId = productId,
+                Name = $"Product Name {productId}",
+                Available = true,
+                Url = "example.com",
+                CurrencyCode = "CAD",
+                Price = 129.99,
             });
+
+            await productRepository.SaveAsync(product, product.Version);
         }
     }
 }
