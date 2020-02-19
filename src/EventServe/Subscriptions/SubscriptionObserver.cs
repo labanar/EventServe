@@ -7,9 +7,9 @@ namespace EventServe.Subscriptions
         where TProfile : ISubscriptionProfile
         where TEvent : Event
     {
-        private readonly ISusbcriptionProfileHandlerResolver _resolver;
+        private readonly ISusbcriptionHandlerResolver _resolver;
 
-        public SubscriptionObserver(ISusbcriptionProfileHandlerResolver resolver)
+        public SubscriptionObserver(ISusbcriptionHandlerResolver resolver)
         {
             _resolver = resolver;
         }

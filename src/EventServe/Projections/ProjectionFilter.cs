@@ -3,33 +3,35 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace EventServe.Subscriptions
+namespace EventServe.Projections
 {
-    public class SubscriptionFilter: IStreamFilter
+    public class ProjectionFilter: IStreamFilter
     {
         private readonly StreamId _streamId;
-        private readonly HashSet<string> _streamExpressions;
         private readonly Type _aggregateType;
+        private readonly HashSet<string> _streamExpressions = new HashSet<string>();
         private readonly HashSet<Type> _eventTypes = new HashSet<Type>();
         private readonly HashSet<string> _eventTypeStrings = new HashSet<string>();
 
         public StreamId SubscribedStreamId => _streamId;
         public Type AggregateType => _aggregateType;
 
-        public SubscriptionFilter(StreamId streamId, HashSet<string> streamExpressions, HashSet<Type> eventTypes)
+
+        public ProjectionFilter(StreamId streamId, HashSet<string> streamExpressions, HashSet<Type> eventTypes)
         {
             _streamId = streamId;
             _streamExpressions = streamExpressions;
             _eventTypes = eventTypes;
-            _eventTypeStrings = eventTypes.Select(x => x.FullName).ToHashSet();
+            _eventTypeStrings = eventTypes.Select(x => x.Name).ToHashSet();
         }
 
-        public SubscriptionFilter(Type aggregateType, HashSet<string> streamExpressions, HashSet<Type> eventTypes)
+        public ProjectionFilter(Type aggregateType, HashSet<string> streamExpressions, HashSet<Type> eventTypes)
         {
             _aggregateType = aggregateType;
             _streamExpressions = streamExpressions;
             _eventTypes = eventTypes;
-            _eventTypeStrings = eventTypes.Select(x => x.FullName).ToHashSet();
+            _eventTypeStrings = eventTypes.Select(x => x.Name).ToHashSet();
+            _eventTypeStrings.UnionWith(eventTypes.Select(x => x.FullName));
         }
 
         public bool DoesEventPassFilter(Event @event, string streamId)
@@ -45,7 +47,7 @@ namespace EventServe.Subscriptions
                 if (Regex.IsMatch(streamId, pattern, RegexOptions.IgnoreCase))
                     return true;
             }
-
+      
             return false;
         }
 

@@ -7,6 +7,10 @@ namespace EventServe
 {
     public class StreamPosition : IEquatable<StreamPosition>
     {
+        public static StreamPosition End => EndOfStream();
+
+        public static StreamPosition Start => StartOfStream();
+
         public int Position => _position;
 
         private int _position = -1;
@@ -14,12 +18,12 @@ namespace EventServe
 
         private StreamPosition(int position) { }
 
-        public static StreamPosition StartOfStream()
+        private static StreamPosition StartOfStream()
         {
             return new StreamPosition(0);
         }
 
-        public static StreamPosition EndOfStream()
+        private static StreamPosition EndOfStream()
         {
             return new StreamPosition(-1);
         }

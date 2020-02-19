@@ -7,7 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace EventServe.TestApp
+namespace EventServe.SampleApp
 {
     public class Program
     {

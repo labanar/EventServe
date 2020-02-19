@@ -31,16 +31,14 @@ namespace EventServe
 
                 return aggregate;
             }
-            catch
-            {
-                return aggregate;
-            }
+            catch { }
             finally
             {
                 if(enumerator != null)
                     await enumerator.DisposeAsync();
             }
 
+            return aggregate;
         }
 
         public async Task<long> SaveAsync(AggregateRoot aggregate, long version = -2) {

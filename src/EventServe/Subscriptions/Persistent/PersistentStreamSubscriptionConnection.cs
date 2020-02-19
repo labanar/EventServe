@@ -19,7 +19,7 @@ namespace EventServe.Subscriptions
         protected bool _cancellationRequestedByUser = false;
         private List<IObserver<Event>> _observers = new List<IObserver<Event>>();
         protected string _subscriptionName;
-        protected SubscriptionFilter _filter;
+        protected IStreamFilter _filter;
 
         public PersistentStreamSubscriptionConnection()
         {
