@@ -59,7 +59,7 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
                         var resolver = applicationBuilder.ApplicationServices.GetRequiredService<ISusbcriptionHandlerResolver>();
                         var profileType = profile.GetType();
                         var observerType = typeof(SubscriptionObserver<,>).MakeGenericType(profileType, eventType);
-                        var observer = (IObserver<Event>)Activator.CreateInstance(observerType, resolver);
+                        var observer = (IObserver<Event>)Activator.CreateInstance(observerType, applicationBuilder.ApplicationServices);
                         subscription.Subscribe(observer);
                     }
 
@@ -84,7 +84,7 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
                         var resolver = applicationBuilder.ApplicationServices.GetRequiredService<ISusbcriptionHandlerResolver>();
                         var profileType = profile.GetType();
                         var observerType = typeof(SubscriptionObserver<,>).MakeGenericType(profileType, eventType);
-                        var observer = (IObserver<Event>)Activator.CreateInstance(observerType, resolver);
+                        var observer = (IObserver<Event>)Activator.CreateInstance(observerType, applicationBuilder.ApplicationServices);
                         subscription.Subscribe(observer);
                     }
 
@@ -118,7 +118,7 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
                         var resolver = applicationBuilder.ApplicationServices.GetRequiredService<ISusbcriptionHandlerResolver>();
                         var profileType = profile.GetType();
                         var observerType = typeof(SubscriptionObserver<,>).MakeGenericType(profileType, eventType);
-                        var observer = (IObserver<Event>)Activator.CreateInstance(observerType, resolver);
+                        var observer = (IObserver<Event>)Activator.CreateInstance(observerType, applicationBuilder.ApplicationServices);
                         subscription.Subscribe(observer);
                     }
 

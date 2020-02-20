@@ -4,8 +4,8 @@ using System.Text;
 
 namespace EventServe.Projections.Partitioned
 {
-    public interface IPartitionedProjectionTypeExpression
+    public interface IPartitionedProjectionTypeExpression<T>
+        where T: PartitionedProjection
     {
-        IPartitionedProjectionHandlerExpression OnTo<T>() where T : PartitionedProjection;
     }
 }

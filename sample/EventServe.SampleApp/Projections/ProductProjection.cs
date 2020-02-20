@@ -18,20 +18,17 @@ namespace EventServe.SampleApp.Projections
         public bool Available { get; set; }
     }
 
-
     public class ProductProjectionProfile: PartitionedProjectionProfile
     {
         public ProductProjectionProfile()
         {
-            CreateProfile()
+            CreateProfile<ProductProjection>()
                 .ProjectFromAggregateCategory<Product>()
-                .OnTo<ProductProjection>()
                 .HandleEvent<ProductCreatedEvent>()
                 .HandleEvent<ProductPriceChangedEvent>()
                 .HandleEvent<ProductAvailabilityChangedEvent>();
         }
     }
-
 
     public class ProductProjectionEventHandler : 
         IPartitionedProjectionEventHandler<ProductProjection, ProductCreatedEvent>,

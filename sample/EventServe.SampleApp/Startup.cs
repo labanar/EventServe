@@ -80,7 +80,8 @@ namespace EventServe.SampleApp
 
 
             var productRepo = app.ApplicationServices.GetRequiredService<IEventRepository<Product>>();
-            await CreateProduct(productRepo);
+            //await CreateProduct(productRepo);
+            SimulatePriceFluctuations(productRepo, 500, Guid.Parse("2DEA3A1F-6E39-4537-B677-DEDF7B2A58ED"), Guid.Parse("DEC21003-81F9-4E67-A024-283C85C00DBF"));
 
             app.UseHttpsRedirection();
             app.UseRouting();
@@ -105,6 +106,31 @@ namespace EventServe.SampleApp
             });
 
             await productRepository.SaveAsync(product, product.Version);
+        }
+
+
+        private async Task SimulatePriceFluctuations(IEventRepository<Product> productRepository, int iterations, params Guid[] productIds)
+        {
+            for(int i = 0; i < 1000; i++)
+            {
+                var rand = new Random();
+
+                var maxPrice = 129.99;
+                var fluctuationRange = maxPrice / 2;
+
+                foreach (var productId in productIds)
+                {
+                    var sign = rand.Next(0, 2);
+                    var fluctuationAmount = fluctuationRange * rand.NextDouble();
+                    var newPrice = (sign == 0) ? maxPrice - fluctuationAmount : maxPrice + fluctuationAmount;
+
+                    var product = await productRepository.GetById(productId);
+                    product.ResetProductPrice(newPrice, "CAD");
+                    await productRepository.SaveAsync(product, product.Version);
+                }
+
+                await Task.Delay(TimeSpan.FromSeconds(5));
+            }
         }
     }
 }

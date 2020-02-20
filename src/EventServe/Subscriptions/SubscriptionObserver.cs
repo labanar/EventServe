@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Threading.Tasks;
 
 namespace EventServe.Subscriptions
@@ -7,11 +8,11 @@ namespace EventServe.Subscriptions
         where TProfile : ISubscriptionProfile
         where TEvent : Event
     {
-        private readonly ISusbcriptionHandlerResolver _resolver;
+        private readonly IServiceProvider _serviceProvider;
 
-        public SubscriptionObserver(ISusbcriptionHandlerResolver resolver)
+        public SubscriptionObserver(IServiceProvider serviceProvider)
         {
-            _resolver = resolver;
+            _serviceProvider = serviceProvider;
         }
 
         public void OnCompleted()
@@ -29,14 +30,31 @@ namespace EventServe.Subscriptions
             if (!(@event is TEvent typedEvent))
                 return;
 
-            var handlerTask = _resolver.Resolve<TProfile, TEvent>();
-            Task.WaitAll(handlerTask);
+            try
+            {
+                var worker = Task.Factory
+                .StartNew(async () =>
+                {
+                    using (var scope = _serviceProvider.CreateScope())
+                    {
+                        var handler = scope.ServiceProvider.GetService<ISubscriptionEventHandler<TProfile, TEvent>>();
+                        if (handler == null)
+                            return;
 
-            var handler = handlerTask.Result;
-            if (handler == null)
-                return;
+                        await handler.HandleEvent(typedEvent);
+                    }
+                });
 
-            handler.HandleEvent(typedEvent).Wait();
+                worker.Wait();
+            }
+            catch (AggregateException ae)
+            {
+                //Check if the task threw any exceptions that we're concerned with
+                foreach (var e in ae.InnerExceptions)
+                {
+                    throw;
+                }
+            }
         }
     }
 }

@@ -46,6 +46,17 @@ namespace EventServe.SampleApp.Domain
                 });
         }
 
+
+        public void ResetProductPrice(double price, string currencyCode)
+        {
+            if (price != _price || currencyCode != _currencyCode)
+                ApplyChange(new ProductPriceChangedEvent(_id)
+                {
+                    Price = price,
+                    CurrencyCode = currencyCode
+                });
+        }
+
         private void Apply(ProductCreatedEvent @event)
         {
             _id = @event.AggregateId;
