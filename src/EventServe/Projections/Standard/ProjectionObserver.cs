@@ -59,7 +59,7 @@ namespace EventServe.Projections
                 //Check if the task threw any exceptions that we're concerned with
                 foreach(var e in ae.InnerExceptions)
                 {
-
+                    throw;
                 }
             }
         }

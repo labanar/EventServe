@@ -30,6 +30,14 @@ namespace EventServe.SqlStreamStore.MsSql.Extensions.Microsoft.DependencyInjecti
 
         public static void UseEventServeMsSqlStreamStore(this IApplicationBuilder applicationBuilder)
         {
+
+            using (var scope = applicationBuilder.ApplicationServices.CreateScope())
+            {
+                var context = scope.ServiceProvider.GetRequiredService<SqlStreamStoreContext>();
+                if(context.Database.EnsureCreated())
+                    context.Database.Migrate();
+            }
+
             using (var scope = applicationBuilder.ApplicationServices.CreateScope())
             {
                 var settingsProvider = scope.ServiceProvider.GetRequiredService<IMsSqlStreamStoreSettingsProvider>();
@@ -46,12 +54,6 @@ namespace EventServe.SqlStreamStore.MsSql.Extensions.Microsoft.DependencyInjecti
             }
 
 
-            using (var scope = applicationBuilder.ApplicationServices.CreateScope())
-            {
-                var context = scope.ServiceProvider.GetRequiredService<SqlStreamStoreContext>();
-                context.Database.EnsureCreated();
-                context.Database.Migrate();
-            }
 
 
             applicationBuilder.RegisterEventServeSubscriptions();

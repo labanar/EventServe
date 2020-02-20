@@ -4,8 +4,9 @@ using System.Text;
 
 namespace EventServe.Projections.Partitioned
 {
-    public interface IPartitionedProjectionProfileExpression
+    public interface IPartitionedProjectionProfileExpression<T>
+        where T: PartitionedProjection
     {
-        IPartitionedProjectionTypeExpression ProjectFromAggregateCategory<T>() where T : AggregateRoot;
+        IPartitionedProjectionHandlerExpression<T> ProjectFromAggregateCategory<TAggregate>() where TAggregate : AggregateRoot;
     }
 }
