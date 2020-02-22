@@ -28,8 +28,6 @@ namespace EventServe
             {
                 while (await enumerator.MoveNextAsync())
                     aggregate.LoadFromHistory(enumerator.Current);
-
-                return aggregate;
             }
             catch { }
             finally
@@ -41,7 +39,7 @@ namespace EventServe
             return aggregate;
         }
 
-        public async Task<long> SaveAsync(AggregateRoot aggregate, long version = -2) {
+        public async Task<long> SaveAsync(AggregateRoot aggregate) {
             if (aggregate == null)
                 return 0;
 
@@ -56,11 +54,7 @@ namespace EventServe
                 .Build();
 
             var eventCount = events.Count();
-
-            if (version >= -1)
-                await _streamWriter.AppendEventsToStream(streamId, events, version);
-            else
-                await _streamWriter.AppendEventsToStream(streamId, events);
+            await _streamWriter.AppendEventsToStream(streamId, events, aggregate.Version);
 
             aggregate.MarkChangesAsCommitted();
             return eventCount;

@@ -33,13 +33,47 @@ namespace EventServe.EventStore.Subscriptions
             await Connect();
         }
 
+        protected override Task DisconnectAsync()
+        {
+            if (_subscriptionBase == null)
+            {
+                _connected = false;
+                _cancellationRequestedByUser = true;
+                return Task.CompletedTask;
+            }
+
+            _cancellationRequestedByUser = true;
+            _connection.Close();
+            _connection.Dispose();
+            return Task.CompletedTask;
+        }
+
+        protected override async Task ResetAsync()
+        {
+            var streamId = _streamId == null ? $"$ce-{_aggregateType.ToUpper()}" : _streamId.Id;
+            using var connection = _connectionProvider.GetConnection();
+            await connection.ConnectAsync();
+            await connection.DeletePersistentSubscriptionAsync(streamId, _subscriptionName, await _connectionProvider.GetCredentials());
+        }
+
+        protected override Task AcknowledgeEvent(Guid eventId)
+        {
+            if (_subscriptionBase == null)
+                throw new ApplicationException("Subscription is not connected, therefore acknowledgement cannot be sent.");
+
+            _subscriptionBase.Acknowledge(eventId);
+            return Task.CompletedTask;
+        }
+
         private async Task Connect()
         {
             _connection = _connectionProvider.GetConnection();
             await _connection.ConnectAsync();
 
 
-            var streamId = _filter.SubscribedStreamId == null ? $"$ce-{_filter.AggregateType.Name.ToUpper()}" : _filter.SubscribedStreamId.Id;
+            var streamId = _streamId == null ? $"$ce-{_aggregateType.ToUpper()}" : _streamId.Id;
+
+            //Check if this subscription already exists
             await _connection.CreateSubscription(streamId,
                                                  _subscriptionName,
                                                  await _connectionProvider.GetCredentials(),
@@ -62,12 +96,22 @@ namespace EventServe.EventStore.Subscriptions
 
         private async Task HandleEvent(EventStorePersistentSubscriptionBase subscriptionBase, ResolvedEvent resolvedEvent)
         {
-            if (_filter != null && !_filter.DoesEventPassFilter(resolvedEvent.Event.EventType, resolvedEvent.Event.EventStreamId))
-                await AcknowledgeEvent(resolvedEvent.OriginalEvent.EventId);
+            Func<Event> lazyEvent =
+                new Func<Event>(() =>
+                {
+                    var @event = _eventSerializer.DeseralizeEvent(resolvedEvent);
+                    @event.EventId = resolvedEvent.OriginalEvent.EventId;
+                    return @event;
+                });
 
-            var @event = _eventSerializer.DeseralizeEvent(resolvedEvent);
-            @event.EventId = resolvedEvent.OriginalEvent.EventId;
-            await RaiseEvent(@event);
+            var streamMessage = new SubscriptionMessage(
+                resolvedEvent.OriginalEvent.EventId,
+                resolvedEvent.Event.EventStreamId,
+                resolvedEvent.Event.EventType, 
+                lazyEvent);
+
+            _position = resolvedEvent.OriginalEventNumber;
+            await RaiseMessage(streamMessage);
         }
 
         private void SubscriptionDropped(EventStorePersistentSubscriptionBase eventStorePersistentSubscriptionBase,
@@ -75,6 +119,9 @@ namespace EventServe.EventStore.Subscriptions
         {
             if(_cancellationRequestedByUser)
             {
+                if (_connection != null)
+                    _connection.Dispose();
+
                 _logger.LogInformation(ex, $"Subscription stopped by user: {subscriptionDropReason.ToString()}");
                 return;
             }
@@ -82,30 +129,6 @@ namespace EventServe.EventStore.Subscriptions
             _logger.LogError(ex, $"Subscription dropped: {subscriptionDropReason.ToString()}");
             _connection.Dispose();
             Connect().Wait();   
-        }
-
-        protected override Task AcknowledgeEvent(Guid eventId)
-        {
-            if (_subscriptionBase == null)
-                throw new ApplicationException("Subscription is not connected, therefore acknowledgement cannot be sent.");
-
-            _subscriptionBase.Acknowledge(eventId);
-            return Task.CompletedTask;
-        }
-
-        protected override Task DisconnectAsync()
-        {
-            if(_subscriptionBase == null)
-            {
-                _connected = false;
-                _cancellationRequestedByUser = true;
-                return Task.CompletedTask;
-            }
-
-            _cancellationRequestedByUser = true;
-            _connection.Close();
-            _connection.Dispose();
-            return Task.CompletedTask;
         }
     }
 }

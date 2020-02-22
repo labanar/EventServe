@@ -1,27 +1,29 @@
-﻿using EventServe.Subscriptions;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Collections.Generic;
+using System.Linq.Expressions;
+using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 
-namespace EventServe.Projections
+namespace EventServe.Subscriptions
 {
-    public class ProjectionObserver<TProjection, TEvent> : IObserver<SubscriptionMessage>
-        where TProjection : Projection, new()
-        where TEvent : Event
+    public class SubscriptionMessageObserver<TProfile, TEvent> : IObserver<SubscriptionMessage>
+        where TProfile: ISubscriptionProfile
+        where TEvent: Event
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly IStreamFilter _filter;
 
-        public ProjectionObserver(IServiceProvider serviceProvider, IStreamFilter streamFilter)
+        public SubscriptionMessageObserver(
+            IServiceProvider serviceProvider,
+            IStreamFilter filter)
         {
             _serviceProvider = serviceProvider;
-            _filter = streamFilter;
+            _filter = filter;
         }
 
-        public void OnCompleted()
-        {
-
-        }
+        public void OnCompleted() { }
 
         public void OnError(Exception error)
         {
@@ -44,27 +46,21 @@ namespace EventServe.Projections
                 {
                     using (var scope = _serviceProvider.CreateScope())
                     {
-                        var handler = scope.ServiceProvider.GetService<IProjectionEventHandler<TProjection, TEvent>>();
+
+                        var handler = scope.ServiceProvider.GetService<ISubscriptionEventHandler<TProfile, TEvent>>();
                         if (handler == null)
                             return;
 
-                        var repository = scope.ServiceProvider.GetRequiredService<IProjectionStateRepository>();
-
-                        var readModel = await repository.GetProjectionState<TProjection>();
-                        if (readModel == null)
-                            readModel = new TProjection();
-
-                        await handler.ProjectEvent(readModel, typedEvent);
-                        await repository.SetProjectionState(readModel);
+                        await handler.HandleEvent(typedEvent);
                     }
                 });
 
                 worker.Wait();
             }
-            catch(AggregateException ae)
+            catch (AggregateException ae)
             {
                 //Check if the task threw any exceptions that we're concerned with
-                foreach(var e in ae.InnerExceptions)
+                foreach (var e in ae.InnerExceptions)
                 {
                     throw;
                 }

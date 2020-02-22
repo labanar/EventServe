@@ -1,14 +1,16 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace EventServe.SqlStreamStore.Subscriptions
 {
     public interface IPersistentSubscriptionPositionManager
     {
-        Task<long?> GetSubscriptionPosition(string subscriptionName);
-        Task IncrementSubscriptionPosition(string subscriptionName);
+        Task<long?> GetSubscriptionPosition(Guid subscriptionId, bool createIfNotExists);
+        Task SetSubscriptionPosition(Guid subscriptionId, long? position);
+        Task ResetSubscriptionPosition(Guid subscriptionId);
     }
 
 
@@ -21,36 +23,43 @@ namespace EventServe.SqlStreamStore.Subscriptions
             _serviceProvider = serviceProvider;
         }
 
-        public async Task<long?> GetSubscriptionPosition(string subscriptionName)
+        public async Task<long?> GetSubscriptionPosition(Guid subscriptionId, bool createIfNotExists)
         {
-            using(var context = _serviceProvider.CreateScope().ServiceProvider.GetRequiredService<SqlStreamStoreContext>())
-            {
-                var subscriptionPosition = await context.SubscriptionPositions.FirstOrDefaultAsync(x => x.Name == subscriptionName);
-                return subscriptionPosition?.Position;
-            }
+            using var scope = _serviceProvider.CreateScope();
+            using var context = scope.ServiceProvider.GetRequiredService<SqlStreamStoreContext>();
+            var subscriptionPosition = await context.SubscriptionPositions.FindAsync(subscriptionId);
 
-        }
-
-        public async Task IncrementSubscriptionPosition(string subscriptionName)
-        {
-            using (var context = _serviceProvider.CreateScope().ServiceProvider.GetRequiredService<SqlStreamStoreContext>())
+            if (createIfNotExists && subscriptionPosition == default)
             {
-                var subscriptionPosition = await context.SubscriptionPositions.FirstOrDefaultAsync(x => x.Name == subscriptionName);
-                if (subscriptionPosition == null)
+                subscriptionPosition = new PeristentSubscriptionPosition
                 {
-                    subscriptionPosition = new PeristentSubscriptionPosition
-                    {
-                        Name = subscriptionName,
-                        Position = 0
-                    };
-                    await context.AddAsync(subscriptionPosition);
-                    await context.SaveChangesAsync();
-                    return;
-                }
-
-                subscriptionPosition.Position += 1;
+                    SubscriptionId = subscriptionId
+                };
+                await context.SubscriptionPositions.AddAsync(subscriptionPosition);
                 await context.SaveChangesAsync();
             }
+
+            //context.Entry(subscriptionPosition).State = EntityState.Detached;
+            return subscriptionPosition?.Position;
+        }
+
+        public async Task SetSubscriptionPosition(Guid subscriptionId, long? position)
+        {
+            using var scope = _serviceProvider.CreateScope();
+            using var context = scope.ServiceProvider.GetRequiredService<SqlStreamStoreContext>();
+            var subscriptionPosition = new PeristentSubscriptionPosition
+            {
+                SubscriptionId = subscriptionId,
+                Position = position
+            };
+            context.Attach(subscriptionPosition);
+            context.Entry(subscriptionPosition).Property(p => p.Position).IsModified = true;
+            await context.SaveChangesAsync();
+        }
+
+        public async Task ResetSubscriptionPosition(Guid subscriptionId)
+        {
+            await SetSubscriptionPosition(subscriptionId, null);
         }
     }
 }

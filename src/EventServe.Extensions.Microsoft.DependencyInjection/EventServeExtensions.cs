@@ -1,17 +1,16 @@
-﻿using EventServe.Projections;
+﻿using System;
+using System.Linq;
+using System.Reactive.Linq;
+using System.Reflection;
+using System.Threading.Tasks;
+using EventServe.Projections;
 using EventServe.Projections.Partitioned;
-using EventServe.Projections.Standard;
 using EventServe.Services;
 using EventServe.Subscriptions;
 using EventServe.Subscriptions.Persistent;
 using EventServe.Subscriptions.Transient;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Linq;
-using System.Reactive.Linq;
-using System.Reflection;
-using System.Threading.Tasks;
 
 
 namespace EventServe.Extensions.Microsoft.DependencyInjection
@@ -25,10 +24,10 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
             services.RegisterAllTypesWithBaseType<PartitionedProjectionProfile>(assemblies, ServiceLifetime.Singleton);
             services.RegisterAllTypesWithBaseType<PersistentSubscriptionProfile>(assemblies, ServiceLifetime.Singleton);
             services.RegisterAllTypesWithBaseType<TransientSubscriptionProfile>(assemblies, ServiceLifetime.Singleton);
-            services.AddTransient<ISusbcriptionHandlerResolver, SubscriptionHandlerResolver>();
             services.ConnectImplementationsToTypesClosing(typeof(ISubscriptionEventHandler<,>), assemblies, false);
             services.ConnectImplementationsToTypesClosing(typeof(IProjectionEventHandler<,>), assemblies, false);
             services.ConnectImplementationsToTypesClosing(typeof(IPartitionedProjectionEventHandler<,>), assemblies, false);
+            services.ConnectImplementationsToTypesClosing(typeof(IPersistentSubscriptionResetHandler<>), assemblies, false);
             services.AddTransient(typeof(IEventRepository<>), typeof(EventRepository<>));
         }
 
@@ -46,6 +45,7 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
 
             var subscriptions = subscriptionsTask.Result;
 
+            //Start up internal subscriptions
             using (var scope = applicationBuilder.ApplicationServices.CreateScope())
             {
                 var manager = scope.ServiceProvider.GetRequiredService<ISubscriptionManager>();
@@ -56,14 +56,13 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
                     var subscription = applicationBuilder.ApplicationServices.GetRequiredService<ITransientStreamSubscriptionConnection>();
                     foreach (var eventType in profile.SubscribedEvents)
                     {
-                        var resolver = applicationBuilder.ApplicationServices.GetRequiredService<ISusbcriptionHandlerResolver>();
                         var profileType = profile.GetType();
-                        var observerType = typeof(SubscriptionObserver<,>).MakeGenericType(profileType, eventType);
-                        var observer = (IObserver<Event>)Activator.CreateInstance(observerType, applicationBuilder.ApplicationServices);
-                        subscription.Subscribe(observer);
+                        var messageObserverType = typeof(SubscriptionMessageObserver<,>).MakeGenericType(profileType, eventType);
+                        var messageObserver = (IObserver<SubscriptionMessage>)Activator.CreateInstance(messageObserverType, applicationBuilder.ApplicationServices, profile.Filter);
+                        subscription.Subscribe(messageObserver);
                     }
 
-                    var connectionSettings = new TransientStreamSubscriptionConnectionSettings(profile.StreamPosition, profile.Filter);
+                    var connectionSettings = new TransientStreamSubscriptionConnectionSettings(profile.StreamPosition, profile.Filter.SubscribedStreamId, profile.Filter.AggregateType?.Name);
                     var subId = Guid.NewGuid();
                     manager.Add(subId, subscription, connectionSettings).Wait();
                     manager.Connect(subId).Wait();
@@ -81,14 +80,13 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
                     var subscription = applicationBuilder.ApplicationServices.GetRequiredService<ITransientStreamSubscriptionConnection>();
                     foreach (var eventType in profile.SubscribedEvents)
                     {
-                        var resolver = applicationBuilder.ApplicationServices.GetRequiredService<ISusbcriptionHandlerResolver>();
                         var profileType = profile.GetType();
-                        var observerType = typeof(SubscriptionObserver<,>).MakeGenericType(profileType, eventType);
-                        var observer = (IObserver<Event>)Activator.CreateInstance(observerType, applicationBuilder.ApplicationServices);
-                        subscription.Subscribe(observer);
+                        var messageObserverType = typeof(SubscriptionMessageObserver<,>).MakeGenericType(profileType, eventType);
+                        var messageObserver = (IObserver<SubscriptionMessage>)Activator.CreateInstance(messageObserverType, applicationBuilder.ApplicationServices, profile.Filter);
+                        subscription.Subscribe(messageObserver);
                     }
 
-                    var connectionSettings = new TransientStreamSubscriptionConnectionSettings(profile.StreamPosition, profile.Filter);
+                    var connectionSettings = new TransientStreamSubscriptionConnectionSettings(profile.StreamPosition, profile.Filter.SubscribedStreamId, profile.Filter.AggregateType?.Name);
                     var sub = subscriptions.FirstOrDefault(x => x.Name == profile.GetType().Name);
                     if(sub == default)
                     {
@@ -115,14 +113,17 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
                     var subscription = applicationBuilder.ApplicationServices.GetRequiredService<IPersistentStreamSubscriptionConnection>();
                     foreach (var eventType in profile.SubscribedEvents)
                     {
-                        var resolver = applicationBuilder.ApplicationServices.GetRequiredService<ISusbcriptionHandlerResolver>();
                         var profileType = profile.GetType();
-                        var observerType = typeof(SubscriptionObserver<,>).MakeGenericType(profileType, eventType);
-                        var observer = (IObserver<Event>)Activator.CreateInstance(observerType, applicationBuilder.ApplicationServices);
-                        subscription.Subscribe(observer);
+
+                        var messageObserverType = typeof(SubscriptionMessageObserver<,>).MakeGenericType(profileType, eventType);
+                        var messageObserver = (IObserver<SubscriptionMessage>)Activator.CreateInstance(messageObserverType, applicationBuilder.ApplicationServices, profile.Filter);
+                        subscription.Subscribe(messageObserver);
+
+                        var resetObserverType = typeof(PersistentSubscriptionResetObserver<>).MakeGenericType(profileType);
+                        var resetObserver = (IObserver<PersistentSubscriptionResetEvent>)Activator.CreateInstance(resetObserverType, applicationBuilder.ApplicationServices);
+                        subscription.Subscribe(resetObserver);
                     }
 
-                    var connectionSettings = new PersistentStreamSubscriptionConnectionSettings(profile.GetType().Name, profile.Filter);
                     var sub = subscriptions.FirstOrDefault(x => x.Name == profile.GetType().Name);
                     if (sub == default)
                     {
@@ -131,6 +132,7 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
                     }
                     else
                     {
+                        var connectionSettings = new PersistentStreamSubscriptionConnectionSettings(sub.SubscriptionId, profile.GetType().Name, profile.Filter.SubscribedStreamId, profile.Filter.AggregateType?.Name);
                         manager.Add(sub.SubscriptionId, subscription, connectionSettings).Wait();
                         if (sub.Connected)
                             manager.Connect(sub.SubscriptionId).Wait();
@@ -152,11 +154,10 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
                     foreach (var eventType in profile.SubscribedEvents)
                     {
                         var observerType = typeof(PartitionedProjectionObserver<,>).MakeGenericType(profile.ProjectionType, eventType);
-                        var observer = (IObserver<Event>)Activator.CreateInstance(observerType, applicationBuilder.ApplicationServices);
+                        var observer = (IObserver<SubscriptionMessage>)Activator.CreateInstance(observerType, applicationBuilder.ApplicationServices, profile.Filter);
                         subscription.Subscribe(observer);
                     }
 
-                    var connectionSettings = new PersistentStreamSubscriptionConnectionSettings(profile.GetType().Name, profile.Filter);
                     var sub = subscriptions.FirstOrDefault(x => x.Name == profile.GetType().Name);
                     if (sub == default)
                     {
@@ -165,6 +166,7 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
                     }
                     else
                     {
+                        var connectionSettings = new PersistentStreamSubscriptionConnectionSettings(sub.SubscriptionId, profile.GetType().Name, profile.Filter.SubscribedStreamId, profile.Filter.AggregateType?.Name);
                         manager.Add(sub.SubscriptionId, subscription, connectionSettings).Wait();
                         if (sub.Connected)
                             manager.Connect(sub.SubscriptionId).Wait();
@@ -186,11 +188,10 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
                     foreach (var eventType in profile.SubscribedEvents)
                     {
                         var observerType = typeof(ProjectionObserver<,>).MakeGenericType(profile.ProjectionType, eventType);
-                        var observer = (IObserver<Event>)Activator.CreateInstance(observerType, applicationBuilder.ApplicationServices);
+                        var observer = (IObserver<SubscriptionMessage>)Activator.CreateInstance(observerType, applicationBuilder.ApplicationServices, profile.Filter);
                         subscription.Subscribe(observer);
                     }
 
-                    var connectionSettings = new PersistentStreamSubscriptionConnectionSettings(profile.GetType().Name, profile.Filter);
                     var sub = subscriptions.FirstOrDefault(x => x.Name == profile.GetType().Name);
                     if (sub == default)
                     {
@@ -199,6 +200,7 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
                     }
                     else
                     {
+                        var connectionSettings = new PersistentStreamSubscriptionConnectionSettings(sub.SubscriptionId, profile.GetType().Name, profile.Filter.SubscribedStreamId, profile.Filter.AggregateType?.Name);
                         manager.Add(sub.SubscriptionId, subscription, connectionSettings).Wait();
                         if (sub.Connected)
                             manager.Connect(sub.SubscriptionId).Wait();

@@ -69,10 +69,10 @@ namespace EventServe.SqlStreamStore.IntegrationTests
             });
 
             //Save the first aggregate
-            await sut.SaveAsync(aggregate1, aggregate1.Version);
+            await sut.SaveAsync(aggregate1);
 
             //Saving the second aggregate should fail, as it has been modified since we queried
-            await Assert.ThrowsAsync<WrongExpectedVersionException>(async () => await sut.SaveAsync(aggregate2, aggregate2.Version));
+            await Assert.ThrowsAsync<WrongExpectedVersionException>(async () => await sut.SaveAsync(aggregate2));
         }
 
 
@@ -86,7 +86,7 @@ namespace EventServe.SqlStreamStore.IntegrationTests
             };
 
             var aggregate = new DummyAggregate(resetCommand);
-            await repository.SaveAsync(aggregate, aggregate.Version);
+            await repository.SaveAsync(aggregate);
 
             return aggregate;
         }

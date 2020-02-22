@@ -1,18 +1,21 @@
 ﻿using EventServe.Projections.Partitioned;
+using EventServe.Subscriptions;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Threading.Tasks;
 
 namespace EventServe.Projections
 {
-    public class PartitionedProjectionObserver<TProjection, TEvent> : IObserver<Event>
+    public class PartitionedProjectionObserver<TProjection, TEvent> : IObserver<SubscriptionMessage>
         where TProjection : PartitionedProjection, new()
         where TEvent : Event
     {
+        private readonly IStreamFilter _filter;
         private readonly IServiceProvider _serviceProvider;
 
-        public PartitionedProjectionObserver(IServiceProvider serviceProvider)
+        public PartitionedProjectionObserver(IServiceProvider serviceProvider, IStreamFilter filter)
         {
+            _filter = filter;
             _serviceProvider = serviceProvider;
         }
 
@@ -26,35 +29,36 @@ namespace EventServe.Projections
             throw error;
         }
 
-        public void OnNext(Event @event)
+        public void OnNext(SubscriptionMessage value)
         {
-            if (!(@event is TEvent typedEvent))
+            //Check if this event passes through the filter
+            if (_filter != null && !_filter.DoesEventPassFilter(value.Type, value.SourceStreamId))
                 return;
 
-           
+            if (!(value.Event is TEvent typedEvent))
+                return;
 
             try
             {
                 var worker = Task.Factory
-                   .StartNew(async () =>
-                   {
+                .StartNew(async () =>
+                {
+                    using (var scope = _serviceProvider.CreateScope())
+                    {
+                        var handler = scope.ServiceProvider.GetService<IPartitionedProjectionEventHandler<TProjection, TEvent>>();
+                        if (handler == null)
+                            return;
 
-                       using(var scope = _serviceProvider.CreateScope())
-                       {
-                           var handler = scope.ServiceProvider.GetService<IPartitionedProjectionEventHandler<TProjection, TEvent>>();
-                           if (handler == null)
-                               return;
+                        var repository = scope.ServiceProvider.GetRequiredService<IPartitionedProjectionStateRepository>();
 
-                           var repository = scope.ServiceProvider.GetRequiredService<IPartitionedProjectionStateRepository>();
+                        var readModel = await repository.GetProjectionState<TProjection>(typedEvent.AggregateId);
+                        if (readModel == null)
+                            readModel = new TProjection();
 
-                           var readModel = await repository.GetProjectionState<TProjection>(@event.AggregateId);
-                           if (readModel == null)
-                               readModel = new TProjection();
-
-                           await handler.ProjectEvent(readModel, typedEvent);
-                           await repository.SetProjectionState(@event.AggregateId, readModel);
-                       }    
-                   });
+                        await handler.ProjectEvent(readModel, typedEvent);
+                        await repository.SetProjectionState(typedEvent.AggregateId, readModel);
+                    }
+                });
 
                 worker.Wait();
             }
@@ -63,7 +67,7 @@ namespace EventServe.Projections
                 //Check if the task threw any exceptions that we're concerned with
                 foreach (var e in ae.InnerExceptions)
                 {
-
+                    throw;
                 }
             }
         }

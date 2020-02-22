@@ -5,7 +5,7 @@ using EventServe.Subscriptions.Transient;
 
 namespace EventServe.Subscriptions
 {
-    public interface ITransientStreamSubscriptionConnection: IObservable<Event>
+    public interface ITransientStreamSubscriptionConnection: IObservable<SubscriptionMessage>
     {
         Task Connect(TransientStreamSubscriptionConnectionSettings connectionSettings);
         Task Disconnect();
@@ -16,10 +16,11 @@ namespace EventServe.Subscriptions
         private readonly Queue<Task> _dispatchQueue = new Queue<Task>();
         private readonly SemaphoreLocker _locker;
         protected bool _connected = false;
-        protected IStreamFilter _filter;
+        protected StreamId _streamId;
+        protected string _aggregateType;
         protected StreamPosition _startPosition = StreamPosition.End;
         protected bool _cancellationRequestedByUser = false;
-        private List<IObserver<Event>> _observers = new List<IObserver<Event>>();
+        private List<IObserver<SubscriptionMessage>> _observers = new List<IObserver<SubscriptionMessage>>();
 
         public TransientStreamSubscriptionConnection()
         {
@@ -28,7 +29,8 @@ namespace EventServe.Subscriptions
 
         public async Task Connect(TransientStreamSubscriptionConnectionSettings connectionSettings)
         {
-            _filter = connectionSettings.Filter;
+            _streamId = connectionSettings.StreamId;
+            _aggregateType = connectionSettings.AggregateType;
             _startPosition = connectionSettings.StreamPosition;
             await ConnectAsync();
         }
@@ -37,8 +39,7 @@ namespace EventServe.Subscriptions
             _cancellationRequestedByUser = true;
             await DisconnectAsync();
         }
-
-        public IDisposable Subscribe(IObserver<Event> observer)
+        public IDisposable Subscribe(IObserver<SubscriptionMessage> observer)
         {
             _observers.Add(observer);
             return default;
@@ -47,10 +48,10 @@ namespace EventServe.Subscriptions
         protected abstract Task ConnectAsync();
         protected abstract Task DisconnectAsync();
 
-        protected async Task RaiseEvent<T>(T @event) where T : Event
+        protected async Task RaiseMessage(SubscriptionMessage message)
         {
             //Add event to raising queue
-            _dispatchQueue.Enqueue(DispatchEvent(@event));
+            _dispatchQueue.Enqueue(DispatchMessage(message));
 
             //Dequeue an event and process
             await _locker.LockAsync(async () =>
@@ -59,10 +60,17 @@ namespace EventServe.Subscriptions
                 await dequeuedTask;
             });
         }
-        private async Task DispatchEvent<T>(T @event) where T : Event
+        private async Task DispatchMessage(SubscriptionMessage message)
         {
-            foreach(var observer in _observers)
-                observer.OnNext(@event);
+            try
+            {
+                foreach (var observer in _observers)
+                    observer.OnNext(message);
+            }
+            catch
+            {
+                throw;
+            }
         }
     }
 }

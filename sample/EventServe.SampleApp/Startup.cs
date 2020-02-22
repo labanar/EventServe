@@ -17,6 +17,8 @@ using EventServe.SampleApp.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using EventServe.Projections;
 using EventServe.SampleApp.Domain;
+using EventServe.EventStore;
+using EventServe.Extensions.Microsoft.DependencyInjection;
 
 namespace EventServe.SampleApp
 {
@@ -35,35 +37,35 @@ namespace EventServe.SampleApp
             services.AddMediatR(typeof(Startup).Assembly, typeof(EventStorePersistentSubscriptionConnection).Assembly, typeof(PersistentStreamSubscriptionConnection).Assembly);
             services.AddControllers();
 
-            services.AddDbContext<SampleContext>(options =>
+            services.AddDbContextPool<SampleContext>(options =>
             {
                 options.UseSqlServer(Configuration["ConnectionStrings:ReadModelDb"]);
             });
             services.AddTransient<IPartitionedProjectionStateRepository, PartitionedProjectionStateRepository>();
 
-            //services.AddEventServe(options =>
-            //{
-            //    var connOptions = Configuration.GetSection("EventStoreConnectionOptions").Get<EventStoreConnectionOptions>();
-            //    options.Host = connOptions.Host;
-            //    options.Port = connOptions.Port;
-            //    options.Username = connOptions.Username;
-            //    options.Password = connOptions.Password;
-            //},
-            //new Assembly[] {
-            //    typeof(Startup).Assembly ,
-            //    typeof(PersistentSubscriptionProfile).Assembly
-            //});
-
             services.AddEventServe(options =>
             {
-                options.ConnectionString = Configuration["ConnectionStrings:MsSqlStreamStoreDb"];
-                options.SchemaName = Configuration["MsSqlStreamStoreOptions:SchemaName"];
+                var connOptions = Configuration.GetSection("EventStoreConnectionOptions").Get<EventStoreConnectionOptions>();
+                options.Host = connOptions.Host;
+                options.Port = connOptions.Port;
+                options.Username = connOptions.Username;
+                options.Password = connOptions.Password;
             },
-            Configuration["ConnectionStrings:MsSqlStreamStoreDb"],
             new Assembly[] {
-                typeof(PersistentSubscriptionProfile).Assembly,
-                typeof(Startup).Assembly,
+                typeof(Startup).Assembly ,
+                typeof(PersistentSubscriptionProfile).Assembly
             });
+
+            //services.AddEventServe(options =>
+            //{
+            //    options.ConnectionString = Configuration["ConnectionStrings:MsSqlStreamStoreDb"];
+            //    options.SchemaName = Configuration["MsSqlStreamStoreOptions:SchemaName"];
+            //},
+            //Configuration["ConnectionStrings:MsSqlStreamStoreDb"],
+            //new Assembly[] {
+            //    typeof(PersistentSubscriptionProfile).Assembly,
+            //    typeof(Startup).Assembly,
+            //});
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -74,14 +76,16 @@ namespace EventServe.SampleApp
                 app.UseDeveloperExceptionPage();
             }
 
-            //app.UseEventServe();
-            app.UseEventServeMsSqlStreamStore();
+            app.UseEventServe();
+            //app.UseEventServeMsSqlStreamStore();
 
 
 
             var productRepo = app.ApplicationServices.GetRequiredService<IEventRepository<Product>>();
+            var subscriptionManager = app.ApplicationServices.GetRequiredService<ISubscriptionManager>();
             //await CreateProduct(productRepo);
-            SimulatePriceFluctuations(productRepo, 500, Guid.Parse("2DEA3A1F-6E39-4537-B677-DEDF7B2A58ED"), Guid.Parse("DEC21003-81F9-4E67-A024-283C85C00DBF"));
+            await ResetSubscription(subscriptionManager, Guid.Parse("554cb735-99f2-4f75-91de-dd13ef5478ac"));
+            //SimulatePriceFluctuations(productRepo, 10000, Guid.Parse("a3b200a4-ae13-4c3b-afcb-7452f4bcdbcf"), Guid.Parse("a31d48fa-9e70-454b-a7c2-2bed8137bcf8"));
 
             app.UseHttpsRedirection();
             app.UseRouting();
@@ -105,13 +109,13 @@ namespace EventServe.SampleApp
                 Price = 129.99,
             });
 
-            await productRepository.SaveAsync(product, product.Version);
+            await productRepository.SaveAsync(product);
         }
 
 
         private async Task SimulatePriceFluctuations(IEventRepository<Product> productRepository, int iterations, params Guid[] productIds)
         {
-            for(int i = 0; i < 1000; i++)
+            for(int i = 0; i < iterations; i++)
             {
                 var rand = new Random();
 
@@ -126,11 +130,16 @@ namespace EventServe.SampleApp
 
                     var product = await productRepository.GetById(productId);
                     product.ResetProductPrice(newPrice, "CAD");
-                    await productRepository.SaveAsync(product, product.Version);
+                    await productRepository.SaveAsync(product);
                 }
 
-                await Task.Delay(TimeSpan.FromSeconds(5));
+                //await Task.Delay(TimeSpan.FromMilliseconds(250));
             }
+        }
+
+        private async Task ResetSubscription(ISubscriptionManager manager, Guid subscriptionId)
+        {
+            await manager.Reset(subscriptionId);
         }
     }
 }

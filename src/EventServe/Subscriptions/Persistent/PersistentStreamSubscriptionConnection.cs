@@ -5,21 +5,34 @@ using EventServe.Subscriptions.Persistent;
 
 namespace EventServe.Subscriptions
 {
-    public interface IPersistentStreamSubscriptionConnection : IObservable<Event>
+    public interface IPersistentStreamSubscriptionConnection : IObservable<PersistentSubscriptionResetEvent>, IObservable<SubscriptionMessage>
     {
+        bool Connected { get; }
+        DateTime? ConnectionStartDate { get; }
         Task Connect(PersistentStreamSubscriptionConnectionSettings settings);
         Task Disconnect();
+        Task Reset();
     }
 
     public abstract class PersistentStreamSubscriptionConnection : IPersistentStreamSubscriptionConnection
     {
+        public bool Connected => _connected;
+        public DateTime? ConnectionStartDate => _connectionStartDate;
+
         private readonly Queue<Task> _dispatchQueue;
         private readonly SemaphoreLocker _locker;
+        private List<IObserver<SubscriptionMessage>> _messageObservers = new List<IObserver<SubscriptionMessage>>();
+        private IObserver<PersistentSubscriptionResetEvent> _resetObserver;
+
         protected bool _connected = false;
+        protected DateTime? _connectionStartDate;
         protected bool _cancellationRequestedByUser = false;
-        private List<IObserver<Event>> _observers = new List<IObserver<Event>>();
+
+        protected Guid _subscriptionId;
         protected string _subscriptionName;
-        protected IStreamFilter _filter;
+        protected StreamId _streamId;
+        protected string _aggregateType;
+        protected long? _position;
 
         public PersistentStreamSubscriptionConnection()
         {
@@ -29,23 +42,37 @@ namespace EventServe.Subscriptions
 
         public async Task Connect(PersistentStreamSubscriptionConnectionSettings settings)
         {
+            _subscriptionId = settings.SubscriptionId;
             _subscriptionName = settings.SubscriptionName;
-            _filter = settings.Filter;
+            _streamId = settings.StreamId;
+            _aggregateType = settings.AggregateType;
             await ConnectAsync();
-        }   
+            _connectionStartDate = DateTime.UtcNow;
+        }
         public async Task Disconnect()
         {
             _cancellationRequestedByUser = true;
             await DisconnectAsync();
+            _connectionStartDate = null;
+        }
+        public async Task Reset()
+        {
+            await DisconnectAsync();
+            await ResetAsync();
+            _resetObserver.OnNext(new PersistentSubscriptionResetEvent());
+            _position = null;
+            await ConnectAsync();
         }
 
         protected abstract Task ConnectAsync();
         protected abstract Task DisconnectAsync();
+        protected abstract Task ResetAsync();
         protected abstract Task AcknowledgeEvent(Guid eventId);
-        protected async Task RaiseEvent<T>(T @event) where T : Event
+
+        protected async Task RaiseMessage(SubscriptionMessage message)
         {
             //Add event to raising queue
-            _dispatchQueue.Enqueue(DispatchEvent(@event));
+            _dispatchQueue.Enqueue(DispatchMessage(message));
 
             //Dequeue an event and process
             await _locker.LockAsync(async () =>
@@ -54,23 +81,29 @@ namespace EventServe.Subscriptions
                 await dequeuedTask;
             });
         }
-        private async Task DispatchEvent<T>(T @event) where T : Event
+        private async Task DispatchMessage(SubscriptionMessage message)
         {
             try
             {
-                foreach (var observer in _observers)
-                    observer.OnNext(@event);
+                foreach (var observer in _messageObservers)
+                    observer.OnNext(message);
 
-                await AcknowledgeEvent(@event.EventId);
+                await AcknowledgeEvent(message.EventId);
             }
             catch
             {
                 throw;
             }
         }
-        public IDisposable Subscribe(IObserver<Event> observer)
+
+        public IDisposable Subscribe(IObserver<PersistentSubscriptionResetEvent> observer)
         {
-            _observers.Add(observer);
+            _resetObserver = observer;
+            return default;
+        }
+        public IDisposable Subscribe(IObserver<SubscriptionMessage> observer)
+        {
+            _messageObservers.Add(observer);
             return default;
         }
     }

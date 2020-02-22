@@ -44,6 +44,23 @@ namespace EventServe.EventStore.IntegrationTests
         }
 
         [Fact]
+        public async Task Read_and_writes_change_to_aggregate()
+        {
+            var fakeAggregate = await CreateDummyAggregate();
+            var sut = CreateRepository<DummyAggregate>();
+            var aggregate = await sut.GetById(fakeAggregate.Id);
+
+            aggregate.ResetDummy(new ResetDummyAggregateCommand
+            {
+                Id = aggregate.Id,
+                Name = "A new name",
+                Url = "https://url.example.com"
+            });
+
+            await sut.SaveAsync(aggregate);
+        }
+
+        [Fact]
         public async Task Write_fails_when_aggregate_has_been_modified_by_another_actor()
         {
             //Create a fake aggregate
@@ -71,10 +88,10 @@ namespace EventServe.EventStore.IntegrationTests
             });
 
             //Save the first aggregate
-            await sut.SaveAsync(aggregate1, aggregate1.Version);
+            await sut.SaveAsync(aggregate1);
 
             //Saving the second aggregate should fail, as it has been modified since we queried
-            await Assert.ThrowsAsync<WrongExpectedVersionException>(async () => await sut.SaveAsync(aggregate2, aggregate2.Version));
+            await Assert.ThrowsAsync<WrongExpectedVersionException>(async () => await sut.SaveAsync(aggregate2));
         }
 
 

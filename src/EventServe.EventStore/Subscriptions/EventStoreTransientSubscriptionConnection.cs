@@ -29,11 +29,26 @@ namespace EventServe.EventStore.Subscriptions
             _connectionProvider = connectionProvider;
         }
 
+
         protected override async Task ConnectAsync()
         {
             _cancellationRequestedByUser = false;
             _connected = false;
             await Connect();
+        }
+        protected override Task DisconnectAsync()
+        {
+            if (_subscriptionBase == null)
+            {
+                _connected = false;
+                _cancellationRequestedByUser = true;
+                return Task.CompletedTask;
+            }
+
+            _cancellationRequestedByUser = true;
+            _connection.Close();
+            _connection.Dispose();
+            return Task.CompletedTask;
         }
 
         private async Task Connect()
@@ -50,7 +65,7 @@ namespace EventServe.EventStore.Subscriptions
                 return HandleEvent(resolvedEvent);
             };
 
-            var streamId = _filter.SubscribedStreamId == null ? $"$ce-{_filter.AggregateType.Name.ToUpper()}" : _filter.SubscribedStreamId.Id;
+            var streamId = _streamId == null ? $"$ce-{_aggregateType.ToUpper()}" : _streamId.Id;
             if (_startPosition ==  StreamPosition.End)
             {
                 _connected = true;
@@ -77,17 +92,25 @@ namespace EventServe.EventStore.Subscriptions
             }
         }
 
+
         private async Task HandleEvent(ResolvedEvent resolvedEvent)
         {
-            //Check if this event passes through the filter
-            if (_filter != null && !_filter.DoesEventPassFilter(resolvedEvent.Event.EventType, resolvedEvent.Event.EventStreamId))
-                return;
+            Func<Event> lazyEvent =
+                new Func<Event>(() =>
+                {
+                    var @event = _eventSerializer.DeseralizeEvent(resolvedEvent);
+                    @event.EventId = resolvedEvent.OriginalEvent.EventId;
+                    return @event;
+                });
 
-            var @event = _eventSerializer.DeseralizeEvent(resolvedEvent);
-            @event.EventId = resolvedEvent.OriginalEvent.EventId;
-            await RaiseEvent(@event);
+            var streamMessage = new SubscriptionMessage(
+                resolvedEvent.OriginalEvent.EventId,
+                resolvedEvent.Event.EventStreamId,
+                resolvedEvent.Event.EventType,
+                lazyEvent);
+
+            await RaiseMessage(streamMessage);
         }
-
 
         private void SubscriptionDropped(EventStoreCatchUpSubscription subscription,
             SubscriptionDropReason subscriptionDropReason, Exception ex)
@@ -103,7 +126,6 @@ namespace EventServe.EventStore.Subscriptions
             Connect().Wait();
         }
 
-
         private void SubscriptionDropped(ESSubscription subscription,
            SubscriptionDropReason subscriptionDropReason, Exception ex)
         {
@@ -116,21 +138,6 @@ namespace EventServe.EventStore.Subscriptions
             _logger.LogError(ex, $"Subscription dropped: {subscriptionDropReason.ToString()}");
             _connection.Dispose();
             Connect().Wait();
-        }
-
-        protected override Task DisconnectAsync()
-        {
-            if (_subscriptionBase == null)
-            {
-                _connected = false;
-                _cancellationRequestedByUser = true;
-                return Task.CompletedTask;
-            }
-
-            _cancellationRequestedByUser = true;
-            _connection.Close();
-            _connection.Dispose();
-            return Task.CompletedTask;
         }
     }
 }

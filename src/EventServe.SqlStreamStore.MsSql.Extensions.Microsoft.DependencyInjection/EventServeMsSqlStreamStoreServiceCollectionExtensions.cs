@@ -17,7 +17,7 @@ namespace EventServe.SqlStreamStore.MsSql.Extensions.Microsoft.DependencyInjecti
             services.AddEventServeSqlStreamStore();
             services.Configure(setupAction);
             services.AddTransient<IMsSqlStreamStoreSettingsProvider>(_ => new MsSqlStreamStoreSettingsProvider(connectionString));
-            services.AddDbContext<SqlStreamStoreContext>(options =>
+            services.AddDbContextPool<SqlStreamStoreContext>(options =>
             {
                 options.UseSqlServer(connectionString, sqlServerOptions =>
                 {

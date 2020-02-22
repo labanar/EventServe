@@ -32,7 +32,7 @@ namespace EventServe.SqlStreamStore
         }
 
 
-        public async Task AppendEventsToStream(string stream, List<Event> events, long expectedVersion)
+        public async Task AppendEventsToStream(string stream, List<Event> events, long? expectedVersion)
         {
             var streamId = new StreamId(stream);
 
@@ -43,7 +43,7 @@ namespace EventServe.SqlStreamStore
             try
             {
                 var store = await _streamStoreProvider.GetStreamStore();
-                await store.AppendToStream(streamId.Id, (int)expectedVersion, serializedEvents.ToArray());
+                await store.AppendToStream(streamId.Id, expectedVersion.HasValue ? (int)expectedVersion.Value : ExpectedVersion.NoStream, serializedEvents.ToArray());
             }
             catch(WrongVersion wV)
             {
@@ -59,14 +59,14 @@ namespace EventServe.SqlStreamStore
             await store.AppendToStream(streamId.Id, ExpectedVersion.Any, new NewStreamMessage[] {  await _eventSerializer.SerializeEvent(@event) });
         }
 
-        public async Task AppendEventToStream(string stream, Event @event, long expectedVersion)
+        public async Task AppendEventToStream(string stream, Event @event, long? expectedVersion)
         {
             var streamId = new StreamId(stream);
             var store = await _streamStoreProvider.GetStreamStore();
 
             try
             {
-                await store.AppendToStream(streamId.Id, (int)expectedVersion, new NewStreamMessage[] { await _eventSerializer.SerializeEvent(@event) });
+                await store.AppendToStream(streamId.Id, expectedVersion.HasValue ? (int)expectedVersion.Value : ExpectedVersion.NoStream, new NewStreamMessage[] { await _eventSerializer.SerializeEvent(@event) });
             }
             catch (WrongVersion wV)
             {

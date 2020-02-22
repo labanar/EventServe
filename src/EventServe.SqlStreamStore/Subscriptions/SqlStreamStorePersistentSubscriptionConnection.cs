@@ -35,57 +35,71 @@ namespace EventServe.SqlStreamStore.Subscriptions
         protected override async Task ConnectAsync()
         {
             //Get subscription position
-            var pos = await _subscriptionManager.GetSubscriptionPosition(_subscriptionName);
-            int? intPos = (pos != null) ? Convert.ToInt32(pos) : default(int?);
-
+            _position = await _subscriptionManager.GetSubscriptionPosition(_subscriptionId, true);
             _store = await _storeProvider.GetStreamStore();
 
-            if(_filter.SubscribedStreamId == null)
+            if(_streamId == null)
             {
-                _allSubscription = _store.SubscribeToAll(intPos,
-                   (_, message, cancellationToken) =>
-                   {
-                       return HandleEvent(message, cancellationToken);
-                   },
-                   (sub, reason, ex) =>
-                   {
-                       HandleSubscriptionDropped(sub, reason, ex);
-                   });
+                _allSubscription = _store.SubscribeToAll(_position,
+                   HandleSubscriptionEvent,
+                   HandleSubscriptionDropped);
             }
             else
             {
-                _subscription = _store.SubscribeToStream(_filter.SubscribedStreamId.Id, intPos,
-                   (_, message, cancellationToken) =>
-                   {
-                       return HandleEvent(message, cancellationToken);
-                   },
-                   (sub, reason, ex) =>
-                   {
-                       HandleSubscriptionDropped(sub, reason, ex);
-                   });
+                int? intPos = (_position != null) ? Convert.ToInt32(_position) : default(int?);
+                _subscription = _store.SubscribeToStream(_streamId.Id, intPos,
+                   HandleSubscriptionEvent,
+                   HandleSubscriptionDropped);
             }          
+        }
+
+        protected override Task DisconnectAsync()
+        {
+            if (_subscription == null && _allSubscription == null)
+                return Task.CompletedTask;
+
+            _cancellationRequestedByUser = true;
+
+            if(_subscription != null)
+                _subscription.Dispose();
+
+            if (_allSubscription != null)
+                _allSubscription.Dispose();
+
+            return Task.CompletedTask;
+        }
+        protected override async Task ResetAsync()
+        {
+            await _subscriptionManager.ResetSubscriptionPosition(_subscriptionId);
         }
 
         private async Task HandleEvent(StreamMessage message, CancellationToken cancellation)
         {
-            //Check if this event passes through the filter
-            if (_filter != null && !_filter.DoesEventPassFilter(message.Type, message.StreamId))
-            {
-                await AcknowledgeEvent(message.MessageId);
-                return;
-            }
+            Func<Event> lazyEvent =
+                new Func<Event>(() => 
+                {
+                    var deserializationTask = _eventSerializer.DeseralizeEvent(message);
+                    deserializationTask.Wait();
+                    return deserializationTask.Result;
+                });
 
-            _logger.LogInformation($"Event received: {message.Type} [{message.MessageId}]");
-            var @event = await _eventSerializer.DeseralizeEvent(message);
-            await RaiseEvent(@event);
-            _logger.LogInformation($"Event rasied successfully: {message.Type} [{message.MessageId}]");
+            var streamMessage = new SubscriptionMessage(message.MessageId, message.StreamId, message.Type, lazyEvent);
+            await RaiseMessage(streamMessage);
         }
-
         protected override async Task AcknowledgeEvent(Guid eventId)
         {
-            await _subscriptionManager.IncrementSubscriptionPosition(_subscriptionName);
+            _position = (_position == null) ? 0 : ++_position;
+            await _subscriptionManager.SetSubscriptionPosition(_subscriptionId, _position);
         }
 
+        private Task HandleSubscriptionEvent(IAllStreamSubscription subscription, StreamMessage message, CancellationToken token)
+        {
+            return HandleEvent(message, token);
+        }
+        private Task HandleSubscriptionEvent(IStreamSubscription subscription, StreamMessage message, CancellationToken token)
+        {
+            return HandleEvent(message, token);
+        }
         private void HandleSubscriptionDropped(IStreamSubscription subscription, SubscriptionDroppedReason reason, Exception exception = null)
         {
             if(_cancellationRequestedByUser)
@@ -101,7 +115,6 @@ namespace EventServe.SqlStreamStore.Subscriptions
                 _logger.LogError($"{subscription.Name} subscription dropped: {reason.ToString()}");
             _connected = false;
         }
-
         private void HandleSubscriptionDropped(IAllStreamSubscription subscription, SubscriptionDroppedReason reason, Exception exception = null)
         {
             if (_cancellationRequestedByUser)
@@ -116,16 +129,6 @@ namespace EventServe.SqlStreamStore.Subscriptions
             else
                 _logger.LogError($"{subscription.Name} subscription dropped: {reason.ToString()}");
             _connected = false;
-        }
-
-        protected override Task DisconnectAsync()
-        {
-            if (_subscription == null)
-                return Task.CompletedTask;
-
-            _cancellationRequestedByUser = true;
-            _subscription.Dispose();
-            return Task.CompletedTask;
         }
     }
 }

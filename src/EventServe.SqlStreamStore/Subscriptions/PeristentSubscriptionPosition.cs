@@ -7,7 +7,6 @@ namespace EventServe.SqlStreamStore.Subscriptions
     public class PeristentSubscriptionPosition
     {
         public Guid SubscriptionId { get; set; }
-        public string Name { get; set; }
         public long? Position { get; set; }
     }
 }

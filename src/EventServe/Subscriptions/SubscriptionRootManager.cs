@@ -30,7 +30,7 @@ namespace EventServe.Subscriptions
             var managerRoot = await _repository.GetById(Guid.Empty);
             if (managerRoot == null) managerRoot = new SubscriptionManagerRoot();
             var subscriptionId = managerRoot.CreatePersistentSubscription(name);
-            await _repository.SaveAsync(managerRoot, managerRoot.Version);
+            await _repository.SaveAsync(managerRoot);
             return new SubscriptionBase
             {
                 SubscriptionId = subscriptionId,
@@ -45,7 +45,7 @@ namespace EventServe.Subscriptions
             var managerRoot = await _repository.GetById(Guid.Empty);
             if (managerRoot == null) managerRoot = new SubscriptionManagerRoot();
             var subscriptionId = managerRoot.CreateTransientSubscription(name);
-            await _repository.SaveAsync(managerRoot, managerRoot.Version);
+            await _repository.SaveAsync(managerRoot);
             return new SubscriptionBase
             {
                 SubscriptionId = subscriptionId,
@@ -72,7 +72,7 @@ namespace EventServe.Subscriptions
             var managerRoot = await _repository.GetById(Guid.Empty);
             if (managerRoot == null) managerRoot = new SubscriptionManagerRoot();
             managerRoot.StartSubscription(subscriptionId);
-            await _repository.SaveAsync(managerRoot, managerRoot.Version);
+            await _repository.SaveAsync(managerRoot);
         }
 
         public async Task StopSubscription(Guid subscriptionId)
@@ -80,7 +80,7 @@ namespace EventServe.Subscriptions
             var managerRoot = await _repository.GetById(Guid.Empty);
             if (managerRoot == null) managerRoot = new SubscriptionManagerRoot();
             managerRoot.StopSubscription(subscriptionId, "Stopped by user");
-            await _repository.SaveAsync(managerRoot, managerRoot.Version);
+            await _repository.SaveAsync(managerRoot);
         }
     }
 }

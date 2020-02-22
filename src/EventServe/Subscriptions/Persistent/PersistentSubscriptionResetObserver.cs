@@ -1,35 +1,28 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using System;
+﻿using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace EventServe.Subscriptions
+namespace EventServe.Subscriptions.Persistent
 {
-    public class SubscriptionObserver<TProfile, TEvent> : IObserver<Event>
-        where TProfile : ISubscriptionProfile
-        where TEvent : Event
+    public class PersistentSubscriptionResetObserver<TProfile> : IObserver<PersistentSubscriptionResetEvent>
+        where TProfile: PersistentSubscriptionProfile
     {
         private readonly IServiceProvider _serviceProvider;
 
-        public SubscriptionObserver(IServiceProvider serviceProvider)
+        public PersistentSubscriptionResetObserver(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
         }
 
-        public void OnCompleted()
-        {
-
-        }
+        public void OnCompleted() { }
 
         public void OnError(Exception error)
         {
             throw error;
         }
 
-        public void OnNext(Event @event)
+        public void OnNext(PersistentSubscriptionResetEvent value)
         {
-            if (!(@event is TEvent typedEvent))
-                return;
-
             try
             {
                 var worker = Task.Factory
@@ -37,11 +30,8 @@ namespace EventServe.Subscriptions
                 {
                     using (var scope = _serviceProvider.CreateScope())
                     {
-                        var handler = scope.ServiceProvider.GetService<ISubscriptionEventHandler<TProfile, TEvent>>();
-                        if (handler == null)
-                            return;
-
-                        await handler.HandleEvent(typedEvent);
+                        var handler = scope.ServiceProvider.GetRequiredService<IPersistentSubscriptionResetHandler<TProfile>>();
+                        await handler.HandleReset();
                     }
                 });
 

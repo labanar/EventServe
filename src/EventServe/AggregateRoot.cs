@@ -1,13 +1,16 @@
 ﻿using ReflectionMagic;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace EventServe
 {
     public abstract class AggregateRoot
     {
         public abstract Guid Id { get; }
-        public int Version { get; internal set; } = -1;
+        public long? Version => _version;
+
+        private long? _version = null;
 
         private IReadOnlyCollection<Event> DomainEvents => _changes.AsReadOnly();
 
@@ -20,23 +23,22 @@ namespace EventServe
 
         public void MarkChangesAsCommitted()
         {
-            Version += _changes.Count;
-            _changes.Clear();
-        }
-
-        public void LoadFromHistory(IEnumerable<Event> history)
-        {
-            foreach (var @event in history)
-            {
-                ApplyChange(@event, false);
-                Version++;
-            }
+            if (_version.HasValue)
+                _version += _changes.Count;
+            else
+                _version = _changes.Count - 1;
         }
 
         public void LoadFromHistory(Event @event)
         {
+            if (@event == null)
+                return;
+
             ApplyChange(@event, false);
-            Version++;
+            if (_version.HasValue)
+                _version += 1;
+            else
+                _version = 0;
         }
 
         private void ApplyChange(Event @event, bool isNew)

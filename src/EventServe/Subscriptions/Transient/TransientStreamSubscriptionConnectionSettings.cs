@@ -6,13 +6,16 @@ namespace EventServe.Subscriptions.Transient
 {
     public class TransientStreamSubscriptionConnectionSettings
     {
-        public TransientStreamSubscriptionConnectionSettings(StreamPosition streamPosition, IStreamFilter filter)
+        public TransientStreamSubscriptionConnectionSettings(StreamPosition streamPosition, StreamId streamId, string aggregateType)
         {
             StreamPosition = streamPosition;
-            Filter = filter;
+            StreamId = streamId;
+            AggregateType = aggregateType;
         }
 
         public StreamPosition StreamPosition { get; }
-        public IStreamFilter Filter { get; }
+
+        public StreamId StreamId { get; }
+        public string AggregateType { get; }
     }
 }

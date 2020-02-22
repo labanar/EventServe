@@ -16,7 +16,6 @@ namespace EventServe.SqlStreamStore
             builder.Entity<PeristentSubscriptionPosition>(options =>
             {
                 options.HasKey(x => x.SubscriptionId);
-                options.HasIndex(x => x.Name).IsUnique();
             });
         }
     }

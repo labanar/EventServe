@@ -30,9 +30,9 @@ namespace EventServe.EventStore
             return AppendEvent(stream, @event, ExpectedVersion.Any);
         }
 
-        public Task AppendEventToStream(string stream, Event @event, long expectedVersion)
+        public Task AppendEventToStream(string stream, Event @event, long? expectedVersion)
         {
-            return AppendEvent(stream, @event, expectedVersion);
+            return AppendEvent(stream, @event, expectedVersion == null ? ExpectedVersion.EmptyStream : expectedVersion.Value);
         }
 
         public Task AppendEventsToStream(string stream, List<Event> events)
@@ -40,9 +40,9 @@ namespace EventServe.EventStore
             return AppendEvents(stream, events, ExpectedVersion.Any);
         }
 
-        public Task AppendEventsToStream(string stream, List<Event> events, long expectedVersion)
+        public Task AppendEventsToStream(string stream, List<Event> events, long? expectedVersion)
         {
-            return AppendEvents(stream, events, expectedVersion);
+            return AppendEvents(stream, events, expectedVersion == null ? ExpectedVersion.EmptyStream : expectedVersion.Value);
         }
 
         private async Task AppendEvent(string stream, Event @event, long expectedVersion)
@@ -70,7 +70,7 @@ namespace EventServe.EventStore
             }
             catch (ES.Exceptions.WrongExpectedVersionException wrongVersionException)
             {
-                throw new WrongExpectedVersionException($"Stream version does not match the expected version {expectedVersion}.");
+                throw new WrongExpectedVersionException($"Stream version does not match the expected version {expectedVersion}. {wrongVersionException.Message}");
             }
         }
     }

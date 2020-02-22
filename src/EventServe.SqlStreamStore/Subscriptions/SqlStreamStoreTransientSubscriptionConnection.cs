@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using EventServe.Subscriptions;
+using Microsoft.Extensions.Logging;
 using SqlStreamStore;
 using SqlStreamStore.Streams;
 using SqlStreamStore.Subscriptions;
@@ -33,7 +34,7 @@ namespace EventServe.SqlStreamStore.Subscriptions
         {
             _store = await _storeProvider.GetStreamStore();
 
-            if (_filter.SubscribedStreamId == null)
+            if (_streamId == null)
             {
                 _allSubscription = _store.SubscribeToAll(
                     _startPosition == StreamPosition.End ? -1 : 0,
@@ -49,7 +50,7 @@ namespace EventServe.SqlStreamStore.Subscriptions
             else
             {
                 _streamSubscription = _store.SubscribeToStream(
-                    _filter.SubscribedStreamId.Id, 
+                    _streamId.Id, 
                     _startPosition == StreamPosition.End ? -1 : 0,
                     (_, message, cancellationToken) =>
                     {
@@ -64,14 +65,16 @@ namespace EventServe.SqlStreamStore.Subscriptions
 
         private async Task HandleEvent(StreamMessage message, CancellationToken cancellation)
         {
-            //Check if this event passes through the filter
-            if (_filter != null && !_filter.DoesEventPassFilter(message.Type, message.StreamId))
-                return;
+            Func<Event> lazyEvent =
+               new Func<Event>(() =>
+               {
+                   var deserializationTask = _eventSerializer.DeseralizeEvent(message);
+                   deserializationTask.Wait();
+                   return deserializationTask.Result;
+               });
 
-            _logger.LogInformation($"Event received: {message.Type} [{message.MessageId}]");
-            var @event = await _eventSerializer.DeseralizeEvent(message);
-            await RaiseEvent(@event);
-            _logger.LogInformation($"Event rasied successfully: {message.Type} [{message.MessageId}]");
+            var streamMessage = new SubscriptionMessage(message.MessageId, message.StreamId, message.Type, lazyEvent);
+            await RaiseMessage(streamMessage);
         }
 
 
