@@ -43,29 +43,29 @@ namespace EventServe.SampleApp
             });
             services.AddTransient<IPartitionedProjectionStateRepository, PartitionedProjectionStateRepository>();
 
-            services.AddEventServe(options =>
-            {
-                var connOptions = Configuration.GetSection("EventStoreConnectionOptions").Get<EventStoreConnectionOptions>();
-                options.Host = connOptions.Host;
-                options.Port = connOptions.Port;
-                options.Username = connOptions.Username;
-                options.Password = connOptions.Password;
-            },
-            new Assembly[] {
-                typeof(Startup).Assembly ,
-                typeof(PersistentSubscriptionProfile).Assembly
-            });
-
             //services.AddEventServe(options =>
             //{
-            //    options.ConnectionString = Configuration["ConnectionStrings:MsSqlStreamStoreDb"];
-            //    options.SchemaName = Configuration["MsSqlStreamStoreOptions:SchemaName"];
+            //    var connOptions = Configuration.GetSection("EventStoreConnectionOptions").Get<EventStoreConnectionOptions>();
+            //    options.Host = connOptions.Host;
+            //    options.Port = connOptions.Port;
+            //    options.Username = connOptions.Username;
+            //    options.Password = connOptions.Password;
             //},
-            //Configuration["ConnectionStrings:MsSqlStreamStoreDb"],
             //new Assembly[] {
-            //    typeof(PersistentSubscriptionProfile).Assembly,
-            //    typeof(Startup).Assembly,
+            //    typeof(Startup).Assembly ,
+            //    typeof(PersistentSubscriptionProfile).Assembly
             //});
+
+            services.AddEventServe(options =>
+            {
+                options.ConnectionString = Configuration["ConnectionStrings:MsSqlStreamStoreDb"];
+                options.SchemaName = Configuration["MsSqlStreamStoreOptions:SchemaName"];
+            },
+            Configuration["ConnectionStrings:MsSqlStreamStoreDb"],
+            new Assembly[] {
+                typeof(PersistentSubscriptionProfile).Assembly,
+                typeof(Startup).Assembly,
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -76,16 +76,17 @@ namespace EventServe.SampleApp
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseEventServe();
-            //app.UseEventServeMsSqlStreamStore();
+            //app.UseEventServe();
+            app.UseEventServeMsSqlStreamStore();
 
 
 
             var productRepo = app.ApplicationServices.GetRequiredService<IEventRepository<Product>>();
             var subscriptionManager = app.ApplicationServices.GetRequiredService<ISubscriptionManager>();
             //await CreateProduct(productRepo);
-            await ResetSubscription(subscriptionManager, Guid.Parse("554cb735-99f2-4f75-91de-dd13ef5478ac"));
-            //SimulatePriceFluctuations(productRepo, 10000, Guid.Parse("a3b200a4-ae13-4c3b-afcb-7452f4bcdbcf"), Guid.Parse("a31d48fa-9e70-454b-a7c2-2bed8137bcf8"));
+
+            await ResetSubscription(subscriptionManager, Guid.Parse("dff350a8-92df-4cd9-9ef8-23ba57ded611"));
+            //SimulatePriceFluctuations(app.ApplicationServices, 10000, Guid.Parse("dec21003-81f9-4e67-a024-283c85c00dbf"), Guid.Parse("2dea3a1f-6e39-4537-b677-dedf7b2a58ed"));
 
             app.UseHttpsRedirection();
             app.UseRouting();
@@ -113,7 +114,7 @@ namespace EventServe.SampleApp
         }
 
 
-        private async Task SimulatePriceFluctuations(IEventRepository<Product> productRepository, int iterations, params Guid[] productIds)
+        private async Task SimulatePriceFluctuations(IServiceProvider serviceProvider, int iterations, params Guid[] productIds)
         {
             for(int i = 0; i < iterations; i++)
             {
@@ -124,13 +125,17 @@ namespace EventServe.SampleApp
 
                 foreach (var productId in productIds)
                 {
+
                     var sign = rand.Next(0, 2);
                     var fluctuationAmount = fluctuationRange * rand.NextDouble();
                     var newPrice = (sign == 0) ? maxPrice - fluctuationAmount : maxPrice + fluctuationAmount;
 
-                    var product = await productRepository.GetById(productId);
+                    using var scope = serviceProvider.CreateScope();
+                    var repository = scope.ServiceProvider.GetService<IEventRepository<Product>>();
+
+                    var product = await repository.GetById(productId);
                     product.ResetProductPrice(newPrice, "CAD");
-                    await productRepository.SaveAsync(product);
+                    await repository.SaveAsync(product);
                 }
 
                 //await Task.Delay(TimeSpan.FromMilliseconds(250));

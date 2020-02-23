@@ -96,10 +96,12 @@ namespace EventServe.EventStore.Subscriptions
 
         private async Task HandleEvent(EventStorePersistentSubscriptionBase subscriptionBase, ResolvedEvent resolvedEvent)
         {
+            var serializer = _eventSerializer;
+
             Func<Event> lazyEvent =
                 new Func<Event>(() =>
                 {
-                    var @event = _eventSerializer.DeseralizeEvent(resolvedEvent);
+                    var @event = serializer.DeseralizeEvent(resolvedEvent);
                     @event.EventId = resolvedEvent.OriginalEvent.EventId;
                     return @event;
                 });

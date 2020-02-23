@@ -10,7 +10,7 @@ namespace EventServe.SqlStreamStore
     {
         private readonly ISqlStreamStoreProvider _streamStoreProvider;
         private readonly IEventSerializer _eventSerializer;
-        private const int PAGE_SIZE = 1000;
+        private const int PAGE_SIZE = 100;
 
         public SqlStreamStoreStreamReader(ISqlStreamStoreProvider streamStoreProvider, IEventSerializer eventSerializer)
         {

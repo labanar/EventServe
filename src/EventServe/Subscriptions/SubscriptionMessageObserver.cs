@@ -39,31 +39,14 @@ namespace EventServe.Subscriptions
             if (!(value.Event is TEvent typedEvent))
                 return;
 
-            try
+            using (var scope = _serviceProvider.CreateScope())
             {
-                var worker = Task.Factory
-                .StartNew(async () =>
-                {
-                    using (var scope = _serviceProvider.CreateScope())
-                    {
 
-                        var handler = scope.ServiceProvider.GetService<ISubscriptionEventHandler<TProfile, TEvent>>();
-                        if (handler == null)
-                            return;
+                var handler = scope.ServiceProvider.GetService<ISubscriptionEventHandler<TProfile, TEvent>>();
+                if (handler == null)
+                    return;
 
-                        await handler.HandleEvent(typedEvent);
-                    }
-                });
-
-                worker.Wait();
-            }
-            catch (AggregateException ae)
-            {
-                //Check if the task threw any exceptions that we're concerned with
-                foreach (var e in ae.InnerExceptions)
-                {
-                    throw;
-                }
+                handler.HandleEvent(typedEvent).Wait();
             }
         }
     }

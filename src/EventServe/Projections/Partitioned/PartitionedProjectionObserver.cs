@@ -38,37 +38,26 @@ namespace EventServe.Projections
             if (!(value.Event is TEvent typedEvent))
                 return;
 
-            try
+            using (var scope = _serviceProvider.CreateScope())
             {
-                var worker = Task.Factory
-                .StartNew(async () =>
-                {
-                    using (var scope = _serviceProvider.CreateScope())
-                    {
-                        var handler = scope.ServiceProvider.GetService<IPartitionedProjectionEventHandler<TProjection, TEvent>>();
-                        if (handler == null)
-                            return;
+                var handler = scope.ServiceProvider.GetService<IPartitionedProjectionEventHandler<TProjection, TEvent>>();
+                if (handler == null)
+                    return;
 
-                        var repository = scope.ServiceProvider.GetRequiredService<IPartitionedProjectionStateRepository>();
+                var repository = scope.ServiceProvider.GetRequiredService<IPartitionedProjectionStateRepository>();
 
-                        var readModel = await repository.GetProjectionState<TProjection>(typedEvent.AggregateId);
-                        if (readModel == null)
-                            readModel = new TProjection();
+                var readModelQuery = repository.GetProjectionState<TProjection>(typedEvent.AggregateId);
+                readModelQuery.Wait();
 
-                        await handler.ProjectEvent(readModel, typedEvent);
-                        await repository.SetProjectionState(typedEvent.AggregateId, readModel);
-                    }
-                });
+                var readModel = readModelQuery.Result;
+                if (readModel == null)
+                    readModel = new TProjection();
 
-                worker.Wait();
-            }
-            catch (AggregateException ae)
-            {
-                //Check if the task threw any exceptions that we're concerned with
-                foreach (var e in ae.InnerExceptions)
-                {
-                    throw;
-                }
+                var projectionTask = handler.ProjectEvent(readModel, typedEvent);
+                projectionTask.Wait();
+
+                var updateTask = repository.SetProjectionState(typedEvent.AggregateId, readModel);
+                updateTask.Wait();
             }
         }
     }

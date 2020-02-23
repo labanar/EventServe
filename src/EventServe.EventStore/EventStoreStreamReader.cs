@@ -27,30 +27,34 @@ namespace EventServe.EventStore
             var credentials = await _connectionProvider.GetCredentials();
 
             long position = 0;
-            var slices = default(StreamEventsSlice);
+            var slice = default(StreamEventsSlice);
             do
             {
-                if (position != 0)
-                    position += 1;
 
-                slices = await _conn.ReadStreamEventsForwardAsync(stream, position, 4096, false, credentials);
-                switch (slices.Status)
+
+                slice = await _conn.ReadStreamEventsForwardAsync(stream, position, 100, false, credentials);
+                switch (slice.Status)
                 {
                     case SliceReadStatus.StreamDeleted: throw new StreamDeletedException(stream);
                     case SliceReadStatus.StreamNotFound: throw new StreamNotFoundException(stream);
                     default: break;
                 }
 
-                foreach (var resolvedEvent in slices.Events)
+                foreach (var resolvedEvent in slice.Events)
                 {
                     if (resolvedEvent.OriginalStreamId[0] == '$')
                         continue;
 
-                    position = resolvedEvent.Event.EventNumber;
-                    yield return _eventSerializer.DeseralizeEvent(resolvedEvent);
+                    var eventNumber = resolvedEvent.Event.EventNumber;
+                    position = eventNumber;
+                    var @event = _eventSerializer.DeseralizeEvent(resolvedEvent);
+                    yield return @event;
                 }
+
+                if (!slice.IsEndOfStream)
+                    position += 1;
             }
-            while (!slices.IsEndOfStream);
+            while (!slice.IsEndOfStream);
  
 
             yield break;

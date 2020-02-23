@@ -37,37 +37,25 @@ namespace EventServe.Projections
             if (!(value.Event is TEvent typedEvent))
                 return;
 
-            try
+            using (var scope = _serviceProvider.CreateScope())
             {
-                var worker = Task.Factory
-                .StartNew(async () =>
-                {
-                    using (var scope = _serviceProvider.CreateScope())
-                    {
-                        var handler = scope.ServiceProvider.GetService<IProjectionEventHandler<TProjection, TEvent>>();
-                        if (handler == null)
-                            return;
+                var handler = scope.ServiceProvider.GetService<IProjectionEventHandler<TProjection, TEvent>>();
+                if (handler == null)
+                    return;
 
-                        var repository = scope.ServiceProvider.GetRequiredService<IProjectionStateRepository>();
+                var repository = scope.ServiceProvider.GetRequiredService<IProjectionStateRepository>();
 
-                        var readModel = await repository.GetProjectionState<TProjection>();
-                        if (readModel == null)
-                            readModel = new TProjection();
+                var readModelQuery = repository.GetProjectionState<TProjection>();
+                readModelQuery.Wait();
+                var readModel = readModelQuery.Result;
+                if (readModel == null)
+                    readModel = new TProjection();
 
-                        await handler.ProjectEvent(readModel, typedEvent);
-                        await repository.SetProjectionState(readModel);
-                    }
-                });
+                var projectionTask = handler.ProjectEvent(readModel, typedEvent);
+                projectionTask.Wait();
 
-                worker.Wait();
-            }
-            catch(AggregateException ae)
-            {
-                //Check if the task threw any exceptions that we're concerned with
-                foreach(var e in ae.InnerExceptions)
-                {
-                    throw;
-                }
+                var updateTask = repository.SetProjectionState(readModel);
+                updateTask.Wait();
             }
         }
     }
