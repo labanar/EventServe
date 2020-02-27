@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using EventServe.EventStore.Interfaces;
 using EventServe.Subscriptions;
 using EventStore.ClientAPI;
+using EventServe.Subscriptions.Enums;
 
 namespace EventServe.EventStore.Subscriptions
 {
@@ -70,9 +71,7 @@ namespace EventServe.EventStore.Subscriptions
             _connection = _connectionProvider.GetConnection();
             await _connection.ConnectAsync();
 
-
             var streamId = _streamId == null ? $"$ce-{_aggregateType.ToUpper()}" : _streamId.Id;
-
             //Check if this subscription already exists
             await _connection.CreateSubscription(streamId,
                                                  _subscriptionName,
@@ -92,6 +91,7 @@ namespace EventServe.EventStore.Subscriptions
                 subscriptionDropped: SubscriptionDropped,
                 autoAck: false);
             _connected = true;
+            _status = SubscriptionConnectionStatus.Connected;
         }
 
         private async Task HandleEvent(EventStorePersistentSubscriptionBase subscriptionBase, ResolvedEvent resolvedEvent)
@@ -125,11 +125,13 @@ namespace EventServe.EventStore.Subscriptions
                     _connection.Dispose();
 
                 _logger.LogInformation(ex, $"Subscription stopped by user: {subscriptionDropReason.ToString()}");
+                _status = SubscriptionConnectionStatus.Disconnected;
                 return;
             }
 
             _logger.LogError(ex, $"Subscription dropped: {subscriptionDropReason.ToString()}");
             _connection.Dispose();
+            _status = SubscriptionConnectionStatus.Disconnected;
             Connect().Wait();   
         }
     }

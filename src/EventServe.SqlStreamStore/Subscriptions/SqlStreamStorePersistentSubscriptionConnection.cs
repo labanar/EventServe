@@ -1,4 +1,5 @@
 ﻿using EventServe.Subscriptions;
+using EventServe.Subscriptions.Enums;
 using Microsoft.Extensions.Logging;
 using SqlStreamStore;
 using SqlStreamStore.Streams;
@@ -43,6 +44,7 @@ namespace EventServe.SqlStreamStore.Subscriptions
                 _allSubscription = _store.SubscribeToAll(_position,
                    HandleSubscriptionEvent,
                    HandleSubscriptionDropped);
+                _status = SubscriptionConnectionStatus.Connected;
             }
             else
             {
@@ -50,7 +52,8 @@ namespace EventServe.SqlStreamStore.Subscriptions
                 _subscription = _store.SubscribeToStream(_streamId.Id, intPos,
                    HandleSubscriptionEvent,
                    HandleSubscriptionDropped);
-            }          
+                _status = SubscriptionConnectionStatus.Connected;
+            }
         }
 
         protected override Task DisconnectAsync()
@@ -66,6 +69,7 @@ namespace EventServe.SqlStreamStore.Subscriptions
             if (_allSubscription != null)
                 _allSubscription.Dispose();
 
+            _status = SubscriptionConnectionStatus.Disconnected;
             return Task.CompletedTask;
         }
         protected override async Task ResetAsync()

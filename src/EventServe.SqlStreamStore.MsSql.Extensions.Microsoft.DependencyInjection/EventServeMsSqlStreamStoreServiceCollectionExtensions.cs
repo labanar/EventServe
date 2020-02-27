@@ -34,8 +34,7 @@ namespace EventServe.SqlStreamStore.MsSql.Extensions.Microsoft.DependencyInjecti
             using (var scope = applicationBuilder.ApplicationServices.CreateScope())
             {
                 var context = scope.ServiceProvider.GetRequiredService<SqlStreamStoreContext>();
-                if(context.Database.EnsureCreated())
-                    context.Database.Migrate();
+                context.Database.Migrate();
             }
 
             using (var scope = applicationBuilder.ApplicationServices.CreateScope())
@@ -52,8 +51,6 @@ namespace EventServe.SqlStreamStore.MsSql.Extensions.Microsoft.DependencyInjecti
                 if (checkResult.Result.CurrentVersion != checkResult.Result.ExpectedVersion)
                     store.CreateSchema().Wait();
             }
-
-
 
 
             applicationBuilder.RegisterEventServeSubscriptions();

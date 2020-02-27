@@ -26,7 +26,7 @@ namespace EventServe.SampleApp.Subscriptions
         }
     }
 
-    public class PriceErrorAlertSubscriptionHandler :
+    public class PriceErrorAlertSubscriptionHandler:
             ISubscriptionEventHandler<PriceErrorAlertSubscription, ProductCreatedEvent>,
             ISubscriptionEventHandler<PriceErrorAlertSubscription, ProductPriceChangedEvent>,
             IPersistentSubscriptionResetHandler<PriceErrorAlertSubscription>

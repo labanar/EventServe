@@ -30,10 +30,35 @@ namespace EventServe.Subscriptions
         {
             //Subscription Name
             //Subscription Id
+            //Type
             //Status
-            //Uptime
+            //StartDate
             //Position
-            //Position Relative to End
+
+            foreach(var sub in _transientSubscriptions.Values)
+            {
+                var subscriptionId = Guid.Empty;
+                var name = "SUBNAME";
+                var type = "Transient"; //TODO - add enum
+                var status = sub.Connection.Status;
+                var position = sub.Connection.Position;
+                var startDate = sub.Connection.StartDate;
+
+                yield return "";
+            }
+
+            foreach (var sub in _persistentSubscriptions.Values)
+            {
+                var subscriptionId = sub.ConnectionSettings.SubscriptionId;
+                var name = sub.ConnectionSettings.SubscriptionName;
+                var type = "Persistent"; //TODO - add enum
+                var status = sub.Connection.Status;
+                var position = sub.Connection.Position;
+                var startDate = sub.Connection.StartDate;
+
+                yield return "";
+            }
+
 
             yield break;
         }

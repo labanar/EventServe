@@ -2,13 +2,16 @@
 using System.Threading.Tasks;
 using System;
 using EventServe.Subscriptions.Persistent;
+using EventServe.Subscriptions.Enums;
 
 namespace EventServe.Subscriptions
 {
     public interface IPersistentStreamSubscriptionConnection : IObservable<PersistentSubscriptionResetEvent>, IObservable<SubscriptionMessage>
     {
-        bool Connected { get; }
-        DateTime? ConnectionStartDate { get; }
+        SubscriptionConnectionStatus Status { get; }
+        DateTime? StartDate { get; }
+        long? Position { get; }
+
         Task Connect(PersistentStreamSubscriptionConnectionSettings settings);
         Task Disconnect();
         Task Reset();
@@ -16,8 +19,7 @@ namespace EventServe.Subscriptions
 
     public abstract class PersistentStreamSubscriptionConnection : IPersistentStreamSubscriptionConnection
     {
-        public bool Connected => _connected;
-        public DateTime? ConnectionStartDate => _connectionStartDate;
+
 
         private readonly Queue<Task> _dispatchQueue;
         private readonly SemaphoreLocker _locker;
@@ -25,20 +27,24 @@ namespace EventServe.Subscriptions
         private IObserver<PersistentSubscriptionResetEvent> _resetObserver;
 
         protected bool _connected = false;
-        protected DateTime? _connectionStartDate;
+        protected DateTime? _startDate;
         protected bool _cancellationRequestedByUser = false;
-
         protected Guid _subscriptionId;
         protected string _subscriptionName;
         protected StreamId _streamId;
         protected string _aggregateType;
         protected long? _position;
+        protected SubscriptionConnectionStatus _status = SubscriptionConnectionStatus.Idle;
 
         public PersistentStreamSubscriptionConnection()
         {
             _dispatchQueue = new Queue<Task>();
             _locker = new SemaphoreLocker();
         }
+
+        public SubscriptionConnectionStatus Status => _status;
+        public long? Position => _position;
+        public DateTime? StartDate => _startDate;
 
         public async Task Connect(PersistentStreamSubscriptionConnectionSettings settings)
         {
@@ -47,13 +53,14 @@ namespace EventServe.Subscriptions
             _streamId = settings.StreamId;
             _aggregateType = settings.AggregateType;
             await ConnectAsync();
-            _connectionStartDate = DateTime.UtcNow;
+            _startDate = DateTime.UtcNow;
+            _status = SubscriptionConnectionStatus.Connected;
         }
         public async Task Disconnect()
         {
             _cancellationRequestedByUser = true;
             await DisconnectAsync();
-            _connectionStartDate = null;
+            _startDate = null;
         }
         public async Task Reset()
         {

@@ -1,5 +1,6 @@
 ﻿using EventServe.EventStore.Interfaces;
 using EventServe.Subscriptions;
+using EventServe.Subscriptions.Enums;
 using EventStore.ClientAPI;
 using Microsoft.Extensions.Logging;
 using System;
@@ -68,16 +69,16 @@ namespace EventServe.EventStore.Subscriptions
             var streamId = _streamId == null ? $"$ce-{_aggregateType.ToUpper()}" : _streamId.Id;
             if (_startPosition ==  StreamPosition.End)
             {
-                _connected = true;
                 _subscriptionBase = await _connection.SubscribeToStreamAsync(
                     streamId,
                     true,
                     processEventAlt,
                     subscriptionDropped: SubscriptionDropped);
+                _connected = true;
+                _status = SubscriptionConnectionStatus.Connected;
             }
             else
             {
-                _connected = true;
                 _catchUpSubscriptionBase = _connection.SubscribeToStreamFrom(
                     streamId,
                     0,
@@ -89,6 +90,8 @@ namespace EventServe.EventStore.Subscriptions
                         CatchUpSubscriptionSettings.Default.SubscriptionName),
                     processEvent,
                     subscriptionDropped: SubscriptionDropped);
+                _connected = true;
+                _status = SubscriptionConnectionStatus.Connected;
             }
         }
 

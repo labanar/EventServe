@@ -62,8 +62,8 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
                         subscription.Subscribe(messageObserver);
                     }
 
-                    var connectionSettings = new TransientStreamSubscriptionConnectionSettings(profile.StreamPosition, profile.Filter.SubscribedStreamId, profile.Filter.AggregateType?.Name);
                     var subId = Guid.NewGuid();
+                    var connectionSettings = new TransientStreamSubscriptionConnectionSettings(subId, profile.StreamPosition, profile.Filter.SubscribedStreamId, profile.Filter.AggregateType?.Name);
                     manager.Add(subId, subscription, connectionSettings).Wait();
                     manager.Connect(subId).Wait();
                 }
@@ -86,19 +86,22 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
                         subscription.Subscribe(messageObserver);
                     }
 
-                    var connectionSettings = new TransientStreamSubscriptionConnectionSettings(profile.StreamPosition, profile.Filter.SubscribedStreamId, profile.Filter.AggregateType?.Name);
                     var sub = subscriptions.FirstOrDefault(x => x.Name == profile.GetType().Name);
                     if(sub == default)
                     {
                         var subscriptionBase = rootManager.CreateTransientSubscription(profile.GetType().Name).Result;
+                        var connectionSettings = new TransientStreamSubscriptionConnectionSettings(subscriptionBase.SubscriptionId, profile.StreamPosition, profile.Filter.SubscribedStreamId, profile.Filter.AggregateType?.Name);
+                        manager.Add(subscriptionBase.SubscriptionId, subscription, connectionSettings).Wait();
                         rootManager.StartSubscription(subscriptionBase.SubscriptionId).Wait();
                     }
                     else
                     {
+                        var connectionSettings = new TransientStreamSubscriptionConnectionSettings(sub.SubscriptionId, profile.StreamPosition, profile.Filter.SubscribedStreamId, profile.Filter.AggregateType?.Name);
                         manager.Add(sub.SubscriptionId, subscription, connectionSettings).Wait();
+
                         if (sub.Connected)
                             manager.Connect(sub.SubscriptionId).Wait();
-                    }           
+                    }
                 }
             }
 
@@ -110,33 +113,30 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
                 foreach (var profile in profiles)
                 {
                     //Fetch a new instance persistent subscription from the IoC container
-                    var subscription = applicationBuilder.ApplicationServices.GetRequiredService<IPersistentStreamSubscriptionConnection>();
+                    var connection = applicationBuilder.ApplicationServices.GetRequiredService<IPersistentStreamSubscriptionConnection>();
                     foreach (var eventType in profile.SubscribedEvents)
                     {
                         var profileType = profile.GetType();
 
                         var messageObserverType = typeof(SubscriptionMessageObserver<,>).MakeGenericType(profileType, eventType);
                         var messageObserver = (IObserver<SubscriptionMessage>)Activator.CreateInstance(messageObserverType, applicationBuilder.ApplicationServices, profile.Filter);
-                        subscription.Subscribe(messageObserver);
+                        connection.Subscribe(messageObserver);
 
                         var resetObserverType = typeof(PersistentSubscriptionResetObserver<>).MakeGenericType(profileType);
                         var resetObserver = (IObserver<PersistentSubscriptionResetEvent>)Activator.CreateInstance(resetObserverType, applicationBuilder.ApplicationServices);
-                        subscription.Subscribe(resetObserver);
+                        connection.Subscribe(resetObserver);
                     }
 
                     var sub = subscriptions.FirstOrDefault(x => x.Name == profile.GetType().Name);
-                    if (sub == default)
-                    {
-                        var subscriptionBase = rootManager.CreatePersistentSubscription(profile.GetType().Name).Result;
-                        rootManager.StartSubscription(subscriptionBase.SubscriptionId).Wait();
-                    }
-                    else
-                    {
-                        var connectionSettings = new PersistentStreamSubscriptionConnectionSettings(sub.SubscriptionId, profile.GetType().Name, profile.Filter.SubscribedStreamId, profile.Filter.AggregateType?.Name);
-                        manager.Add(sub.SubscriptionId, subscription, connectionSettings).Wait();
-                        if (sub.Connected)
-                            manager.Connect(sub.SubscriptionId).Wait();
-                    }
+                    SetupPersistentSubscription(
+                        sub?.SubscriptionId,
+                        profile.GetType().Name,
+                        profile.Filter.SubscribedStreamId,
+                        profile.Filter.AggregateType?.Name,
+                        sub == null ? false : sub.Connected,
+                        connection,
+                        rootManager,
+                        manager);
                 }
             }
 
@@ -150,27 +150,24 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
                 foreach (var profile in profiles)
                 {
                     //Fetch a new instance persistent subscription from the IoC container
-                    var subscription = applicationBuilder.ApplicationServices.GetRequiredService<IPersistentStreamSubscriptionConnection>();
+                    var connection = applicationBuilder.ApplicationServices.GetRequiredService<IPersistentStreamSubscriptionConnection>();
                     foreach (var eventType in profile.SubscribedEvents)
                     {
                         var observerType = typeof(PartitionedProjectionObserver<,>).MakeGenericType(profile.ProjectionType, eventType);
                         var observer = (IObserver<SubscriptionMessage>)Activator.CreateInstance(observerType, applicationBuilder.ApplicationServices, profile.Filter);
-                        subscription.Subscribe(observer);
+                        connection.Subscribe(observer);
                     }
 
                     var sub = subscriptions.FirstOrDefault(x => x.Name == profile.GetType().Name);
-                    if (sub == default)
-                    {
-                        var subscriptionBase = rootManager.CreatePersistentSubscription(profile.GetType().Name).Result;
-                        rootManager.StartSubscription(subscriptionBase.SubscriptionId).Wait();
-                    }
-                    else
-                    {
-                        var connectionSettings = new PersistentStreamSubscriptionConnectionSettings(sub.SubscriptionId, profile.GetType().Name, profile.Filter.SubscribedStreamId, profile.Filter.AggregateType?.Name);
-                        manager.Add(sub.SubscriptionId, subscription, connectionSettings).Wait();
-                        if (sub.Connected)
-                            manager.Connect(sub.SubscriptionId).Wait();
-                    }
+                    SetupPersistentSubscription(
+                        sub?.SubscriptionId,
+                        profile.GetType().Name,
+                        profile.Filter.SubscribedStreamId,
+                        profile.Filter.AggregateType?.Name,
+                        sub == null ? false : sub.Connected,
+                        connection,
+                        rootManager,
+                        manager);
                 }
             }
 
@@ -184,30 +181,52 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
                 foreach (var profile in profiles)
                 {
                     //Fetch a new instance persistent subscription from the IoC container
-                    var subscription = applicationBuilder.ApplicationServices.GetRequiredService<IPersistentStreamSubscriptionConnection>();
+                    var connection = applicationBuilder.ApplicationServices.GetRequiredService<IPersistentStreamSubscriptionConnection>();
                     foreach (var eventType in profile.SubscribedEvents)
                     {
                         var observerType = typeof(ProjectionObserver<,>).MakeGenericType(profile.ProjectionType, eventType);
                         var observer = (IObserver<SubscriptionMessage>)Activator.CreateInstance(observerType, applicationBuilder.ApplicationServices, profile.Filter);
-                        subscription.Subscribe(observer);
+                        connection.Subscribe(observer);
                     }
 
                     var sub = subscriptions.FirstOrDefault(x => x.Name == profile.GetType().Name);
-                    if (sub == default)
-                    {
-                        var subscriptionBase = rootManager.CreatePersistentSubscription(profile.GetType().Name).Result;
-                        rootManager.StartSubscription(subscriptionBase.SubscriptionId).Wait();
-                    }
-                    else
-                    {
-                        var connectionSettings = new PersistentStreamSubscriptionConnectionSettings(sub.SubscriptionId, profile.GetType().Name, profile.Filter.SubscribedStreamId, profile.Filter.AggregateType?.Name);
-                        manager.Add(sub.SubscriptionId, subscription, connectionSettings).Wait();
-                        if (sub.Connected)
-                            manager.Connect(sub.SubscriptionId).Wait();
-                    }
+                    SetupPersistentSubscription(
+                        sub?.SubscriptionId,
+                        profile.GetType().Name,
+                        profile.Filter.SubscribedStreamId,
+                        profile.Filter.AggregateType?.Name,
+                        sub == null ? false : sub.Connected,
+                        connection,
+                        rootManager,
+                        manager);
                 }
             }
 
+        }
+
+        private static void SetupPersistentSubscription(Guid? subscriptionId, string profileName, StreamId streamId, 
+                                                        string aggregateType, bool isConnected,
+                                                        IPersistentStreamSubscriptionConnection connection,
+                                                        ISubscriptionRootManager rootManager,
+                                                        ISubscriptionManager manager)
+        {
+            if (!subscriptionId.HasValue)
+            {
+                var subscriptionBase = rootManager.CreatePersistentSubscription(profileName).Result;
+                var connectionSettings = new PersistentStreamSubscriptionConnectionSettings(subscriptionBase.SubscriptionId, profileName, streamId, aggregateType);
+                manager.Add(subscriptionBase.SubscriptionId, connection, connectionSettings).Wait();
+                rootManager.StartSubscription(subscriptionBase.SubscriptionId).Wait();
+                manager.Connect(subscriptionBase.SubscriptionId).Wait();
+                return;
+            }
+            else
+            {
+                var connectionSettings = new PersistentStreamSubscriptionConnectionSettings(subscriptionId.Value, profileName, streamId, aggregateType);
+                manager.Add(subscriptionId.Value, connection, connectionSettings).Wait();
+
+                if (isConnected)
+                    manager.Connect(subscriptionId.Value).Wait();
+            }
         }
     }
 }
