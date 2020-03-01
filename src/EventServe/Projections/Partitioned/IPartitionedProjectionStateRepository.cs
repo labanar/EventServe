@@ -7,5 +7,6 @@ namespace EventServe.Projections
     {
         Task<T> GetProjectionState<T>(Guid partitionId) where T : PartitionedProjection;
         Task<T> SetProjectionState<T>(Guid partitionId, T state) where T : PartitionedProjection;
+        Task ResetState<T>() where T : PartitionedProjection;
     }
 }

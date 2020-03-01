@@ -44,12 +44,10 @@ namespace EventServe.SqlStreamStore.MsSql.Extensions.Microsoft.DependencyInjecti
                 var settings = settingsProvider.GetSettings();
                 Task.WaitAll(settings);
 
-                var store = new MsSqlStreamStore(settings.Result);
+                var store = new MsSqlStreamStoreV3(settings.Result);
+                store.CreateSchemaIfNotExists().Wait();
                 var checkResult = store.CheckSchema();
                 Task.WaitAll(checkResult);
-
-                if (checkResult.Result.CurrentVersion != checkResult.Result.ExpectedVersion)
-                    store.CreateSchema().Wait();
             }
 
 

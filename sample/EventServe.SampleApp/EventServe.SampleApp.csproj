@@ -26,12 +26,6 @@
     <ProjectReference Include="..\..\src\EventServe.SqlStreamStore.MsSql\EventServe.SqlStreamStore.MsSql.csproj" />
     <ProjectReference Include="..\..\src\EventServe.SqlStreamStore\EventServe.SqlStreamStore.csproj" />
     <ProjectReference Include="..\..\src\EventServe\EventServe.csproj" />
-    <ProjectReference Include="..\..\tests\Integration\EventServe.SqlStreamStore.IntegrationTests\EventServe.SqlStreamStore.IntegrationTests.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Commands\" />
-    <Folder Include="Queries\" />
   </ItemGroup>
 
 

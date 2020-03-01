@@ -11,6 +11,7 @@ namespace EventServe.Subscriptions
         SubscriptionConnectionStatus Status { get; }
         DateTime? StartDate { get; }
         long? Position { get; }
+        public string Name { get; }
 
         Task Connect(PersistentStreamSubscriptionConnectionSettings settings);
         Task Disconnect();
@@ -19,8 +20,6 @@ namespace EventServe.Subscriptions
 
     public abstract class PersistentStreamSubscriptionConnection : IPersistentStreamSubscriptionConnection
     {
-
-
         private readonly Queue<Task> _dispatchQueue;
         private readonly SemaphoreLocker _locker;
         private List<IObserver<SubscriptionMessage>> _messageObservers = new List<IObserver<SubscriptionMessage>>();
@@ -45,6 +44,7 @@ namespace EventServe.Subscriptions
         public SubscriptionConnectionStatus Status => _status;
         public long? Position => _position;
         public DateTime? StartDate => _startDate;
+        public string Name => _subscriptionName;
 
         public async Task Connect(PersistentStreamSubscriptionConnectionSettings settings)
         {

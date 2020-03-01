@@ -26,6 +26,13 @@ namespace EventServe.SampleApp.Infrastructure
             }
         }
 
+        [Obsolete]
+        public async Task ResetState<T>() where T : PartitionedProjection
+        {
+            var cmd = $"TRUNCATE TABLE [Sample].[{nameof(_context.Products)}];";
+            await _context.Database.ExecuteSqlCommandAsync(cmd);
+        }
+
         public async Task<T> SetProjectionState<T>(Guid partitionId, T state) where T : PartitionedProjection
         {
 

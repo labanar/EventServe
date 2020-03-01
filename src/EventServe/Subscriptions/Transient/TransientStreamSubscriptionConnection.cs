@@ -8,6 +8,7 @@ namespace EventServe.Subscriptions
 {
     public interface ITransientStreamSubscriptionConnection: IObservable<SubscriptionMessage>
     {
+        string Name { get; }
         long? Position { get; }
         SubscriptionConnectionStatus Status { get; }
         DateTime? StartDate { get; }
@@ -29,6 +30,7 @@ namespace EventServe.Subscriptions
 
 
         private List<IObserver<SubscriptionMessage>> _observers = new List<IObserver<SubscriptionMessage>>();
+        private string _subscriptionName;
         private readonly Queue<Task> _dispatchQueue = new Queue<Task>();
         private readonly SemaphoreLocker _locker;
         protected DateTime? _startDate;
@@ -42,11 +44,14 @@ namespace EventServe.Subscriptions
         public SubscriptionConnectionStatus Status => _status;
         public DateTime? StartDate => _startDate;
 
+        public string Name => _subscriptionName;
+
         public async Task Connect(TransientStreamSubscriptionConnectionSettings connectionSettings)
         {
             _streamId = connectionSettings.StreamId;
             _aggregateType = connectionSettings.AggregateType;
             _startPosition = connectionSettings.StreamPosition;
+            _subscriptionName = connectionSettings.SubscriptionName;
             await ConnectAsync();
             _startDate = DateTime.UtcNow;
         }

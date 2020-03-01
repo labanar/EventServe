@@ -1,4 +1,5 @@
 ﻿using EventServe.Subscriptions.Domain;
+using EventServe.Subscriptions.Enums;
 using EventServe.Subscriptions.Persistent;
 using EventServe.Subscriptions.Transient;
 using System;
@@ -9,7 +10,7 @@ namespace EventServe.Subscriptions
 {
     public interface ISubscriptionManager
     {
-        IAsyncEnumerable<string> GetSubscriptions();
+        IAsyncEnumerable<(Guid id, string name, string type, long? position, SubscriptionConnectionStatus status, DateTime? startDate)> GetSubscriptions();
         Task Add(Guid subscriptionId, ITransientStreamSubscriptionConnection subscription, TransientStreamSubscriptionConnectionSettings connectionSettings);
         Task Add(Guid subscriptionId, IPersistentStreamSubscriptionConnection subscription, PersistentStreamSubscriptionConnectionSettings connectionSettings);
         Task Connect(Guid subscriptionId);
@@ -26,25 +27,18 @@ namespace EventServe.Subscriptions
             new Dictionary<Guid, (IPersistentStreamSubscriptionConnection Connection, PersistentStreamSubscriptionConnectionSettings ConnectionSettings)>();
         
         
-        public async IAsyncEnumerable<string> GetSubscriptions()
+        public async IAsyncEnumerable<(Guid id, string name, string type, long? position, SubscriptionConnectionStatus status, DateTime? startDate)> GetSubscriptions()
         {
-            //Subscription Name
-            //Subscription Id
-            //Type
-            //Status
-            //StartDate
-            //Position
-
             foreach(var sub in _transientSubscriptions.Values)
             {
                 var subscriptionId = Guid.Empty;
-                var name = "SUBNAME";
+                var name = sub.ConnectionSettings.SubscriptionName;
                 var type = "Transient"; //TODO - add enum
                 var status = sub.Connection.Status;
                 var position = sub.Connection.Position;
                 var startDate = sub.Connection.StartDate;
 
-                yield return "";
+                yield return (subscriptionId, name, type, position, status, startDate);
             }
 
             foreach (var sub in _persistentSubscriptions.Values)
@@ -56,7 +50,7 @@ namespace EventServe.Subscriptions
                 var position = sub.Connection.Position;
                 var startDate = sub.Connection.StartDate;
 
-                yield return "";
+                yield return (subscriptionId, name, type, position, status, startDate);
             }
 
 

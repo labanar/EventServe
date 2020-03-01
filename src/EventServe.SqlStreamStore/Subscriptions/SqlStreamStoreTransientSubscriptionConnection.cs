@@ -1,4 +1,5 @@
 ﻿using EventServe.Subscriptions;
+using EventServe.Subscriptions.Enums;
 using Microsoft.Extensions.Logging;
 using SqlStreamStore;
 using SqlStreamStore.Streams;
@@ -46,6 +47,8 @@ namespace EventServe.SqlStreamStore.Subscriptions
                     {
                         HandleSubscriptionDropped(sub, reason, ex);
                     });
+                _status = SubscriptionConnectionStatus.Connected;
+                _startDate = DateTime.UtcNow;
             }
             else
             {
@@ -60,6 +63,8 @@ namespace EventServe.SqlStreamStore.Subscriptions
                     {
                         HandleSubscriptionDropped(sub, reason, ex);
                     });
+                _status = SubscriptionConnectionStatus.Connected;
+                _startDate = DateTime.UtcNow;
             }
         }
 

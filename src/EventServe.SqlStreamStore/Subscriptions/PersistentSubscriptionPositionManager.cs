@@ -25,36 +25,45 @@ namespace EventServe.SqlStreamStore.Subscriptions
 
         public async Task<long?> GetSubscriptionPosition(Guid subscriptionId, bool createIfNotExists)
         {
-            using var scope = _serviceProvider.CreateScope();
-            using var context = scope.ServiceProvider.GetRequiredService<SqlStreamStoreContext>();
-            var subscriptionPosition = await context.SubscriptionPositions.FindAsync(subscriptionId);
-
-            if (createIfNotExists && subscriptionPosition == default)
+            using (var scope = _serviceProvider.CreateScope())
             {
-                subscriptionPosition = new PeristentSubscriptionPosition
+                using var context = scope.ServiceProvider.GetRequiredService<SqlStreamStoreContext>();
                 {
-                    SubscriptionId = subscriptionId
-                };
-                await context.SubscriptionPositions.AddAsync(subscriptionPosition);
-                await context.SaveChangesAsync();
+                    var subscriptionPosition = await context.SubscriptionPositions.FindAsync(subscriptionId);
+
+                    if (createIfNotExists && subscriptionPosition == default)
+                    {
+                        subscriptionPosition = new PeristentSubscriptionPosition
+                        {
+                            SubscriptionId = subscriptionId
+                        };
+                        await context.SubscriptionPositions.AddAsync(subscriptionPosition);
+                        await context.SaveChangesAsync();
+                    }
+
+                    //context.Entry(subscriptionPosition).State = EntityState.Detached;
+                    return subscriptionPosition?.Position;
+                }
             }
 
-            //context.Entry(subscriptionPosition).State = EntityState.Detached;
-            return subscriptionPosition?.Position;
         }
 
         public async Task SetSubscriptionPosition(Guid subscriptionId, long? position)
         {
-            using var scope = _serviceProvider.CreateScope();
-            using var context = scope.ServiceProvider.GetRequiredService<SqlStreamStoreContext>();
-            var subscriptionPosition = new PeristentSubscriptionPosition
+            using (var scope = _serviceProvider.CreateScope())
             {
-                SubscriptionId = subscriptionId,
-                Position = position
-            };
-            context.Attach(subscriptionPosition);
-            context.Entry(subscriptionPosition).Property(p => p.Position).IsModified = true;
-            await context.SaveChangesAsync();
+                using (var context = scope.ServiceProvider.GetRequiredService<SqlStreamStoreContext>())
+                {
+                    var subscriptionPosition = new PeristentSubscriptionPosition
+                    {
+                        SubscriptionId = subscriptionId,
+                        Position = position
+                    };
+                    context.Attach(subscriptionPosition);
+                    context.Entry(subscriptionPosition).Property(p => p.Position).IsModified = true;
+                    await context.SaveChangesAsync();
+                }
+            }
         }
 
         public async Task ResetSubscriptionPosition(Guid subscriptionId)

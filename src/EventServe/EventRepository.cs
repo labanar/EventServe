@@ -29,7 +29,7 @@ namespace EventServe
                 while (await enumerator.MoveNextAsync())
                     aggregate.LoadFromHistory(enumerator.Current);
             }
-            catch { }
+            catch (Exception e){ }
             finally
             {
                 if(enumerator != null)

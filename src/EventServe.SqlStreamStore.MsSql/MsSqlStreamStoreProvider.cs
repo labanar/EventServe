@@ -15,7 +15,7 @@ namespace EventServe.SqlStreamStore.MsSql
         public async Task<IStreamStore> GetStreamStore()
         {
             var settings =  await _msSqlStreamStoreSettings.GetSettings();
-            return new MsSqlStreamStore(settings);
+            return new MsSqlStreamStoreV3(settings);
         }
     }
 
@@ -32,7 +32,7 @@ namespace EventServe.SqlStreamStore.MsSql
         {
             var settings = await _msSqlStreamStoreSettings.GetSettings();
             settings.Schema = "Subscriptions";
-            return new MsSqlStreamStore(settings);
+            return new MsSqlStreamStoreV3(settings);
         }
     }
 }

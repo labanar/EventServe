@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using Xunit;
 
-namespace EventServe.SqlStreamStore.IntegrationTests
+namespace EventServe.SqlStreamStore.MsSql.IntegrationTests
 {
     public class DummyAggregate : AggregateRoot
     {

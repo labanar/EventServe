@@ -1,4 +1,9 @@
 ﻿using SqlStreamStore;
+using SqlStreamStore.Infrastructure;
+using SqlStreamStore.Streams;
+using SqlStreamStore.Subscriptions;
+using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace EventServe.SqlStreamStore
@@ -28,6 +33,4 @@ namespace EventServe.SqlStreamStore
             return Task.FromResult<IStreamStore>(_store);
         }
     }
-
-
 }

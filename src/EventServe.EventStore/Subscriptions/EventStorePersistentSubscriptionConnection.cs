@@ -52,9 +52,11 @@ namespace EventServe.EventStore.Subscriptions
         protected override async Task ResetAsync()
         {
             var streamId = _streamId == null ? $"$ce-{_aggregateType.ToUpper()}" : _streamId.Id;
-            using var connection = _connectionProvider.GetConnection();
-            await connection.ConnectAsync();
-            await connection.DeletePersistentSubscriptionAsync(streamId, _subscriptionName, await _connectionProvider.GetCredentials());
+            using (var connection = _connectionProvider.GetConnection())
+            {
+                await connection.ConnectAsync();
+                await connection.DeletePersistentSubscriptionAsync(streamId, _subscriptionName, await _connectionProvider.GetCredentials());
+            }
         }
 
         protected override Task AcknowledgeEvent(Guid eventId)

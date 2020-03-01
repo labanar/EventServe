@@ -45,6 +45,7 @@ namespace EventServe.SqlStreamStore.Subscriptions
                    HandleSubscriptionEvent,
                    HandleSubscriptionDropped);
                 _status = SubscriptionConnectionStatus.Connected;
+                _startDate = DateTime.UtcNow;
             }
             else
             {
@@ -53,6 +54,7 @@ namespace EventServe.SqlStreamStore.Subscriptions
                    HandleSubscriptionEvent,
                    HandleSubscriptionDropped);
                 _status = SubscriptionConnectionStatus.Connected;
+                _startDate = DateTime.UtcNow;
             }
         }
 
@@ -68,6 +70,9 @@ namespace EventServe.SqlStreamStore.Subscriptions
 
             if (_allSubscription != null)
                 _allSubscription.Dispose();
+
+            if (_store != null)
+                _store.Dispose();
 
             _status = SubscriptionConnectionStatus.Disconnected;
             return Task.CompletedTask;

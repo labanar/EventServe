@@ -4,17 +4,22 @@ using System;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace EventServe.SqlStreamStore.IntegrationTests
+namespace EventServe.SqlStreamStore.MsSql.IntegrationTests
 {
-    public class EventStoreRepositoryShould
+    [Collection("SqlStreamStore Collection")]
+    public class SqlStreamStoreRepositoryShould
     {
-        private readonly IEventSerializer _serializer;
-        private readonly InMemorySqlStreamStoreProvider _storeProvider;
+        private readonly EmbeddedMsSqlStreamStoreFixture _fixture;
+        private readonly SqlStreamStoreEventSerializer _serializer;
+        private readonly MsSqlStreamStoreSettingsProvider _settingsProvider;
+        private readonly MsSqlStreamStoreProvider _storeProvider;
 
-        public EventStoreRepositoryShould()
+        public SqlStreamStoreRepositoryShould(EmbeddedMsSqlStreamStoreFixture fixture)
         {
+            _fixture = fixture;
             _serializer = new SqlStreamStoreEventSerializer();
-            _storeProvider = new InMemorySqlStreamStoreProvider();
+            _settingsProvider = new MsSqlStreamStoreSettingsProvider(_fixture.ConnectionString);
+            _storeProvider = new MsSqlStreamStoreProvider(_settingsProvider);
         }
 
         [Fact]
@@ -87,7 +92,6 @@ namespace EventServe.SqlStreamStore.IntegrationTests
 
             var aggregate = new DummyAggregate(resetCommand);
             await repository.SaveAsync(aggregate);
-
             return aggregate;
         }
 

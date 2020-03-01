@@ -1,4 +1,5 @@
 ﻿using EventServe.Services;
+using SqlStreamStore;
 using SqlStreamStore.Streams;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ namespace EventServe.SqlStreamStore
     {
         private readonly ISqlStreamStoreProvider _streamStoreProvider;
         private readonly IEventSerializer _eventSerializer;
-        private const int PAGE_SIZE = 100;
+        private const int PAGE_SIZE = 128;
 
         public SqlStreamStoreStreamReader(ISqlStreamStoreProvider streamStoreProvider, IEventSerializer eventSerializer)
         {
@@ -20,8 +21,7 @@ namespace EventServe.SqlStreamStore
 
         public async IAsyncEnumerable<Event> ReadAllEventsFromStreamAsync(string stream)
         {
-            var store = await _streamStoreProvider.GetStreamStore();
-
+            using var store = await _streamStoreProvider.GetStreamStore();
             var pos = 0;
             var end = false;
             var streamId = new StreamId(stream);
@@ -33,7 +33,7 @@ namespace EventServe.SqlStreamStore
             while (!end)
             {
                 //process page results
-                var serializationTasks = new List<Task<Event>>();
+                var serializationTasks = new List<Task<Event>>(page.Messages.Length);
                 foreach (var message in page.Messages)
                     serializationTasks.Add(_eventSerializer.DeseralizeEvent(message));
 

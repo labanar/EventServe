@@ -63,7 +63,11 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
                     }
 
                     var subId = Guid.NewGuid();
-                    var connectionSettings = new TransientStreamSubscriptionConnectionSettings(subId, profile.StreamPosition, profile.Filter.SubscribedStreamId, profile.Filter.AggregateType?.Name);
+                    var connectionSettings = new TransientStreamSubscriptionConnectionSettings(subId,
+                                                                                               profile.GetType().Name,
+                                                                                               profile.StreamPosition,
+                                                                                               profile.Filter.SubscribedStreamId,
+                                                                                               profile.Filter.AggregateType?.Name);
                     manager.Add(subId, subscription, connectionSettings).Wait();
                     manager.Connect(subId).Wait();
                 }
@@ -90,15 +94,23 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
                     if(sub == default)
                     {
                         var subscriptionBase = rootManager.CreateTransientSubscription(profile.GetType().Name).Result;
-                        var connectionSettings = new TransientStreamSubscriptionConnectionSettings(subscriptionBase.SubscriptionId, profile.StreamPosition, profile.Filter.SubscribedStreamId, profile.Filter.AggregateType?.Name);
+                        var connectionSettings = new TransientStreamSubscriptionConnectionSettings(subscriptionBase.SubscriptionId,
+                                                                                                   profile.GetType().Name,
+                                                                                                   profile.StreamPosition,
+                                                                                                   profile.Filter.SubscribedStreamId,
+                                                                                                   profile.Filter.AggregateType?.Name);
                         manager.Add(subscriptionBase.SubscriptionId, subscription, connectionSettings).Wait();
                         rootManager.StartSubscription(subscriptionBase.SubscriptionId).Wait();
                     }
                     else
                     {
-                        var connectionSettings = new TransientStreamSubscriptionConnectionSettings(sub.SubscriptionId, profile.StreamPosition, profile.Filter.SubscribedStreamId, profile.Filter.AggregateType?.Name);
-                        manager.Add(sub.SubscriptionId, subscription, connectionSettings).Wait();
+                        var connectionSettings = new TransientStreamSubscriptionConnectionSettings(sub.SubscriptionId,
+                                                                                                   profile.GetType().Name,
+                                                                                                   profile.StreamPosition,
+                                                                                                   profile.Filter.SubscribedStreamId,
+                                                                                                   profile.Filter.AggregateType?.Name);
 
+                        manager.Add(sub.SubscriptionId, subscription, connectionSettings).Wait();
                         if (sub.Connected)
                             manager.Connect(sub.SubscriptionId).Wait();
                     }
@@ -156,6 +168,10 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
                         var observerType = typeof(PartitionedProjectionObserver<,>).MakeGenericType(profile.ProjectionType, eventType);
                         var observer = (IObserver<SubscriptionMessage>)Activator.CreateInstance(observerType, applicationBuilder.ApplicationServices, profile.Filter);
                         connection.Subscribe(observer);
+
+                        var resetObserverType = typeof(PartitionedProjectionResetObserver<>).MakeGenericType(profile.ProjectionType);
+                        var resetObserver = (IObserver<PersistentSubscriptionResetEvent>)Activator.CreateInstance(resetObserverType, applicationBuilder.ApplicationServices);
+                        connection.Subscribe(resetObserver);
                     }
 
                     var sub = subscriptions.FirstOrDefault(x => x.Name == profile.GetType().Name);
@@ -187,6 +203,10 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
                         var observerType = typeof(ProjectionObserver<,>).MakeGenericType(profile.ProjectionType, eventType);
                         var observer = (IObserver<SubscriptionMessage>)Activator.CreateInstance(observerType, applicationBuilder.ApplicationServices, profile.Filter);
                         connection.Subscribe(observer);
+
+                        var resetObserverType = typeof(PartitionedProjectionResetObserver<>).MakeGenericType(profile.ProjectionType);
+                        var resetObserver = (IObserver<PersistentSubscriptionResetEvent>)Activator.CreateInstance(resetObserverType, applicationBuilder.ApplicationServices);
+                        connection.Subscribe(resetObserver);
                     }
 
                     var sub = subscriptions.FirstOrDefault(x => x.Name == profile.GetType().Name);
@@ -216,7 +236,7 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
                 var connectionSettings = new PersistentStreamSubscriptionConnectionSettings(subscriptionBase.SubscriptionId, profileName, streamId, aggregateType);
                 manager.Add(subscriptionBase.SubscriptionId, connection, connectionSettings).Wait();
                 rootManager.StartSubscription(subscriptionBase.SubscriptionId).Wait();
-                manager.Connect(subscriptionBase.SubscriptionId).Wait();
+                //manager.Connect(subscriptionBase.SubscriptionId).Wait();
                 return;
             }
             else

@@ -4,17 +4,22 @@ using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace EventServe.SqlStreamStore.IntegrationTests
+namespace EventServe.SqlStreamStore.MsSql.IntegrationTests
 {
-    public class StreamReaderShould
+    [Collection("SqlStreamStore Collection")]
+    public class SqlStreamReaderShould
     {
+        private readonly EmbeddedMsSqlStreamStoreFixture _fixture;
         private readonly SqlStreamStoreEventSerializer _serializer;
-        private readonly InMemorySqlStreamStoreProvider _storeProvider;
+        private readonly MsSqlStreamStoreSettingsProvider _settingsProvider;
+        private readonly MsSqlStreamStoreProvider _storeProvider;
 
-        public StreamReaderShould()
+        public SqlStreamReaderShould(EmbeddedMsSqlStreamStoreFixture fixture)
         {
-            _storeProvider = new InMemorySqlStreamStoreProvider();
+            _fixture = fixture;
             _serializer = new SqlStreamStoreEventSerializer();
+            _settingsProvider = new MsSqlStreamStoreSettingsProvider(_fixture.ConnectionString);
+            _storeProvider = new MsSqlStreamStoreProvider(_settingsProvider);
         }
 
         [Fact]
