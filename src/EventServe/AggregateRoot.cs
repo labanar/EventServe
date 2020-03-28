@@ -27,6 +27,8 @@ namespace EventServe
                 _version += _changes.Count;
             else
                 _version = _changes.Count - 1;
+
+            _changes.Clear();
         }
 
         public void LoadFromHistory(Event @event)
