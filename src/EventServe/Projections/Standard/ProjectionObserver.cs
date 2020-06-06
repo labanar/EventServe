@@ -43,9 +43,9 @@ namespace EventServe.Projections
                 if (handler == null)
                     return;
 
-                var repository = scope.ServiceProvider.GetRequiredService<IProjectionStateRepository>();
+                var repository = scope.ServiceProvider.GetRequiredService<IProjectionStateRepository<TProjection>>();
 
-                var readModelQuery = repository.GetProjectionState<TProjection>();
+                var readModelQuery = repository.GetProjectionState();
                 readModelQuery.Wait();
                 var readModel = readModelQuery.Result;
                 if (readModel == null)

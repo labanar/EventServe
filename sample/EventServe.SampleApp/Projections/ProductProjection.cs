@@ -18,7 +18,7 @@ namespace EventServe.SampleApp.Projections
         public bool Available { get; set; }
     }
 
-    public class ProductProjectionProfile : PartitionedProjectionProfile
+    public class ProductProjectionProfile : PartitionedProjectionProfile<ProductProjection>
     {
         public ProductProjectionProfile()
         {

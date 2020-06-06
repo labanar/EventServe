@@ -25,8 +25,8 @@ namespace EventServe.Projections.Partitioned
         {
             using (var scope = _serviceProvider.CreateScope())
             {
-                var stateRepository = scope.ServiceProvider.GetRequiredService<IPartitionedProjectionStateRepository>();
-                stateRepository.ResetState<TProjection>().Wait();
+                var stateRepository = scope.ServiceProvider.GetRequiredService<IPartitionedProjectionStateRepository<TProjection>>();
+                stateRepository.ResetState().Wait();
             }      
         }
     }

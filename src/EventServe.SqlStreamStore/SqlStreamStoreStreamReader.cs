@@ -3,6 +3,7 @@ using SqlStreamStore;
 using SqlStreamStore.Streams;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace EventServe.SqlStreamStore
@@ -47,6 +48,43 @@ namespace EventServe.SqlStreamStore
                 {
                     pos += PAGE_SIZE;
                     page = await store.ReadStreamForwards(streamId.Id, pos, PAGE_SIZE);
+                }
+                else
+                {
+                    end = true;
+                }
+            }
+
+            yield break;
+        }
+
+        public async IAsyncEnumerable<Event> ReadStreamBackwards(string stream)
+        {
+            using var store = await _streamStoreProvider.GetStreamStore();
+            var end = false;
+            var streamId = new StreamId(stream);
+            var page = await store.ReadStreamBackwards(streamId.Id, StreamVersion.End, PAGE_SIZE);
+
+            if (page.Status == PageReadStatus.StreamNotFound)
+                throw new StreamNotFoundException(stream);
+
+            while (!end)
+            {
+                //process page results
+                var serializationTasks = new List<Task<Event>>(page.Messages.Length);
+                foreach (var message in page.Messages)
+                    serializationTasks.Add(_eventSerializer.DeseralizeEvent(message));
+
+                await Task.WhenAll(serializationTasks);
+
+                foreach (var task in serializationTasks)
+                    yield return task.Result;
+
+                //Check next page
+                if (!page.IsEnd)
+                {
+                    var streamVersion = page.Messages.LastOrDefault().StreamVersion;
+                    page = await store.ReadStreamBackwards(streamId.Id, streamVersion, PAGE_SIZE);
                 }
                 else
                 {

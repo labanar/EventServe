@@ -21,9 +21,10 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
         {
             services.AddTransient<ISubscriptionRootManager, SubscriptionRootManager>();
             services.AddSingleton<ISubscriptionManager, SubscriptionManager>();
-            services.RegisterAllTypesWithBaseType<PartitionedProjectionProfile>(assemblies, ServiceLifetime.Singleton);
+            //services.RegisterAllTypesWithBaseType<PartitionedProjectionProfile>(assemblies, ServiceLifetime.Singleton);
             services.RegisterAllTypesWithBaseType<PersistentSubscriptionProfile>(assemblies, ServiceLifetime.Singleton);
             services.RegisterAllTypesWithBaseType<TransientSubscriptionProfile>(assemblies, ServiceLifetime.Singleton);
+            services.ConnectImplementationsToTypesClosing(typeof(PartitionedProjectionProfile<>), assemblies, false);
             services.ConnectImplementationsToTypesClosing(typeof(ISubscriptionEventHandler<,>), assemblies, false);
             services.ConnectImplementationsToTypesClosing(typeof(IProjectionEventHandler<,>), assemblies, false);
             services.ConnectImplementationsToTypesClosing(typeof(IPartitionedProjectionEventHandler<,>), assemblies, false);
@@ -157,7 +158,7 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
             using (var scope = applicationBuilder.ApplicationServices.CreateScope())
             {
                 var manager = scope.ServiceProvider.GetRequiredService<ISubscriptionManager>();
-                var profiles = scope.ServiceProvider.GetServices<PartitionedProjectionProfile>();  
+                var profiles = scope.ServiceProvider.GetServices<IPartitionedProjectionProfile>();  
 
                 foreach (var profile in profiles)
                 {
@@ -184,6 +185,32 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
                         connection,
                         rootManager,
                         manager);
+                }
+            }
+
+            //Setup partitioned projection queries
+            using (var scope = applicationBuilder.ApplicationServices.CreateScope())
+            {
+                var manager = scope.ServiceProvider.GetRequiredService<ISubscriptionManager>();
+                var profiles = scope.ServiceProvider.GetServices<IPartitionedProjectionProfile>();
+
+                foreach (var profile in profiles)
+                {
+                    foreach (var eventType in profile.SubscribedEvents)
+                    {
+                        var handlerType = typeof(IPartitionedProjectionEventHandler<,>).MakeGenericType(profile.ProjectionType, eventType);
+
+                        //Register the handler
+
+
+                        //var observerType = typeof(PartitionedProjectionObserver<,>).MakeGenericType(profile.ProjectionType, eventType);
+                        //var observer = (IObserver<SubscriptionMessage>)Activator.CreateInstance(observerType, applicationBuilder.ApplicationServices, profile.Filter);
+                        //connection.Subscribe(observer);
+
+                        //var resetObserverType = typeof(PartitionedProjectionResetObserver<>).MakeGenericType(profile.ProjectionType);
+                        //var resetObserver = (IObserver<PersistentSubscriptionResetEvent>)Activator.CreateInstance(resetObserverType, applicationBuilder.ApplicationServices);
+                    }
+
                 }
             }
 
