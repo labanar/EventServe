@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 namespace EventServe.Projections
 {
-    public interface IProjectionStateRepository
+    public interface IProjectionStateRepository<T>
+        where T : Projection
     {
-        Task<T> GetProjectionState<T>() where T : Projection;
-        Task<T> SetProjectionState<T>(T state) where T : Projection;
+        Task<T> GetProjectionState();
+        Task SetProjectionState(T state);
     }
 }

@@ -3,7 +3,16 @@ using System.Collections.Generic;
 
 namespace EventServe.Projections.Partitioned
 {
-    public class PartitionedProjectionProfile
+    public interface IPartitionedProjectionProfile
+    {
+        ProjectionFilter Filter { get; }
+        HashSet<Type> SubscribedEvents { get; }
+        Type ProjectionType { get; }
+    }
+
+
+    public class PartitionedProjectionProfile<T>: IPartitionedProjectionProfile
+        where T: PartitionedProjection
     {
         public ProjectionFilter Filter => _projectionFilterBuilder.Build();
         public HashSet<Type> SubscribedEvents => _eventTypes;

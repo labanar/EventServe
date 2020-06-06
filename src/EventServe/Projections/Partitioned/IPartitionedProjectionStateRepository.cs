@@ -3,10 +3,11 @@ using System.Threading.Tasks;
 
 namespace EventServe.Projections
 {
-    public interface IPartitionedProjectionStateRepository
+    public interface IPartitionedProjectionStateRepository<T>
+        where T: PartitionedProjection
     {
-        Task<T> GetProjectionState<T>(Guid partitionId) where T : PartitionedProjection;
-        Task<T> SetProjectionState<T>(Guid partitionId, T state) where T : PartitionedProjection;
-        Task ResetState<T>() where T : PartitionedProjection;
+        Task<T> GetProjectionState(Guid partitionId);
+        Task SetProjectionState(Guid partitionId, T state);
+        Task ResetState();
     }
 }

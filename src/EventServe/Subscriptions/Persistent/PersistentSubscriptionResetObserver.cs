@@ -4,6 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace EventServe.Subscriptions.Persistent
 {
+    public class PersistentSubscriptionResetEvent { }
+
     public class PersistentSubscriptionResetObserver<TProfile> : IObserver<PersistentSubscriptionResetEvent>
         where TProfile: PersistentSubscriptionProfile
     {

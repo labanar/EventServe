@@ -16,7 +16,6 @@ namespace EventServe.Projections
         public StreamId SubscribedStreamId => _streamId;
         public Type AggregateType => _aggregateType;
 
-
         public ProjectionFilter(StreamId streamId, HashSet<string> streamExpressions, HashSet<Type> eventTypes)
         {
             _streamId = streamId;

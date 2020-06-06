@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace EventServe.Projections
 {
-     public interface IPartitionedProjectionEventHandler<TProjection, TEvent>
+    public interface IPartitionedProjectionEventHandler<TProjection, TEvent>
         where TProjection : PartitionedProjection, new()
         where TEvent : Event
     {

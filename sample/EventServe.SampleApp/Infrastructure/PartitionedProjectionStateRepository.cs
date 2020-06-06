@@ -5,7 +5,8 @@ using System.Threading.Tasks;
 
 namespace EventServe.SampleApp.Infrastructure
 {
-    public class PartitionedProjectionStateRepository : IPartitionedProjectionStateRepository
+    public class PartitionedProjectionStateRepository<T> : IPartitionedProjectionStateRepository<T>
+        where T: PartitionedProjection
     {
         private readonly SampleContext _context;
 
@@ -14,7 +15,7 @@ namespace EventServe.SampleApp.Infrastructure
             _context = context;
         }
 
-        public async Task<T> GetProjectionState<T>(Guid partitionId) where T : PartitionedProjection
+        public async Task<T> GetProjectionState(Guid partitionId)    
         {
             try
             {
@@ -27,13 +28,13 @@ namespace EventServe.SampleApp.Infrastructure
         }
 
         [Obsolete]
-        public async Task ResetState<T>() where T : PartitionedProjection
+        public async Task ResetState()
         {
             var cmd = $"TRUNCATE TABLE [Sample].[{nameof(_context.Products)}];";
             await _context.Database.ExecuteSqlCommandAsync(cmd);
         }
 
-        public async Task<T> SetProjectionState<T>(Guid partitionId, T state) where T : PartitionedProjection
+        public async Task SetProjectionState(Guid partitionId, T state)
         {
 
             if(await _context.FindAsync<T>(partitionId) != default)
@@ -42,7 +43,6 @@ namespace EventServe.SampleApp.Infrastructure
                 await _context.AddAsync(state);
 
             await _context.SaveChangesAsync();
-            return state;
         }
     }
 }

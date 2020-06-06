@@ -6,6 +6,6 @@ namespace EventServe.Projections
 {
     public abstract class Projection
     {
-
+        public abstract Guid Id { get; }
     }
 }

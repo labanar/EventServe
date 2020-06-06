@@ -20,6 +20,7 @@ using EventServe.SampleApp.Domain;
 using EventServe.EventStore;
 using EventServe.Extensions.Microsoft.DependencyInjection;
 using System.Linq;
+using EventServe.SampleApp.Projections;
 
 namespace EventServe.SampleApp
 {
@@ -42,7 +43,7 @@ namespace EventServe.SampleApp
             {
                 options.UseSqlServer(Configuration["ConnectionStrings:ReadModelDb"]);
             });
-            services.AddTransient<IPartitionedProjectionStateRepository, PartitionedProjectionStateRepository>();
+            services.AddTransient<IPartitionedProjectionStateRepository<ProductProjection>, PartitionedProjectionStateRepository<ProductProjection>>();
 
             //services.AddEventServe(options =>
             //{
