@@ -56,7 +56,7 @@ namespace EventServe.Projections
                 var projectionTask = handler.ProjectEvent(readModel, typedEvent);
                 projectionTask.Wait();
 
-                var updateTask = repository.SetProjectionState(typedEvent.AggregateId, readModel);
+                var updateTask = repository.SetProjectionState(typedEvent.AggregateId, projectionTask.Result);
                 updateTask.Wait();
             }
         }
