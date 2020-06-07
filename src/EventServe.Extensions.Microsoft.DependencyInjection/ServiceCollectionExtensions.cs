@@ -38,7 +38,8 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
         public static void ConnectImplementationsToTypesClosing(this IServiceCollection services, Type openRequestInterface,
            IEnumerable<Assembly> assembliesToScan,
            bool addIfAlreadyExists,
-           ServiceLifetime lifetime = ServiceLifetime.Transient)
+           ServiceLifetime lifetime = ServiceLifetime.Transient,
+           Type baseInterface = null)
         {
             var concretions = new List<Type>();
             var interfaces = new List<Type>();
@@ -56,6 +57,9 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
                 {
                     interfaces.Fill(interfaceType);
                 }
+
+                if (baseInterface != null)
+                    interfaces.Fill(baseInterface);
             }
 
             foreach (var @interface in interfaces)
