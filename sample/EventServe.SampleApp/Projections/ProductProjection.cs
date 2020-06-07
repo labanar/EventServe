@@ -16,6 +16,7 @@ namespace EventServe.SampleApp.Projections
         public double Price { get; set; }
         public string CurrencyCode { get; set; }
         public bool Available { get; set; }
+        public override Guid LastEventId { get; set; }
     }
 
     public class ProductProjectionProfile : PartitionedProjectionProfile<ProductProjection>
