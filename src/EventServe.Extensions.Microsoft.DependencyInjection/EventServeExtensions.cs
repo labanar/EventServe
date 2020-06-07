@@ -22,9 +22,11 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
             services.AddTransient<ISubscriptionRootManager, SubscriptionRootManager>();
             services.AddSingleton<ISubscriptionManager, SubscriptionManager>();
             //services.RegisterAllTypesWithBaseType<PartitionedProjectionProfile>(assemblies, ServiceLifetime.Singleton);
+
+            services.ConnectImplementationsToTypesClosing(typeof(PartitionedProjectionProfile<>), assemblies, false, ServiceLifetime.Singleton, typeof(IPartitionedProjectionProfile));
             services.RegisterAllTypesWithBaseType<PersistentSubscriptionProfile>(assemblies, ServiceLifetime.Singleton);
             services.RegisterAllTypesWithBaseType<TransientSubscriptionProfile>(assemblies, ServiceLifetime.Singleton);
-            services.ConnectImplementationsToTypesClosing(typeof(PartitionedProjectionProfile<>), assemblies, false);
+
             services.ConnectImplementationsToTypesClosing(typeof(ISubscriptionEventHandler<,>), assemblies, false);
             services.ConnectImplementationsToTypesClosing(typeof(IProjectionEventHandler<,>), assemblies, false);
             services.ConnectImplementationsToTypesClosing(typeof(IPartitionedProjectionEventHandler<,>), assemblies, false);
@@ -92,7 +94,7 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
                     }
 
                     var sub = subscriptions.FirstOrDefault(x => x.Name == profile.GetType().Name);
-                    if(sub == default)
+                    if (sub == default)
                     {
                         var subscriptionBase = rootManager.CreateTransientSubscription(profile.GetType().Name).Result;
                         var connectionSettings = new TransientStreamSubscriptionConnectionSettings(subscriptionBase.SubscriptionId,
@@ -158,9 +160,9 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
             using (var scope = applicationBuilder.ApplicationServices.CreateScope())
             {
                 var manager = scope.ServiceProvider.GetRequiredService<ISubscriptionManager>();
-                var profiles = scope.ServiceProvider.GetServices<IPartitionedProjectionProfile>();  
+                var profiles = scope.ServiceProvider.GetServices<IPartitionedProjectionProfile>();
 
-                foreach (var profile in profiles)
+                foreach (IPartitionedProjectionProfile profile in profiles)
                 {
                     //Fetch a new instance persistent subscription from the IoC container
                     var connection = applicationBuilder.ApplicationServices.GetRequiredService<IPersistentStreamSubscriptionConnection>();
@@ -251,7 +253,7 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
 
         }
 
-        private static void SetupPersistentSubscription(Guid? subscriptionId, string profileName, StreamId streamId, 
+        private static void SetupPersistentSubscription(Guid? subscriptionId, string profileName, StreamId streamId,
                                                         string aggregateType, bool isConnected,
                                                         IPersistentStreamSubscriptionConnection connection,
                                                         ISubscriptionRootManager rootManager,
