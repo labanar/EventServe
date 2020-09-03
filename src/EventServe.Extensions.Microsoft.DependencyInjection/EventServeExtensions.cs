@@ -32,6 +32,7 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
             services.ConnectImplementationsToTypesClosing(typeof(IPartitionedProjectionEventHandler<,>), assemblies, false);
             services.ConnectImplementationsToTypesClosing(typeof(IPersistentSubscriptionResetHandler<>), assemblies, false);
             services.AddTransient(typeof(IEventRepository<>), typeof(EventRepository<>));
+            services.AddTransient(typeof(IPartitionedProjectionQuery<>), typeof(PartitionedProjectionQuery<>));
         }
 
         public static void UseEventServe(this IApplicationBuilder applicationBuilder)
