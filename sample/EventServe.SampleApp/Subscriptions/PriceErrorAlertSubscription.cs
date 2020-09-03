@@ -1,12 +1,16 @@
 ﻿using System;
 using System.Threading.Tasks;
+using EventServe.Projections.Partitioned;
 using EventServe.SampleApp.Domain;
 using EventServe.SampleApp.Domain.Events;
 using EventServe.SampleApp.Infrastructure;
+using EventServe.SampleApp.Projections;
 using EventServe.Subscriptions;
 using EventServe.Subscriptions.Persistent;
+using Microsoft.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace EventServe.SampleApp.Subscriptions
 {
@@ -33,13 +37,16 @@ namespace EventServe.SampleApp.Subscriptions
     {
         private readonly SampleContext _context;
         private readonly ILogger<PriceErrorAlertSubscriptionHandler> _logger;
+        private readonly IPartitionedProjectionQuery<ProductProjection> _partitionedProjectionQuery;
 
         public PriceErrorAlertSubscriptionHandler(
             SampleContext context,
+            IPartitionedProjectionQuery<ProductProjection> partitionedProjectionQuery,
             ILogger<PriceErrorAlertSubscriptionHandler> logger)
         {
             _context = context;
             _logger = logger;
+            _partitionedProjectionQuery = partitionedProjectionQuery;
         }
 
         public async Task HandleEvent(ProductCreatedEvent @event)
@@ -86,6 +93,11 @@ namespace EventServe.SampleApp.Subscriptions
             lastPrice.DateLastModified = @event.EventDate;
             await _context.SaveChangesAsync();
             await _context.DisposeAsync();
+
+
+            var projection = await _partitionedProjectionQuery.Execute(@event.AggregateId);
+            _logger.LogInformation($"[{@event.AggregateId}] Potential price error detected product data: {JsonConvert.SerializeObject(projection)}");
+
         }
 
         [Obsolete]
