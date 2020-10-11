@@ -1,8 +1,8 @@
 ﻿namespace EventServe
 {
-    public static class Constants
+    internal static class Constants
     {
-        public static class StreamIds
+        internal static class StreamIds
         {
             public const string ALL = "__ALL__";
         }

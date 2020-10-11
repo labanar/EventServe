@@ -24,9 +24,6 @@ namespace EventServe.EventStore
             }
         }
 
-
-
-      
         public static async Task<bool> CreateSubscription(
             this IEventStoreConnection conn, 
             string stream, 

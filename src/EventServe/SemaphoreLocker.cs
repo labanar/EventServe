@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace EventServe
 {
-    public class SemaphoreLocker
+    internal class SemaphoreLocker
     {
         private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
 

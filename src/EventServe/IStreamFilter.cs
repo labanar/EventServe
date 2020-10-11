@@ -8,9 +8,7 @@ namespace EventServe
     {
         public StreamId SubscribedStreamId { get; }
         public Type AggregateType { get; }
-
         bool DoesEventPassFilter(Event @event, string streamId);
-
         bool DoesEventPassFilter(string eventType, string streamId);
     }
 }

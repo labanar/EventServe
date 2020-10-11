@@ -8,7 +8,7 @@ namespace EventServe.SampleApp.Domain.Events
     public class ProductPriceChangedEvent : Event
     {
         public ProductPriceChangedEvent() { }
-        public ProductPriceChangedEvent(Guid aggregateId, bool allowDefaultGuid = false) : base(aggregateId, allowDefaultGuid)
+        public ProductPriceChangedEvent(Guid aggregateId) : base(aggregateId)
         {
 
         }
