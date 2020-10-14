@@ -21,9 +21,8 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
         {
             services.AddTransient<ISubscriptionRootManager, SubscriptionRootManager>();
             services.AddSingleton<ISubscriptionManager, SubscriptionManager>();
-            //services.RegisterAllTypesWithBaseType<PartitionedProjectionProfile>(assemblies, ServiceLifetime.Singleton);
 
-            services.ConnectImplementationsToTypesClosing(typeof(PartitionedProjectionProfile<>), assemblies, false, ServiceLifetime.Singleton, typeof(IPartitionedProjectionProfile));
+            services.ConnectImplementationsToTypesClosing(typeof(PartitionedProjectionProfile<>), assemblies, true, ServiceLifetime.Singleton, recognizeType: t => ServiceRegistrationCache.ProjectionProfileTypes.Add(t));
             services.RegisterAllTypesWithBaseType<PersistentSubscriptionProfile>(assemblies, ServiceLifetime.Singleton);
             services.RegisterAllTypesWithBaseType<TransientSubscriptionProfile>(assemblies, ServiceLifetime.Singleton);
 
@@ -161,10 +160,14 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
             using (var scope = applicationBuilder.ApplicationServices.CreateScope())
             {
                 var manager = scope.ServiceProvider.GetRequiredService<ISubscriptionManager>();
-                var profiles = scope.ServiceProvider.GetServices<IPartitionedProjectionProfile>();
+                var profiles = scope.ServiceProvider.GetServices(typeof(IPartitionedProjectionProfile));
 
-                foreach (IPartitionedProjectionProfile profile in profiles)
+                var profileTypes = ServiceRegistrationCache.ProjectionProfileTypes;
+
+                foreach (var profileType in profileTypes)
                 {
+                    var profile = scope.ServiceProvider.GetRequiredService(profileType) as IPartitionedProjectionProfile;
+
                     //Fetch a new instance persistent subscription from the IoC container
                     var connection = applicationBuilder.ApplicationServices.GetRequiredService<IPersistentStreamSubscriptionConnection>();
                     foreach (var eventType in profile.SubscribedEvents)
@@ -216,7 +219,6 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
 
                 }
             }
-
 
             //Start up projections
             using (var scope = applicationBuilder.ApplicationServices.CreateScope())

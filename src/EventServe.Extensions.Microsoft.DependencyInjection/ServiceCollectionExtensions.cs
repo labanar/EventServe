@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using EventServe.Projections.Partitioned;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
 using System.Collections.Generic;
@@ -33,13 +34,13 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
 
             }
         }
-
-
+        
         public static void ConnectImplementationsToTypesClosing(this IServiceCollection services, Type openRequestInterface,
            IEnumerable<Assembly> assembliesToScan,
            bool addIfAlreadyExists,
            ServiceLifetime lifetime = ServiceLifetime.Transient,
-           Type baseInterface = null)
+           Type baseInterface = null,
+           Action<Type> recognizeType = null)
         {
             var concretions = new List<Type>();
             var interfaces = new List<Type>();
@@ -69,6 +70,9 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
                 {
                     foreach (var type in exactMatches)
                     {
+                        if (recognizeType != null)
+                            recognizeType(@interface);
+
                         switch (lifetime)
                         {
                             case ServiceLifetime.Transient: services.AddTransient(@interface, type); break;
