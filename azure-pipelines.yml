@@ -49,7 +49,6 @@ steps:
   inputs:
     command: 'pack'
     packagesToPack: '**/src/**/*.csproj'
-    includesymbols: true
     versioningScheme: 'byBuildNumber'
     buildProperties: 'VersionSuffix=-$(Build.BuildId)'
 
