@@ -14,17 +14,19 @@ namespace EventServe.SqlStreamStore.MsSql
     public class MsSqlStreamStoreSettingsProvider: IMsSqlStreamStoreSettingsProvider
     {
         private readonly string _connectionString;
+        private readonly string _schemaName;
 
-        public MsSqlStreamStoreSettingsProvider(string connectionString)
+        public MsSqlStreamStoreSettingsProvider(string connectionString, string schemaName)
         {
             _connectionString = connectionString;
+            _schemaName = schemaName;
         }
 
         public Task<MsSqlStreamStoreV3Settings> GetSettings()
         {
             return Task.FromResult(new MsSqlStreamStoreV3Settings(_connectionString)
             {
-                Schema = "TestSchema"
+                Schema = _schemaName
             });
         }
     }

@@ -12,6 +12,8 @@ namespace EventServe.SampleApp.Infrastructure
         }
 
         public DbSet<ProductProjection> Products { get; set; }
+
+        public DbSet<AnotherProjection> AnotherProjections { get; set; }
         public DbSet<PriceErrorAlertLastPrice> PriceErrorAlertLastPrices { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -23,6 +25,11 @@ namespace EventServe.SampleApp.Infrastructure
             });
 
             builder.Entity<PriceErrorAlertLastPrice>(options =>
+            {
+                options.HasKey(x => x.ProductId);
+            });
+
+            builder.Entity<AnotherProjection>(options =>
             {
                 options.HasKey(x => x.ProductId);
             });

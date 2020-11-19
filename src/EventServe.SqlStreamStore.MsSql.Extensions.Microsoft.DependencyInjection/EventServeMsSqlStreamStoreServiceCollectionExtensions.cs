@@ -6,20 +6,26 @@ using System;
 using System.Threading.Tasks;
 using System.Reflection;
 using EventServe.Extensions.Microsoft.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace EventServe.SqlStreamStore.MsSql.Extensions.Microsoft.DependencyInjection
 {
     public static class EventServeSqlStreamStoreServiceCollectionExtensions
     {
-        public static void AddEventServe(this IServiceCollection services, Action<MsSqlStreamStoreOptions> setupAction, string connectionString, Assembly[] assemblies)
+        public static void AddEventServe(this IServiceCollection services, Action<MsSqlStreamStoreOptions> setupAction, Assembly[] assemblies)
         {
             services.AddEventServeCore(assemblies);
             services.AddEventServeSqlStreamStore();
             services.Configure(setupAction);
-            services.AddTransient<IMsSqlStreamStoreSettingsProvider>(_ => new MsSqlStreamStoreSettingsProvider(connectionString));
-            services.AddDbContextPool<SqlStreamStoreContext>(options =>
+            services.AddTransient<IMsSqlStreamStoreSettingsProvider>(serviceProvider =>
             {
-                options.UseSqlServer(connectionString, sqlServerOptions =>
+                var options = serviceProvider.GetRequiredService<IOptions<MsSqlStreamStoreOptions>>();
+                return new MsSqlStreamStoreSettingsProvider(options.Value.ConnectionString, options.Value.SchemaName);
+            });
+            services.AddDbContextPool<SqlStreamStoreContext>((serviceProvider, options) =>
+            {
+                var sqlStreamStoreOptions = serviceProvider.GetRequiredService<IOptions<MsSqlStreamStoreOptions>>();
+                options.UseSqlServer(sqlStreamStoreOptions.Value.ConnectionString, sqlServerOptions =>
                 {
                     sqlServerOptions.MigrationsAssembly(typeof(MsSqlStreamStoreOptions).Assembly.FullName);
                 });
