@@ -24,6 +24,12 @@ namespace EventServe
             return this;
         }
 
+        public StreamIdBuilder WithAggregateType(Type t)
+        {
+            this.aggregateName = t.Name;
+            return this;
+        }
+
         public StreamIdBuilder WithAggregateId(Guid id)
         {
             this.aggregateId = id;
