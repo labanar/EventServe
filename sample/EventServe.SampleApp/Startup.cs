@@ -43,7 +43,9 @@ namespace EventServe.SampleApp
             {
                 options.UseSqlServer(Configuration["ConnectionStrings:ReadModelDb"]);
             });
-            services.AddTransient<IPartitionedProjectionStateRepository<ProductProjection>, PartitionedProjectionStateRepository<ProductProjection>>();
+            //services.AddTransient<IPartitionedProjectionStateRepository<ProductProjection>, PartitionedProjectionStateRepository<ProductProjection>>();
+
+            services.AddTransient(typeof(IPartitionedProjectionStateRepository<>), typeof(PartitionedProjectionStateRepository<>));
 
             //services.AddEventServe(options =>
             //{
@@ -63,7 +65,6 @@ namespace EventServe.SampleApp
                 options.ConnectionString = Configuration["ConnectionStrings:MsSqlStreamStoreDb"];
                 options.SchemaName = Configuration["MsSqlStreamStoreOptions:SchemaName"];
             },
-            Configuration["ConnectionStrings:MsSqlStreamStoreDb"],
             new Assembly[] {
                 typeof(PersistentSubscriptionProfile).Assembly,
                 typeof(Startup).Assembly,
@@ -86,7 +87,7 @@ namespace EventServe.SampleApp
             var productRepo = app.ApplicationServices.GetRequiredService<IEventRepository<Product>>();
             var subscriptionManager = app.ApplicationServices.GetRequiredService<ISubscriptionManager>();
 
-            //for (int i = 0; i <= 50000; i++)
+            //for (int i = 0; i <= 50; i++)
             //    await CreateProduct(productRepo);
 
             //await ResetSubscription(subscriptionManager, Guid.Parse("dff350a8-92df-4cd9-9ef8-23ba57ded611"));

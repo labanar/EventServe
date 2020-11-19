@@ -19,7 +19,7 @@ namespace EventServe.SqlStreamStore.MsSql.IntegrationTests
         {
             _fixture = fixture;
             _serializer = new SqlStreamStoreEventSerializer();
-            _settingsProvider = new MsSqlStreamStoreSettingsProvider(_fixture.ConnectionString);
+            _settingsProvider = new MsSqlStreamStoreSettingsProvider(_fixture.ConnectionString, "TestSchema");
             _storeProvider = new MsSqlStreamStoreProvider(_settingsProvider);
         }
 
