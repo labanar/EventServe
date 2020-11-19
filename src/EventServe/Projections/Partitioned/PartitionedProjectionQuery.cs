@@ -52,7 +52,7 @@ namespace EventServe.Projections.Partitioned
                 if (ev.EventId == projection.LastEventId)
                     break;
 
-                if (_projectionProfile.Filter != null & !_projectionProfile.Filter.DoesEventPassFilter(ev, _projectionProfile.Filter.SubscribedStreamId.Id))
+                if (_projectionProfile.Filter != null & !_projectionProfile.Filter.DoesEventPassFilter(ev, streamId))
                     continue;
 
                 //add this event to our stack
