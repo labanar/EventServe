@@ -39,9 +39,14 @@ namespace EventServe.Projections.Partitioned
             if (projection == null || projection == default)
                 projection = new T();
 
+            var streamId = StreamIdBuilder.Create()
+                .WithAggregateType(_projectionProfile.Filter.AggregateType)
+                .WithAggregateId(partitionId)
+                .Build();
+
             //Read backwards and update read-model if stale
             var eventStack = new Stack<Event>();
-            var stream = _streamReader.ReadStreamBackwards(_projectionProfile.Filter.SubscribedStreamId.Id);
+            var stream = _streamReader.ReadStreamBackwards(streamId);
             await foreach (var ev in stream)
             {
                 if (ev.EventId == projection.LastEventId)
