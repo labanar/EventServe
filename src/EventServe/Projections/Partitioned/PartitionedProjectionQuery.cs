@@ -81,7 +81,7 @@ namespace EventServe.Projections.Partitioned
                 if (handler == null)
                     return projection;
 
-                return await handler.AsDynamic().ProjectEvent(projection, @event);
+                return await (Task<T>)handler.AsDynamic().ProjectEvent(projection, @event);
             }
 
         }
