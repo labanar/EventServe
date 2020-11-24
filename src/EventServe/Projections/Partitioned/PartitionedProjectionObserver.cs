@@ -45,8 +45,16 @@ namespace EventServe.Projections
                     return;
 
                 var repository = scope.ServiceProvider.GetRequiredService<IPartitionedProjectionStateRepository<TProjection>>();
+                var partitionIdSelector = scope.ServiceProvider.GetService<IPartitionedProjectionPartitionIdSelector<TProjection, TEvent>>();
+                var readModelId = typedEvent.AggregateId;
+                if(partitionIdSelector != null)
+                {
+                    var partitionIdSelection = partitionIdSelector.GetPartitionId(typedEvent);
+                    partitionIdSelection.Wait();
+                    readModelId = partitionIdSelection.Result;
+                }                
 
-                var readModelQuery = repository.GetProjectionState(typedEvent.AggregateId);
+                var readModelQuery = repository.GetProjectionState(readModelId);
                 readModelQuery.Wait();
 
                 var readModel = readModelQuery.Result;
