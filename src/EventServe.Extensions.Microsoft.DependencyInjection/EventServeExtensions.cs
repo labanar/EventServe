@@ -29,6 +29,7 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
             services.ConnectImplementationsToTypesClosing(typeof(ISubscriptionEventHandler<,>), assemblies, false);
             services.ConnectImplementationsToTypesClosing(typeof(IProjectionEventHandler<,>), assemblies, false);
             services.ConnectImplementationsToTypesClosing(typeof(IPartitionedProjectionEventHandler<,>), assemblies, false);
+            services.ConnectImplementationsToTypesClosing(typeof(IPartitionedProjectionPartitionIdSelector<,>), assemblies, false);
             services.ConnectImplementationsToTypesClosing(typeof(IPersistentSubscriptionResetHandler<>), assemblies, false);
             services.AddTransient(typeof(IEventRepository<>), typeof(EventRepository<>));
             services.AddTransient(typeof(IPartitionedProjectionQuery<>), typeof(PartitionedProjectionQuery<>));
