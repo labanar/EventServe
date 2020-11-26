@@ -90,8 +90,8 @@ namespace EventServe.SampleApp
             //for (int i = 0; i <= 50; i++)
             //    await CreateProduct(productRepo);
 
-            //await ResetSubscription(subscriptionManager, Guid.Parse("dff350a8-92df-4cd9-9ef8-23ba57ded611"));
-            //SimulatePriceFluctuations(app.ApplicationServices, 5000);
+            //await ResetSubscription(subscriptionManager, Guid.Parse("3E9E1EB0-C68A-4207-93D9-0E3B529844E0"));
+            //SimulatePriceFluctuations(app.ApplicationServices, 50);
 
             app.UseHttpsRedirection();
             app.UseRouting();

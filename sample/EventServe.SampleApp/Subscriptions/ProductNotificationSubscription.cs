@@ -12,7 +12,7 @@ namespace EventServe.SampleApp.Subscriptions
 {
     public class ProductNotificationSubscription : PersistentSubscriptionProfile
     {
-        public ProductNotificationSubscription()
+        public ProductNotificationSubscription(): base(false)
         {
             CreateProfile()
                 .SubscribeToAggregateCategory<Product>()

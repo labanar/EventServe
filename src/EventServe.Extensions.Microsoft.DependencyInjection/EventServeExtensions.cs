@@ -84,6 +84,8 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
                 var profiles = scope.ServiceProvider.GetServices<TransientSubscriptionProfile>();
                 foreach (var profile in profiles.Where(x => x.GetType() != typeof(SubscriptionManagerProfile)))
                 {
+                    if (profile.Disabled) continue;
+
                     //Fetch a new instance persistent subscription from the IoC container
                     var subscription = applicationBuilder.ApplicationServices.GetRequiredService<ITransientStreamSubscriptionConnection>();
                     foreach (var eventType in profile.SubscribedEvents)
@@ -128,6 +130,9 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
                 var profiles = scope.ServiceProvider.GetServices<PersistentSubscriptionProfile>();
                 foreach (var profile in profiles)
                 {
+                    if (profile.Disabled) continue;
+
+
                     //Fetch a new instance persistent subscription from the IoC container
                     var connection = applicationBuilder.ApplicationServices.GetRequiredService<IPersistentStreamSubscriptionConnection>();
                     foreach (var eventType in profile.SubscribedEvents)
