@@ -16,11 +16,14 @@ namespace EventServe.Subscriptions.Persistent
         public SubscriptionFilter Filter => _subscriptionFilterBuilder.Build();
         public HashSet<Type> SubscribedEvents => _eventTypes;
 
+        public bool Disabled { get; }
+
         private readonly SubscriptionFilterBuilder _subscriptionFilterBuilder;
         private readonly HashSet<Type> _eventTypes;
 
-        public PersistentSubscriptionProfile()
+        public PersistentSubscriptionProfile(bool disabled = false)
         {
+            Disabled = disabled;
             _subscriptionFilterBuilder = new SubscriptionFilterBuilder();
             _eventTypes = new HashSet<Type>();
         }

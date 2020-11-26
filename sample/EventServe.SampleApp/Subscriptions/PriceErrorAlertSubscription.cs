@@ -21,7 +21,7 @@ namespace EventServe.SampleApp.Subscriptions
     /// </summary>
     public class PriceErrorAlertSubscription : PersistentSubscriptionProfile
     {
-        public PriceErrorAlertSubscription()
+        public PriceErrorAlertSubscription(): base(false)
         {
             CreateProfile()
                 .SubscribeToAggregateCategory<Product>()

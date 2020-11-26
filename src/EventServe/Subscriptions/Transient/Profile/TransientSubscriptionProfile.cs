@@ -18,13 +18,15 @@ namespace EventServe.Subscriptions.Transient
         public SubscriptionFilter Filter => _subscriptionFilterBuilder.Build();
         public HashSet<Type> SubscribedEvents => _subscribedEvents;
         public StreamPosition StreamPosition => _position;
+        public bool Disabled { get; }
 
         private readonly SubscriptionFilterBuilder _subscriptionFilterBuilder;
         private readonly HashSet<Type> _subscribedEvents;
         private StreamPosition _position = StreamPosition.End;
 
-        public TransientSubscriptionProfile()
+        public TransientSubscriptionProfile(bool disabled = false)
         {
+            Disabled = disabled;
             _subscriptionFilterBuilder = new SubscriptionFilterBuilder();
             _subscribedEvents = new HashSet<Type>();
         }
