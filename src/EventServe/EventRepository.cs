@@ -21,22 +21,27 @@ namespace EventServe
 
         public async Task<T> GetById(Guid id) 
         {
-            var enumerator =  GetAllEventsForAggregate(id).GetAsyncEnumerator();
-            var aggregate = (T) Activator.CreateInstance(typeof(T), true);
-
             try
             {
-                while (await enumerator.MoveNextAsync())
-                    aggregate.LoadFromHistory(enumerator.Current);
-            }
-            catch (Exception e){ }
-            finally
-            {
-                if(enumerator != null)
-                    await enumerator.DisposeAsync();
-            }
+                var seen = 0;
+                var aggregate = (T)Activator.CreateInstance(typeof(T), true);
 
-            return aggregate;
+                await foreach(var @event in GetAllEventsForAggregate(id))
+                {
+                    seen += 1;
+                    aggregate.LoadFromHistory(@event);
+                }
+
+                //No events? return null
+                if (seen == 0)
+                    return null;
+
+                return aggregate;
+            }
+            catch(StreamNotFoundException snf)
+            {
+                return null;
+            }
         }
 
         public async Task<long> SaveAsync(AggregateRoot aggregate) {

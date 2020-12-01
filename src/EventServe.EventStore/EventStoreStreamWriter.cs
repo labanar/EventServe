@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using EventServe.EventStore.Interfaces;
 using EventServe.Services;
@@ -7,9 +8,8 @@ using ES = EventStore.ClientAPI;
 
 namespace EventServe.EventStore
 {
-
     //TODO - implement IDisposable
-    public class EventStoreStreamWriter : IEventStreamWriter
+    public class EventStoreStreamWriter : IEventStreamWriter, IDisposable
     {
         private readonly IEventStoreConnectionProvider _connectionProvider;
         private readonly IEventSerializer _eventSerializer;
@@ -72,6 +72,11 @@ namespace EventServe.EventStore
             {
                 throw new WrongExpectedVersionException($"Stream version does not match the expected version {expectedVersion}. {wrongVersionException.Message}");
             }
+        }
+
+        public void Dispose()
+        {
+            _conn.Dispose(); 
         }
     }
 }

@@ -21,6 +21,14 @@ namespace EventServe.EventStore.IntegrationTests
         }
 
         [Fact]
+        public async Task Get_aggregate_returns_null_when_aggregate_does_not_exist()
+        {
+            var sut = CreateRepository<DummyAggregate>();
+            var result = await sut.GetById(Guid.NewGuid());
+            result.Should().Be(null);    
+        }
+
+        [Fact]
         public async Task Writes_aggregate_to_stream()
         {
 

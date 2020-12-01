@@ -32,8 +32,6 @@ namespace EventServe.EventStore
             var slice = default(StreamEventsSlice);
             do
             {
-
-
                 slice = await _conn.ReadStreamEventsForwardAsync(stream, position, 100, false, credentials);
                 switch (slice.Status)
                 {
@@ -57,7 +55,6 @@ namespace EventServe.EventStore
                     position += 1;
             }
             while (!slice.IsEndOfStream);
- 
 
             yield break;
         }
@@ -93,7 +90,6 @@ namespace EventServe.EventStore
                     position -= 1;
             }
             while (!slice.IsEndOfStream);
-
 
             yield break;
         }
