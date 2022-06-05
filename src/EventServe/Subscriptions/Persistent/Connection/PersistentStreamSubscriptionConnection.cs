@@ -3,15 +3,19 @@ using System.Threading.Tasks;
 using System;
 using EventServe.Subscriptions.Persistent;
 using EventServe.Subscriptions.Enums;
+using System.Reactive.Subjects;
 
 namespace EventServe.Subscriptions
 {
-    public interface IPersistentStreamSubscriptionConnection : IObservable<PersistentSubscriptionResetEvent>, IObservable<SubscriptionMessage>
+    public interface IPersistentStreamSubscriptionConnection
     {
         SubscriptionConnectionStatus Status { get; }
         DateTime? StartDate { get; }
         long? Position { get; }
         public string Name { get; }
+
+        IObservable<PersistentSubscriptionResetEvent> ResetObservable { get; }
+        IObservable<SubscriptionMessage> MessageObservable { get; }
 
         Task Connect(PersistentStreamSubscriptionConnectionSettings settings);
         Task Disconnect();
@@ -20,10 +24,13 @@ namespace EventServe.Subscriptions
 
     public abstract class PersistentStreamSubscriptionConnection : IPersistentStreamSubscriptionConnection
     {
+        public IObservable<PersistentSubscriptionResetEvent> ResetObservable => _resetSubject;
+        public IObservable<SubscriptionMessage> MessageObservable => _messageSubject;
+
         private readonly Queue<Task> _dispatchQueue;
         private readonly SemaphoreLocker _locker;
-        private List<IObserver<SubscriptionMessage>> _messageObservers = new List<IObserver<SubscriptionMessage>>();
-        private IObserver<PersistentSubscriptionResetEvent> _resetObserver;
+        private Subject<PersistentSubscriptionResetEvent> _resetSubject = new Subject<PersistentSubscriptionResetEvent>();
+        private Subject<SubscriptionMessage> _messageSubject = new Subject<SubscriptionMessage>();
 
         protected bool _connected = false;
         protected DateTime? _startDate;
@@ -66,7 +73,7 @@ namespace EventServe.Subscriptions
         {
             await DisconnectAsync();
             await ResetAsync();
-            _resetObserver.OnNext(new PersistentSubscriptionResetEvent());
+            _resetSubject.OnNext(new PersistentSubscriptionResetEvent());
             _position = null;
             await ConnectAsync();
         }
@@ -92,26 +99,13 @@ namespace EventServe.Subscriptions
         {
             try
             {
-                foreach (var observer in _messageObservers)
-                    observer.OnNext(message);
-
+                _messageSubject.OnNext(message);
                 await AcknowledgeEvent(message.EventId);
             }
             catch
             {
                 throw;
             }
-        }
-
-        public IDisposable Subscribe(IObserver<PersistentSubscriptionResetEvent> observer)
-        {
-            _resetObserver = observer;
-            return default;
-        }
-        public IDisposable Subscribe(IObserver<SubscriptionMessage> observer)
-        {
-            _messageObservers.Add(observer);
-            return default;
         }
     }
 }

@@ -63,7 +63,7 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
                         var profileType = profile.GetType();
                         var messageObserverType = typeof(SubscriptionMessageObserver<,>).MakeGenericType(profileType, eventType);
                         var messageObserver = (IObserver<SubscriptionMessage>)Activator.CreateInstance(messageObserverType, applicationBuilder.ApplicationServices, profile.Filter);
-                        subscription.Subscribe(messageObserver);
+                        subscription.MessageObservable.Subscribe(messageObserver);
                     }
 
                     var subId = Guid.NewGuid();
@@ -93,7 +93,7 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
                         var profileType = profile.GetType();
                         var messageObserverType = typeof(SubscriptionMessageObserver<,>).MakeGenericType(profileType, eventType);
                         var messageObserver = (IObserver<SubscriptionMessage>)Activator.CreateInstance(messageObserverType, applicationBuilder.ApplicationServices, profile.Filter);
-                        subscription.Subscribe(messageObserver);
+                        subscription.MessageObservable.Subscribe(messageObserver);
                     }
 
                     var sub = subscriptions.FirstOrDefault(x => x.Name == profile.GetType().Name);
@@ -141,11 +141,11 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
 
                         var messageObserverType = typeof(SubscriptionMessageObserver<,>).MakeGenericType(profileType, eventType);
                         var messageObserver = (IObserver<SubscriptionMessage>)Activator.CreateInstance(messageObserverType, applicationBuilder.ApplicationServices, profile.Filter);
-                        connection.Subscribe(messageObserver);
+                        connection.MessageObservable.Subscribe(messageObserver);
 
                         var resetObserverType = typeof(PersistentSubscriptionResetObserver<>).MakeGenericType(profileType);
                         var resetObserver = (IObserver<PersistentSubscriptionResetEvent>)Activator.CreateInstance(resetObserverType, applicationBuilder.ApplicationServices);
-                        connection.Subscribe(resetObserver);
+                        connection.ResetObservable.Subscribe(resetObserver);
                     }
 
                     var sub = subscriptions.FirstOrDefault(x => x.Name == profile.GetType().Name);
@@ -180,11 +180,11 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
                     {
                         var observerType = typeof(PartitionedProjectionObserver<,>).MakeGenericType(profile.ProjectionType, eventType);
                         var observer = (IObserver<SubscriptionMessage>)Activator.CreateInstance(observerType, applicationBuilder.ApplicationServices, profile.Filter);
-                        connection.Subscribe(observer);
+                        connection.MessageObservable.Subscribe(observer);
 
                         var resetObserverType = typeof(PartitionedProjectionResetObserver<>).MakeGenericType(profile.ProjectionType);
                         var resetObserver = (IObserver<PersistentSubscriptionResetEvent>)Activator.CreateInstance(resetObserverType, applicationBuilder.ApplicationServices);
-                        connection.Subscribe(resetObserver);
+                        connection.ResetObservable.Subscribe(resetObserver);
                     }
 
                     var sub = subscriptions.FirstOrDefault(x => x.Name == profile.GetType().Name);
@@ -240,11 +240,11 @@ namespace EventServe.Extensions.Microsoft.DependencyInjection
                     {
                         var observerType = typeof(ProjectionObserver<,>).MakeGenericType(profile.ProjectionType, eventType);
                         var observer = (IObserver<SubscriptionMessage>)Activator.CreateInstance(observerType, applicationBuilder.ApplicationServices, profile.Filter);
-                        connection.Subscribe(observer);
+                        connection.MessageObservable.Subscribe(observer);
 
                         var resetObserverType = typeof(PartitionedProjectionResetObserver<>).MakeGenericType(profile.ProjectionType);
                         var resetObserver = (IObserver<PersistentSubscriptionResetEvent>)Activator.CreateInstance(resetObserverType, applicationBuilder.ApplicationServices);
-                        connection.Subscribe(resetObserver);
+                        connection.ResetObservable.Subscribe(resetObserver);
                     }
 
                     var sub = subscriptions.FirstOrDefault(x => x.Name == profile.GetType().Name);

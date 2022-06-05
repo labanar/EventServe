@@ -14,7 +14,6 @@ namespace EventServe.EventStore.Subscriptions
         private readonly IEventSerializer _eventSerializer;
         private readonly IEventStoreConnectionProvider _connectionProvider;
 
-        private IEventStoreConnection _connection;
         private EventStorePersistentSubscriptionBase _subscriptionBase;
 
         public EventStorePersistentSubscriptionConnection(
@@ -44,17 +43,14 @@ namespace EventServe.EventStore.Subscriptions
             }
 
             _cancellationRequestedByUser = true;
-            _connection.Close();
-            _connection.Dispose();
             return Task.CompletedTask;
         }
 
         protected override async Task ResetAsync()
         {
             var streamId = _streamId == null ? $"$ce-{_aggregateType.ToUpper()}" : _streamId.Id;
-            using (var connection = _connectionProvider.GetConnection())
+            using (var connection = await _connectionProvider.GetConnection())
             {
-                await connection.ConnectAsync();
                 await connection.DeletePersistentSubscriptionAsync(streamId, _subscriptionName, await _connectionProvider.GetCredentials());
             }
         }
@@ -70,12 +66,11 @@ namespace EventServe.EventStore.Subscriptions
 
         private async Task Connect()
         {
-            _connection = _connectionProvider.GetConnection();
-            await _connection.ConnectAsync();
+            var connection = await _connectionProvider.GetConnection();
 
             var streamId = _streamId == null ? $"$ce-{_aggregateType.ToUpper()}" : _streamId.Id;
             //Check if this subscription already exists
-            await _connection.CreateSubscription(streamId,
+            await connection.CreateSubscription(streamId,
                                                  _subscriptionName,
                                                  await _connectionProvider.GetCredentials(),
                                                  _logger);
@@ -85,7 +80,7 @@ namespace EventServe.EventStore.Subscriptions
                 return HandleEvent(subscriptionBase, resolvedEvent);
             };
 
-            _subscriptionBase = await _connection.ConnectToPersistentSubscriptionAsync(
+            _subscriptionBase = await connection.ConnectToPersistentSubscriptionAsync(
                 streamId,
                 _subscriptionName,
                 processEvent,
@@ -123,16 +118,12 @@ namespace EventServe.EventStore.Subscriptions
         {
             if(_cancellationRequestedByUser)
             {
-                if (_connection != null)
-                    _connection.Dispose();
-
                 _logger.LogInformation(ex, $"Subscription stopped by user: {subscriptionDropReason.ToString()}");
                 _status = SubscriptionConnectionStatus.Disconnected;
                 return;
             }
 
             _logger.LogError(ex, $"Subscription dropped: {subscriptionDropReason.ToString()}");
-            _connection.Dispose();
             _status = SubscriptionConnectionStatus.Disconnected;
             Connect().Wait();   
         }

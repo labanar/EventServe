@@ -19,7 +19,8 @@ namespace EventServe.SqlStreamStore
             _eventSerializer = eventSerializer;
         }
 
-        public async Task AppendEventsToStream(string stream, List<Event> events)
+        public async Task AppendEventsToStream<T>(string stream, List<T> events)
+            where T : Event
         {
             var streamId = new StreamId(stream);
 
@@ -32,7 +33,8 @@ namespace EventServe.SqlStreamStore
         }
 
 
-        public async Task AppendEventsToStream(string stream, List<Event> events, long? expectedVersion)
+        public async Task AppendEventsToStream<T>(string stream, List<T> events, long? expectedVersion)
+            where T : Event
         {
             var streamId = new StreamId(stream);
 
@@ -52,14 +54,14 @@ namespace EventServe.SqlStreamStore
 
         }
 
-        public async Task AppendEventToStream(string stream, Event @event)
+        public async Task AppendEventToStream<T>(string stream, T @event) where T : Event
         {
             var streamId = new StreamId(stream);
             using var store = await _streamStoreProvider.GetStreamStore();
             await store.AppendToStream(streamId.Id, ExpectedVersion.Any, new NewStreamMessage[] {  await _eventSerializer.SerializeEvent(@event) });
         }
 
-        public async Task AppendEventToStream(string stream, Event @event, long? expectedVersion)
+        public async Task AppendEventToStream<T>(string stream, T @event, long? expectedVersion) where T : Event
         {
             var streamId = new StreamId(stream);
 

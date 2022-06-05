@@ -16,7 +16,7 @@ namespace EventServe.EventStore.Extensions.Microsoft.DepdendencyInjection
         {
             services.AddEventServeCore(assemblies);
             services.Configure(setupAction);
-            services.AddTransient<IEventStoreConnectionProvider, EventStoreConnectionProvider>();
+            services.AddSingleton<IEventStoreConnectionProvider, EventStoreConnectionProvider>();
             services.AddTransient<IEventStreamReader, EventStoreStreamReader>();
             services.AddTransient<IEventStreamWriter, EventStoreStreamWriter>();
             services.AddTransient<IEventSerializer, EventSerializer>();

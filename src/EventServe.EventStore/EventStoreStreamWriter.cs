@@ -7,13 +7,10 @@ using ES = EventStore.ClientAPI;
 
 namespace EventServe.EventStore
 {
-
-    //TODO - implement IDisposable
     public class EventStoreStreamWriter : IEventStreamWriter
     {
         private readonly IEventStoreConnectionProvider _connectionProvider;
         private readonly IEventSerializer _eventSerializer;
-        private readonly IEventStoreConnection _conn;
 
         public EventStoreStreamWriter(
             IEventStoreConnectionProvider connectionProvider,
@@ -21,36 +18,40 @@ namespace EventServe.EventStore
         {
             _connectionProvider = connectionProvider;
             _eventSerializer = eventSerializer;
-            _conn = _connectionProvider.GetConnection();
-            _conn.ConnectAsync().Wait();
         }
 
-        public Task AppendEventToStream(string stream, Event @event)
+        public Task AppendEventToStream<T>(string stream, T @event)
+            where T: Event
         {
             return AppendEvent(stream, @event, ExpectedVersion.Any);
         }
 
-        public Task AppendEventToStream(string stream, Event @event, long? expectedVersion)
+        public Task AppendEventToStream<T>(string stream, T @event, long? expectedVersion)
+            where T: Event
         {
-            return AppendEvent(stream, @event, expectedVersion == null ? ExpectedVersion.EmptyStream : expectedVersion.Value);
+            return AppendEvent(stream, @event, expectedVersion == null ? ExpectedVersion.NoStream : expectedVersion.Value);
         }
 
-        public Task AppendEventsToStream(string stream, List<Event> events)
+        public Task AppendEventsToStream<T>(string stream, List<T> events)
+            where T: Event
         {
             return AppendEvents(stream, events, ExpectedVersion.Any);
         }
 
-        public Task AppendEventsToStream(string stream, List<Event> events, long? expectedVersion)
+        public Task AppendEventsToStream<T>(string stream, List<T> events, long? expectedVersion)
+            where T: Event
         {
-            return AppendEvents(stream, events, expectedVersion == null ? ExpectedVersion.EmptyStream : expectedVersion.Value);
+            return AppendEvents(stream, events, expectedVersion == null ? ExpectedVersion.NoStream : expectedVersion.Value);
         }
 
-        private async Task AppendEvent(string stream, Event @event, long expectedVersion)
+        private async Task AppendEvent<T>(string stream, T @event, long expectedVersion)
+            where T: Event
         {
+            var connection = await _connectionProvider.GetConnection();
             var eventData = _eventSerializer.SerializeEvent(@event);    
             try
             {
-                await _conn.AppendToStreamAsync(stream, expectedVersion, eventData);
+                await connection.AppendToStreamAsync(stream, expectedVersion, eventData);
             }
             catch (ES.Exceptions.WrongExpectedVersionException wrongVersionException)
             {
@@ -58,15 +59,18 @@ namespace EventServe.EventStore
             }
          }
 
-        private async Task AppendEvents(string stream, List<Event> events, long expectedVersion)
+        private async Task AppendEvents<T>(string stream, List<T> events, long expectedVersion)
+            where T: Event
         {
             var eventDatas = new List<EventData>();
             foreach (var @event in events)
                 eventDatas.Add(_eventSerializer.SerializeEvent(@event));
 
+            var connection = await _connectionProvider.GetConnection();
+
             try
             {
-                await _conn.AppendToStreamAsync(stream, expectedVersion, eventDatas);
+                await connection.AppendToStreamAsync(stream, expectedVersion, eventDatas);
             }
             catch (ES.Exceptions.WrongExpectedVersionException wrongVersionException)
             {

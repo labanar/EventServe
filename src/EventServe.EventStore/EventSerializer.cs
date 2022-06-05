@@ -20,13 +20,10 @@ namespace EventServe.EventStore
 
         private Event DeserializeEvent(ResolvedEvent resolvedEvent)
         {
-            var metaDataJson = Encoding.UTF8.GetString(resolvedEvent.Event.Metadata);
-            var eventDataJson = Encoding.UTF8.GetString(resolvedEvent.Event.Data);
-
-            var metaData = JsonSerializer.Deserialize<EventMetaData>(metaDataJson);
+            var metaData = JsonSerializer.Deserialize<EventMetaData>(resolvedEvent.Event.Metadata);
             var eventType = Type.GetType(metaData.AssemblyQualifiedName);
 
-            var @event = JsonSerializer.Deserialize(eventDataJson, eventType) as Event;
+            var @event = JsonSerializer.Deserialize(resolvedEvent.Event.Data, eventType) as Event;
             return @event;
         }
 
@@ -35,14 +32,11 @@ namespace EventServe.EventStore
             var type = @event.GetType();
             var typeName = type.FullName;
 
-            var serializedEvent = JsonSerializer.Serialize(@event, type);
-            var dataBytes = Encoding.UTF8.GetBytes(serializedEvent);
+            var serializedEvent = JsonSerializer.SerializeToUtf8Bytes(@event, type);
 
             var metaData = new EventMetaData(@event);
-            var serializedMetaData = JsonSerializer.Serialize(metaData, typeof(EventMetaData));
-            var metaDataBytes = Encoding.UTF8.GetBytes(serializedMetaData);
-
-            return new EventData(@event.EventId, typeName, true, dataBytes, metaDataBytes);
+            var serializedMetaData = JsonSerializer.SerializeToUtf8Bytes(metaData, typeof(EventMetaData));
+            return new EventData(@event.EventId, typeName, true, serializedEvent, serializedMetaData);
         }
     }
 }

@@ -5,9 +5,9 @@ namespace EventServe.Services
 {
     public interface IEventStreamWriter
     {
-        Task AppendEventToStream(string stream, Event @event);
-        Task AppendEventToStream(string stream, Event @event, long? expectedVersion);
-        Task AppendEventsToStream(string stream, List<Event> events);
-        Task AppendEventsToStream(string stream, List<Event> events, long? expectedVersion);
+        Task AppendEventToStream<T>(string stream, T @event) where T : Event;
+        Task AppendEventToStream<T>(string stream, T @event, long? expectedVersion) where T : Event;
+        Task AppendEventsToStream<T>(string stream, List<T> events) where T : Event;
+        Task AppendEventsToStream<T>(string stream, List<T> events, long? expectedVersion) where T : Event;
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.Json.Serialization;
 
 namespace EventServe
 {
@@ -10,9 +11,19 @@ namespace EventServe
 
         public Guid AggregateId { get; set; }
 
-        public Event(Guid aggregateId, bool allowDefaultGuid = false)
+        internal Event(Guid aggregateId, bool allowDefaultGuid = false)
         {
             if (aggregateId == null || (!allowDefaultGuid && aggregateId == default(Guid)))
+                throw new AggregateException("Null aggregateId provided.");
+
+            AggregateId = aggregateId;
+            EventId = Guid.NewGuid();
+            EventDate = DateTime.UtcNow;
+        }
+
+        public Event(Guid aggregateId)
+        {
+            if (aggregateId == null || aggregateId == default(Guid))
                 throw new AggregateException("Null aggregateId provided.");
 
             AggregateId = aggregateId;
@@ -32,7 +43,14 @@ namespace EventServe
             AssemblyQualifiedName = @event.GetType().AssemblyQualifiedName;
         }
 
-        public string AssemblyQualifiedName { get; set; }
-        public string IssuedBy { get; set; }
+        [JsonConstructorAttribute]
+        public EventMetaData(string assemblyQualifiedName, string issuedBy)
+        {
+            AssemblyQualifiedName = assemblyQualifiedName;
+            IssuedBy = issuedBy;
+        }
+
+        public string AssemblyQualifiedName { get; private set; }
+        public string IssuedBy { get; private set; }
     }
 }

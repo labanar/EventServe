@@ -11,7 +11,6 @@ namespace EventServe.EventStore
     {
         private readonly IEventStoreConnectionProvider _connectionProvider;
         private readonly IEventSerializer _eventSerializer;
-        private readonly IEventStoreConnection _conn;
 
         public EventStoreStreamReader(
             IEventStoreConnectionProvider connectionProvider,
@@ -19,14 +18,13 @@ namespace EventServe.EventStore
         {
             _connectionProvider = connectionProvider;
             _eventSerializer = eventSerializer;
-            _conn = _connectionProvider.GetConnection();
-            _conn.ConnectAsync().Wait();
         }
 
         
         public async IAsyncEnumerable<Event> ReadAllEventsFromStreamAsync(string stream)
         {
             var credentials = await _connectionProvider.GetCredentials();
+            var connection = await _connectionProvider.GetConnection();
 
             long position = 0;
             var slice = default(StreamEventsSlice);
@@ -34,7 +32,7 @@ namespace EventServe.EventStore
             {
 
 
-                slice = await _conn.ReadStreamEventsForwardAsync(stream, position, 100, false, credentials);
+                slice = await connection.ReadStreamEventsForwardAsync(stream, position, 100, false, credentials);
                 switch (slice.Status)
                 {
                     case SliceReadStatus.StreamDeleted: throw new StreamDeletedException(stream);
@@ -64,13 +62,14 @@ namespace EventServe.EventStore
 
         public async IAsyncEnumerable<Event> ReadStreamBackwards(string stream)
         {
+            var connection = await _connectionProvider.GetConnection();
             var credentials = await _connectionProvider.GetCredentials();
 
             long position = -1;
             var slice = default(StreamEventsSlice);
             do
             {
-                slice = await _conn.ReadStreamEventsBackwardAsync(stream, position, 100, false, credentials);
+                slice = await connection.ReadStreamEventsBackwardAsync(stream, position, 100, false, credentials);
                 switch (slice.Status)
                 {
                     case SliceReadStatus.StreamDeleted: throw new StreamDeletedException(stream);

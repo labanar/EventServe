@@ -21,7 +21,7 @@ namespace EventServe.SampleApp.Subscriptions
     /// </summary>
     public class PriceErrorAlertSubscription : PersistentSubscriptionProfile
     {
-        public PriceErrorAlertSubscription(): base(false)
+        public PriceErrorAlertSubscription() : base(false)
         {
             CreateProfile()
                 .SubscribeToAggregateCategory<Product>()
@@ -30,7 +30,7 @@ namespace EventServe.SampleApp.Subscriptions
         }
     }
 
-    public class PriceErrorAlertSubscriptionHandler:
+    public class PriceErrorAlertSubscriptionHandler :
             ISubscriptionEventHandler<PriceErrorAlertSubscription, ProductCreatedEvent>,
             ISubscriptionEventHandler<PriceErrorAlertSubscription, ProductPriceChangedEvent>,
             IPersistentSubscriptionResetHandler<PriceErrorAlertSubscription>
@@ -104,7 +104,7 @@ namespace EventServe.SampleApp.Subscriptions
         public async Task HandleReset()
         {
             var cmd = $"TRUNCATE TABLE [Sample].[{nameof(_context.PriceErrorAlertLastPrices)}];";
-            await _context.Database.ExecuteSqlCommandAsync(cmd);
+            await _context.Database.ExecuteSqlRawAsync(cmd);
         }
     }
 

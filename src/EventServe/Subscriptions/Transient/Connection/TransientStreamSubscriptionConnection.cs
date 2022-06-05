@@ -3,15 +3,18 @@ using System.Threading.Tasks;
 using System;
 using EventServe.Subscriptions.Transient;
 using EventServe.Subscriptions.Enums;
+using System.Reactive.Subjects;
 
 namespace EventServe.Subscriptions
 {
-    public interface ITransientStreamSubscriptionConnection: IObservable<SubscriptionMessage>
+    public interface ITransientStreamSubscriptionConnection
     {
         string Name { get; }
         long? Position { get; }
         SubscriptionConnectionStatus Status { get; }
         DateTime? StartDate { get; }
+
+        IObservable<SubscriptionMessage> MessageObservable { get; }
 
         Task Connect(TransientStreamSubscriptionConnectionSettings connectionSettings);
         Task Disconnect();
@@ -19,7 +22,7 @@ namespace EventServe.Subscriptions
 
     public abstract class TransientStreamSubscriptionConnection : ITransientStreamSubscriptionConnection
     {
-
+        public IObservable<SubscriptionMessage> MessageObservable => _messageSubject;
         protected bool _connected = false;
         protected StreamId _streamId;
         protected string _aggregateType;
@@ -28,8 +31,7 @@ namespace EventServe.Subscriptions
         protected long? _position;
         protected SubscriptionConnectionStatus _status = SubscriptionConnectionStatus.Idle;
 
-
-        private List<IObserver<SubscriptionMessage>> _observers = new List<IObserver<SubscriptionMessage>>();
+        private Subject<SubscriptionMessage> _messageSubject = new Subject<SubscriptionMessage>();
         private string _subscriptionName;
         private readonly Queue<Task> _dispatchQueue = new Queue<Task>();
         private readonly SemaphoreLocker _locker;
@@ -62,12 +64,6 @@ namespace EventServe.Subscriptions
             _startDate = null;
         }
 
-        public IDisposable Subscribe(IObserver<SubscriptionMessage> observer)
-        {
-            _observers.Add(observer);
-            return default;
-        }
-
         protected abstract Task ConnectAsync();
         protected abstract Task DisconnectAsync();
         protected async Task RaiseMessage(SubscriptionMessage message)
@@ -86,8 +82,7 @@ namespace EventServe.Subscriptions
         {
             try
             {
-                foreach (var observer in _observers)
-                    observer.OnNext(message);
+                _messageSubject.OnNext(message);
             }
             catch
             {

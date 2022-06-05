@@ -13,7 +13,7 @@ namespace EventServe.SqlStreamStore.MsSql.IntegrationTests
 {
     public class EmbeddedMsSqlStreamStoreFixture : IAsyncLifetime
     {
-        const string MsSqlServerImage = "mcr.microsoft.com/mssql/server:2019-latest";
+        const string MsSqlServerImage = "mcr.microsoft.com/mssql/server:2022-latest";
 
         private readonly string _containerName;
         private readonly int _port;
@@ -40,15 +40,6 @@ namespace EventServe.SqlStreamStore.MsSql.IntegrationTests
 
         public async Task InitializeAsync()
         {
-            var images = await _dockerClient.Images.ListImagesAsync(new ImagesListParameters { MatchName = MsSqlServerImage });
-             if (images.Count == 0)
-            {
-                // No image found. Pulling latest ..
-                Console.WriteLine("[Docker] Image not found - pulling latest");
-                await _dockerClient.Images.CreateImageAsync(new ImagesCreateParameters { FromImage = MsSqlServerImage, Tag = "2019-latest" }, null, IgnoreProgress.Forever);
-            }
-
-
             Console.WriteLine("[Docker] Creating container " + _containerName);
             //Create container ...
             await _dockerClient.Containers.CreateContainerAsync(

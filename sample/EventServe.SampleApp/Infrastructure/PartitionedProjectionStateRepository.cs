@@ -31,7 +31,7 @@ namespace EventServe.SampleApp.Infrastructure
         public async Task ResetState()
         {
             var cmd = $"TRUNCATE TABLE [Sample].[{nameof(_context.Products)}];";
-            await _context.Database.ExecuteSqlCommandAsync(cmd);
+            await _context.Database.ExecuteSqlRawAsync(cmd);
         }
 
         public async Task SetProjectionState(Guid partitionId, T state)

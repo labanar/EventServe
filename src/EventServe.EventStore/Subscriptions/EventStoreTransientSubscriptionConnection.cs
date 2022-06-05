@@ -16,7 +16,6 @@ namespace EventServe.EventStore.Subscriptions
         private readonly IEventSerializer _eventSerializer;
         private readonly IEventStoreConnectionProvider _connectionProvider;
 
-        private IEventStoreConnection _connection;
         private ESSubscription _subscriptionBase;
         private EventStoreCatchUpSubscription _catchUpSubscriptionBase;
 
@@ -47,15 +46,12 @@ namespace EventServe.EventStore.Subscriptions
             }
 
             _cancellationRequestedByUser = true;
-            _connection.Close();
-            _connection.Dispose();
             return Task.CompletedTask;
         }
 
         private async Task Connect()
         {
-            _connection = _connectionProvider.GetConnection();
-            await _connection.ConnectAsync();
+            var connection = await _connectionProvider.GetConnection();
 
 
             Func<EventStoreCatchUpSubscription, ResolvedEvent, Task> processEvent = (subscriptionBase, resolvedEvent) => {
@@ -69,7 +65,7 @@ namespace EventServe.EventStore.Subscriptions
             var streamId = _streamId == null ? $"$ce-{_aggregateType.ToUpper()}" : _streamId.Id;
             if (_startPosition ==  StreamPosition.End)
             {
-                _subscriptionBase = await _connection.SubscribeToStreamAsync(
+                _subscriptionBase = await connection.SubscribeToStreamAsync(
                     streamId,
                     true,
                     processEventAlt,
@@ -79,7 +75,7 @@ namespace EventServe.EventStore.Subscriptions
             }
             else
             {
-                _catchUpSubscriptionBase = _connection.SubscribeToStreamFrom(
+                _catchUpSubscriptionBase = connection.SubscribeToStreamFrom(
                     streamId,
                     0,
                     new CatchUpSubscriptionSettings(
@@ -125,7 +121,6 @@ namespace EventServe.EventStore.Subscriptions
             }
 
             _logger.LogError(ex, $"Subscription dropped: {subscriptionDropReason.ToString()}");
-            _connection.Dispose();
             Connect().Wait();
         }
 
@@ -139,7 +134,6 @@ namespace EventServe.EventStore.Subscriptions
             }
 
             _logger.LogError(ex, $"Subscription dropped: {subscriptionDropReason.ToString()}");
-            _connection.Dispose();
             Connect().Wait();
         }
     }
